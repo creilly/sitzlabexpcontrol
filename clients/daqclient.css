@@ -1,0 +1,13 @@
+button.plain {
+    border: 2px;
+    background: none;
+    color: blue;
+}
+
+button.plain:hover {
+    font-weight: bold;
+}
+
+.notification {
+    margin: 0px;
+}
