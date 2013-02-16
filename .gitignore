@@ -27,4 +27,4 @@ develop-eggs
 lib
 lib64
 
-.git&
+.gitignore
