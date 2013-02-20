@@ -1,12 +1,21 @@
 from websocketserver import WebSocketServer, command, runServer
 import random
 import math
+import time
 
 random.seed(None)
 
 class DAQServer(WebSocketServer):
 
     def initialize(self):
+        
+        # establish connection
+        print 'connecting...'
+        time.sleep(.5)
+        print '.......'
+        time.sleep(.5)
+        print 'connected!'
+
         self.tasks = {}
         self.devices = {
             'alpha':['ai%d' % i for i in range(5)],
