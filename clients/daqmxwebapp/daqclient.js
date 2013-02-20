@@ -85,9 +85,18 @@ function Acquisition(name,device,channel) {
 Acquisition.prototype.startRecord = function () {
     var self = this;
     chrome.fileSystem.chooseEntry({'type':'saveFile'},function(fe){
+	if (!fe) {
+	    console.log('no file selected.');
+	    return
+	}
 	fe.createWriter(function(fw) {
 	    console.log(fw.onwriteend);
-	    fw.onerror = function () {console.log('error writing');}
+	    fw.onerror = function (e) {
+		console.log('error writing:');
+		console.log(e);
+		createNotification('error in write, stopping recording');
+		self.stopRecord();
+	    }
 	    fw.truncate(0);
 	    fw.onwriteend = function () {
 		console.log('truncation complete')
@@ -95,15 +104,13 @@ Acquisition.prototype.startRecord = function () {
 		self.recording = true;
 		fw.onwriteend = null;
 	    }
-
+	    $('button.record',self.tr)
+		.text('recording...')
+		.addClass('recording')
+		.off('click')
+		.click(self.stopRecord.bind(self))
 	});
     });
-
-    $('button.record',this.tr)
-	.text('recording...')
-	.addClass('recording')
-	.off('click')
-	.click(this.stopRecord.bind(this))
 }
 
 Acquisition.prototype.stopRecord = function () {
