@@ -98,8 +98,8 @@ class WebSocketServer(tornado.web.Application):
                 )
             )
         except Exception as e:
-            print e
-            self.error(socket,str(e))
+            print e, type(e)
+            self.error(socket,str(e) + ', ' + str(type(e)))
             if DEBUG: raise
 
     def parse_message(self,message):

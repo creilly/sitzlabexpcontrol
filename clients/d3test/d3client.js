@@ -63,26 +63,7 @@ function plot (data) {
 	.append('circle')
 	.attr('cx',function(d){return xScale(d[0])})
 	.attr('cy',function(d){return yScale(d[1])})
-	.attr('r',RADIUS)
-	.style('fill',function(d){
-	    var square = Math.sqrt(d[0]*d[0] + d[1]*d[1]);
-	    if (square > 1.5) {
-		return 'red'
-	    }
-	    if (square > 1.2) {
-		return 'orange'
-	    }
-	    if (square > 0.9) {
-		return 'yellow'
-	    }
-	    if (square > 0.6) {
-		return 'green'
-	    }
-	    if (square > .3) {
-		return 'blue'
-	    }
-	    return 'purple'
-	});
+	.attr('r',RADIUS);
 
     counter++;
 }

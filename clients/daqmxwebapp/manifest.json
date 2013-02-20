@@ -1,0 +1,16 @@
+{
+    "name": "DAQmx monitor",
+    "version": "0.1",
+    "manifest_version": 2,
+    "app": {
+	"background": {
+	    "scripts": ["background.js"]
+	}
+    }, 
+    "permissions": [
+	{"fileSystem": ["write"]}
+    ],
+    "icons": {
+	"128": "icon.png"
+    }
+}
