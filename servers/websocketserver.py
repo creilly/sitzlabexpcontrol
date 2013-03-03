@@ -7,6 +7,8 @@ import tornado.web
 import json
 import sys
 
+from sitz import SitzException, _decode_dict
+
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == '-debug'
 
 #TAGS METHOD AS COMMAND
@@ -16,40 +18,30 @@ def command (command):
         return bar
     return foo
 
+def message (message):
+    def foo (bar):
+        def baz(self,*args,**kwargs):
+            result = bar(self,*args,**kwargs)
+            self.sendMessage(message,result)
+            return result
+        baz.__message__ = message
+        return baz
+    return foo
+
 #BUILDS COMMANDS DICT
 class _get_commands (type):
     def __new__(cls,name,bases,attrs):        
         attrs['commands'] = bases[0].__dict__.get('commands',{})
+        attrs['messages'] = bases[0].__dict__.get('messages',{})
+        if '_messages' in attrs:
+            for message in attrs['_messages']:
+                attrs['messages'][message] = []
         for value in attrs.values():        
             if hasattr(value,'__command__'):
                 attrs['commands'][value.__command__] = value
+            if hasattr(value,'__message__'):
+                attrs['messages'][value.__message__] = []
         return type.__new__(cls, name, bases, attrs)
-
-#WORKAROUND FOR UNICODE ISSUE
-def _decode_list(data):
-    rv = []
-    for item in data:
-        if isinstance(item, unicode):
-            item = item.encode('utf-8')
-        elif isinstance(item, list):
-            item = _decode_list(item)
-        elif isinstance(item, dict):
-            item = _decode_dict(item)
-        rv.append(item)
-    return rv
-def _decode_dict(data):
-    rv = {}
-    for key, value in data.iteritems():
-        if isinstance(key, unicode):
-           key = key.encode('utf-8')
-        if isinstance(value, unicode):
-           value = value.encode('utf-8')
-        elif isinstance(value, list):
-           value = _decode_list(value)
-        elif isinstance(value, dict):
-           value = _decode_dict(value)
-        rv[key] = value
-    return rv
 
 #FUTURE SERVERS INHERIT FROM THIS CLASS
 class WebSocketServer(tornado.web.Application):
@@ -61,12 +53,14 @@ class WebSocketServer(tornado.web.Application):
         
         def initialize(self):
             self.application.sockets.append(self)
+            self.subscriptions = []
             
         def on_message(self, message):
             self.application.handle_message(self,message)
                     
         def on_close(self):
-            self.application.sockets.remove(self)
+            for message in self.subscriptions:
+                self.application.messages[message].remove(self)
     
     def __init__(self):
         self.sockets = []
@@ -97,10 +91,17 @@ class WebSocketServer(tornado.web.Application):
                     }
                 )
             )
-        except Exception as e:
-            print e, type(e)
-            self.error(socket,str(e) + ', ' + str(type(e)))
-            if DEBUG: raise
+        except SitzException as e:
+            socket.write_message(
+                json.dumps(
+                    {
+                        'error':{
+                            'id':callback,
+                            'message':e.message
+                        }
+                    }
+                )
+            )
 
     def parse_message(self,message):
         try:
@@ -115,6 +116,39 @@ class WebSocketServer(tornado.web.Application):
 
     def error(self,socket,message):
         socket.write_message(json.dumps({'error':message}))
+
+    @command('commands')
+    def getCommands(self,socket):
+        return self.commands.keys()
+
+    def sendMessage(self,name,data):
+        message = json.dumps(        
+            {
+                'message':name,
+                'data':data
+            }        
+        )
+        for subscriber in self.messages[name]:
+            subscriber.write_message(message)
+        
+
+    @command('messages')
+    def getMessages(self,socket):
+        return self.messages.keys()
+
+    @command('subscribe')
+    def subscribeToMessage(self,socket,name):
+        self.messages[name].append(socket)
+        socket.subscriptions.append(name)
+
+    @command('unsubscribe')
+    def unsubscribeFromMessage(self,socket,name):
+        self.messages[name].remove(socket)
+        socket.subscriptions.append(remove)
+
+    @command('subscriptions')
+    def getSubscriptions(self,socket):
+        return socket.subscriptions()
 
 def runServer(server,port):
     from datetime import timedelta

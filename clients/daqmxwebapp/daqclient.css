@@ -43,3 +43,7 @@ input, select {
 button.plain.record.recording {
     color: red;
 }
+
+h1 {
+    display: inline;
+}

@@ -1,4 +1,4 @@
-function Acquisition(name,device,channel) {
+function Acquisition(name,device,channel,onCreation,onError) {
     this.name = name;
     this.device = device;
     this.channel = channel;
@@ -9,77 +9,91 @@ function Acquisition(name,device,channel) {
 
     this.recording = false;
 
-    sendCommand('create task',{'name':this.name});
+    var self = this;    
+
     sendCommand(
-	'create channel',
-	{
-	    'task':this.name, 
-	    'physicalChannel':(this.device + '/' + this.channel),
-	    'name':'na'
+	'create ai task', 
+	{'name':self.name},
+	function () {
+	    sendCommand(
+		'create channel',
+		{
+		    'task':self.name, 
+		    'physicalChannel':(self.device + '/' + self.channel),
+		    'name':'na'
+		},
+		function () {
+		    self.tr = $('<tr>')
+			.attr('name',self.name)
+			.append(
+			    $('<td>').text(self.name)
+			)
+			.append(
+			    $('<td>').text(self.device)
+			)
+			.append(
+			    $('<td>').text(self.channel)
+			)	
+			.append(
+			    $('<td>').addClass('value').text('na')
+			)
+			.append(
+			    $('<td>')
+				.append(
+				    $('<label>')
+					.addClass('checkbox')
+					.append(
+					    $('<input>')
+						.prop('type','checkbox')
+						.addClass('plot')
+						.change(function(){
+						    if ($(this).is(':checked')) self.createPlot();
+						    else self.removePlot();
+						})
+					)		    	
+					.append(
+					    $('<span>')
+						.text('plot')
+					)
+				)
+			)
+			.append(
+			    $('<td>')
+				.append(
+				    $('<button>')
+					.addClass('plain')
+					.addClass('record')
+					.text('record')
+					.click(self.startRecord.bind(self))
+				)
+			)
+			.append(
+			    $('<td>').append(
+				$('<button>')
+				    .addClass('plain')
+				    .text('remove')
+				    .click(function () {
+					self.removeAcq();
+				    })
+			    )
+			);
+
+		    $('#acqs > tbody').prepend(self.tr);    
+
+		    self.setSampleTimer();
+		},
+		function (message) {
+		    printError('error creating channel')(message);
+		    delete self;
+		}
+	    );
+
+	},
+	function (message) {
+	    printError('error creating task')(message);
+	    delete self;
 	}
     );
-
-    var self = this;
-    this.tr = $('<tr>')
-	.attr('name',this.name)
-	.append(
-	    $('<td>').text(this.name)
-	)
-	.append(
-	    $('<td>').text(this.device)
-	)
-	.append(
-	    $('<td>').text(this.channel)
-	)	
-	.append(
-	    $('<td>').addClass('value').text('na')
-	)
-	.append(
-	    $('<td>')
-		.append(
-		    $('<label>')
-			.addClass('checkbox')
-			.append(
-			    $('<input>')
-				.prop('type','checkbox')
-				.addClass('plot')
-				.change(function(){
-				    if ($(this).is(':checked')) self.createPlot();
-				    else self.removePlot();
-				})
-			)		    	
-			.append(
-			    $('<span>')
-				.text('plot')
-			)
-		)
-	)
-	.append(
-	    $('<td>')
-		.append(
-		    $('<button>')
-			.addClass('plain')
-			.addClass('record')
-			.text('record')
-			.click(self.startRecord.bind(self))
-		)
-	)
-	.append(
-	    $('<td>').append(
-		$('<button>')
-		    .addClass('plain')
-		    .text('remove')
-		    .click(function () {
-			self.removeAcq();
-		    })
-	    )
-	);
-
-
-    $('#acqs > tbody').prepend(this.tr);    
-
-    this.setSampleTimer();
-
 };
 
 Acquisition.prototype.startRecord = function () {
@@ -250,6 +264,7 @@ Acquisition.prototype.removeAcq = function () {
 };
 
 function initialize () {
+    $('#connection').text('connected')
     bindControls();
     sendCommand('devices', {}, onDevices);
 
@@ -258,11 +273,15 @@ function initialize () {
 	for (var task in tasks) {
 	    sendCommand('clear task', {'task':tasks[task]});
 	}
-	new Acquisition('test','alpha','ai0');
+	new Acquisition(
+	    'test',
+	    'alpha',
+	    'ai0'
+	);
     });    
 }
 
-function bindControls () {
+function bindControls () {    
     $('#device').change(function () {
 	sendCommand(
 	    'physical channels',
@@ -275,19 +294,13 @@ function bindControls () {
 	var name = selectedName();
 	var device = selectedDevice();
 	var channel = selectedChannel();
-	sendCommand(
-	    'tasks',
-	    {},
-	    function (tasks) {
-		if ($.inArray(name,tasks) >= 0) {
-		    createNotification('"' + name + '"' + ' name already taken' );
-		    return
-		}
-		new Acquisition(name, device, channel);
-	    }
-	);
+	new Acquisition(name, device, channel);
     });
 };
+
+function terminate () {
+    $('#connection').text('disconnected')
+}
 
 function selectedDevice () {
     return $('#device > option:selected').prop('value');
@@ -300,28 +313,6 @@ function selectedChannel () {
 function selectedName() {
     return $('#name').prop('value');
 };
-
-function createNotification(message) {
-    $('#notifications').prepend(
-	$('<div>')	
-	    .addClass('alert')
-	    .addClass('notification')	
-	    .append(
-		$('<button>')
-		    .addClass('close')
-		    .attr('data-dismiss','alert')
-		    .text('\xD7')
-	    )
-	    .append(
-		$('<strong>')
-		    .text('Error:')
-	    )
-	    .append(
-		$('<span>')
-		    .text(message)
-	    )
-    );
-}
 
 function onDevices (devices) {
     $('#device').empty();
@@ -336,8 +327,7 @@ function onDevices (devices) {
 };
 
 function physicalChannels (device) {
-    cbid = getCallbackID();
-    sendCommand('physical channels',{'device':device},onPhysicalChannels,cbid);
+    sendCommand('physical channels',{'device':device},onPhysicalChannels);
 };
 
 function onPhysicalChannels (channels) {
@@ -348,3 +338,38 @@ function onPhysicalChannels (channels) {
 	);
     });
 };
+
+function printError(heading) {
+    return function (message) {
+	console.log(heading + ':\n' + message);
+	createNotification(heading + ': ' + message);
+    }
+}
+var N_NOTIFICATIONS = 3;
+function createNotification(message) {
+    var notification = $('<div>')	
+	.addClass('alert')
+	.addClass('fade')
+	.addClass('notification')	
+	.append(
+	    $('<button>')
+		.addClass('close')
+		.attr('data-dismiss','alert')
+		.text('\xD7')
+	)
+	.append(
+	    $('<strong>')
+		.text('Error:')
+	)
+	.append(
+	    $('<div>')
+		.text(message)
+	)
+
+    $('#notifications')
+	.prepend(notification)
+	.children().eq(N_NOTIFICATIONS).find('button').click();
+
+    setTimeout(function () {notification.addClass('in')},0);
+
+}

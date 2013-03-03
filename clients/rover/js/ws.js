@@ -2,6 +2,16 @@ var WS_URL = 'ws://localhost:8888/ws';
 
 var ws;
 
+var handlers = {};
+function onMessage (evt) {
+    var message = JSON.parse(evt.data);
+    for (var key in message) {
+	if (key in handlers) {
+	    handlers[key](message[key]);
+	}
+    }
+};
+
 var _counter = 0;
 var callbacks = {};
 function Callback(callback,errback) {
@@ -44,17 +54,9 @@ function onClose (evt)  {
 };
 
 //override this method
-function terminate () {};
+function terminate () {console.log('terminating')};
 
-var handlers = {};
-function onMessage (evt) {
-    var message = JSON.parse(evt.data);
-    for (var key in message) {
-	if (key in handlers) {
-	    handlers[key](message[key]);
-	}
-    }
-};
+
 
 function openWebSocket () {    
 
@@ -81,4 +83,4 @@ function onError(data) {
 }
 handlers['error'] = onError;
 
-$(document).ready(onReady);
+$(document).ready(function() {terminate()});

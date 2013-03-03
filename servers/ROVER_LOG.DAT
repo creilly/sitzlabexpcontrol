@@ -1,0 +1,42 @@
+2013-03-02 19:41:29.636000: starting
+2013-03-02 19:43:03.558000: starting
+2013-03-02 19:43:03.696000: attribute set: switch -> 1 -> fail = False
+2013-03-02 19:43:03.702000: switch state wrote: switch 1 state True
+2013-03-02 19:43:03.706000: switch state wrote: switch 1 state True
+2013-03-02 19:43:03.707000: attribute set: switch -> 2 -> fail = False
+2013-03-02 19:43:03.713000: switch state wrote: switch 2 state True
+2013-03-02 19:43:03.717000: switch state wrote: switch 2 state True
+2013-03-02 19:43:28.948000: closing
+2013-03-02 19:46:50.303000: starting
+2013-03-02 19:46:50.449000: attribute set: switch -> 1 -> fail = False
+2013-03-02 19:46:50.455000: switch state wrote: switch 1 state True
+2013-03-02 19:46:50.459000: switch state wrote: switch 1 state True
+2013-03-02 19:46:50.459000: attribute set: switch -> 2 -> fail = False
+2013-03-02 19:46:50.464000: switch state wrote: switch 2 state True
+2013-03-02 19:46:50.467000: switch state wrote: switch 2 state True
+2013-03-02 19:46:55.813000: attribute set: switch -> 1 -> fail = True
+2013-03-02 19:46:55.818000: switch state wrote: switch 1 state False
+2013-03-02 19:47:01.912000: attribute set: switch -> 2 -> fail = True
+2013-03-02 19:47:01.917000: switch state wrote: switch 2 state False
+2013-03-02 19:48:13.021000: closing
+2013-03-02 19:52:14.044000: starting
+2013-03-02 19:52:14.178000: attribute set: switch -> 1 -> fail = False
+2013-03-02 19:52:14.184000: switch state wrote: switch 1 state True
+2013-03-02 19:52:14.186000: switch state wrote: switch 1 state True
+2013-03-02 19:52:14.187000: attribute set: switch -> 2 -> fail = False
+2013-03-02 19:52:14.194000: switch state wrote: switch 2 state True
+2013-03-02 19:52:14.198000: switch state wrote: switch 2 state True
+2013-03-02 19:52:14.339000: attribute set: switch -> 1 -> fail = True
+2013-03-02 19:52:14.345000: switch state wrote: switch 1 state False
+2013-03-02 19:52:27.677000: starting
+2013-03-02 19:52:29.885000: closing
+2013-03-02 19:54:11.879000: starting
+2013-03-02 19:54:12.018000: attribute set: switch -> 1 -> fail = False
+2013-03-02 19:54:12.025000: switch state wrote: switch 1 state True
+2013-03-02 19:54:12.027000: switch state wrote: switch 1 state True
+2013-03-02 19:54:12.029000: attribute set: switch -> 2 -> fail = False
+2013-03-02 19:54:12.033000: switch state wrote: switch 2 state True
+2013-03-02 19:54:12.037000: switch state wrote: switch 2 state True
+2013-03-02 19:54:12.178000: attribute set: switch -> 1 -> fail = True
+2013-03-02 19:54:12.183000: switch state wrote: switch 1 state False
+2013-03-02 19:54:15.290000: closing
