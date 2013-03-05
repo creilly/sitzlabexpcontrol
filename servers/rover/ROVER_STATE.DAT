@@ -1,15 +1,17 @@
 {
   "interlock": {
     "3": {
+      "color": "#0000FF",
       "defeated": false,
       "id": "3",
       "name": "beck",
       "polarity": true,
       "sensor": "0",
       "switch": "1",
-      "threshold": 2.0
+      "threshold": 4.0
     },
     "4": {
+      "color": "#FF0000",
       "defeated": false,
       "id": "4",
       "name": "beck",
@@ -22,6 +24,7 @@
   "sensor": {
     "0": {
       "channel": "gamma/ai0",
+      "color": "#FFFF00",
       "id": "0",
       "name": "potentiometer"
     }
@@ -29,21 +32,23 @@
   "switch": {
     "1": {
       "channel": "gamma/port0/line0",
-      "fail": true,
+      "color": "#FF00FF",
+      "fail": false,
       "id": "1",
       "interlock": true,
       "mode": true,
-      "name": "hannity",
+      "name": "colmes",
       "user": false
     },
     "2": {
       "channel": "gamma/port0/line2",
-      "fail": false,
+      "color": "#00FFFF",
+      "fail": true,
       "id": "2",
       "interlock": true,
       "mode": true,
       "name": "hannity",
-      "user": false
+      "user": true
     }
   }
 }

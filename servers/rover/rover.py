@@ -3,7 +3,6 @@ import daqmx
 _elements = {}
 
 class RoverElement(object):
-    props = []
     def __init__(self,state = {}):
         for prop in self.props:
             setattr(self,prop,state[prop])
@@ -21,6 +20,7 @@ class Switch(RoverElement):
     props = [
         'id',
         'name',
+        'color',
         'channel',
         'mode', # INTERLOCK or USER?
         'user', # USER on or off?
@@ -43,8 +43,8 @@ class Switch(RoverElement):
 
     def getComputed(self):
         if self.fail: return False
-        if self.mode is self.INTERLOCK: return self.interlock
-        if self.mode is self.USER: return self.interlock
+        if self.mode is self.INTERLOCK: return True
+        if self.mode is self.USER: return self.user
 
 _elements['switch'] = Switch
 
@@ -56,6 +56,7 @@ class Interlock(RoverElement):
     props = [
         'id',
         'name',
+        'color',
         'switch',
         'sensor',
         'defeated',
@@ -69,6 +70,7 @@ class Sensor(RoverElement):
     props = [
         'id',
         'name',
+        'color',
         'channel'
     ]
     

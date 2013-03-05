@@ -47,7 +47,7 @@ class _get_commands (type):
 class WebSocketServer(tornado.web.Application):
     __metaclass__ = _get_commands
 
-    handler = None
+    _handlers = []
 
     class WebSocketHandler(tornado.websocket.WebSocketHandler):
         
@@ -62,9 +62,9 @@ class WebSocketServer(tornado.web.Application):
             for message in self.subscriptions:
                 self.application.messages[message].remove(self)
     
-    def __init__(self):
+    def __init__(self,custom_handlers = [],**kwargs):
         self.sockets = []
-        tornado.web.Application.__init__(self,[(r'/ws', WebSocketServer.WebSocketHandler if self.handler is None else self.handler), ])
+        tornado.web.Application.__init__(self,[(r'/ws', WebSocketServer.WebSocketHandler)] + self._handlers,**kwargs)
         self.initialize()
 
     def initialize(self):
@@ -124,8 +124,7 @@ class WebSocketServer(tornado.web.Application):
     def sendMessage(self,name,data):
         message = json.dumps(        
             {
-                'message':name,
-                'data':data
+                name:data,
             }        
         )
         for subscriber in self.messages[name]:
@@ -144,11 +143,11 @@ class WebSocketServer(tornado.web.Application):
     @command('unsubscribe')
     def unsubscribeFromMessage(self,socket,name):
         self.messages[name].remove(socket)
-        socket.subscriptions.append(remove)
+        socket.subscriptions.remove(name)
 
     @command('subscriptions')
     def getSubscriptions(self,socket):
-        return socket.subscriptions()
+        return socket.subscriptions
 
 def runServer(server,port):
     from datetime import timedelta

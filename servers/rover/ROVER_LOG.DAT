@@ -1,0 +1,659 @@
+2013-03-05 02:42:12.285000: closing
+2013-03-05 02:41:42.384000: switch state wrote: switch 1 state True
+2013-03-05 02:41:42.374000: attribute set: switch -> 1 -> user = False
+2013-03-05 02:41:39.267000: switch state wrote: switch 1 state True
+2013-03-05 02:41:39.257000: attribute set: switch -> 1 -> fail = False
+2013-03-05 02:41:38.081000: switch state wrote: switch 1 state False
+2013-03-05 02:41:38.068000: attribute set: switch -> 1 -> fail = True
+2013-03-05 02:41:34.427000: switch state wrote: switch 1 state True
+2013-03-05 02:41:34.415000: attribute set: switch -> 1 -> fail = False
+2013-03-05 02:41:32.067000: switch state wrote: switch 1 state False
+2013-03-05 02:41:32.056000: attribute set: switch -> 1 -> fail = True
+2013-03-05 02:41:31.236000: switch state wrote: switch 1 state True
+2013-03-05 02:41:31.228000: attribute set: switch -> 1 -> fail = False
+2013-03-05 02:41:30.164000: switch state wrote: switch 1 state False
+2013-03-05 02:41:30.154000: attribute set: switch -> 1 -> fail = True
+2013-03-05 02:41:30.150000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 4.0
+2013-03-05 02:41:30.067000: switch state wrote: switch 1 state True
+2013-03-05 02:41:30.055000: attribute set: switch -> 1 -> fail = False
+2013-03-05 02:41:28.187000: switch state wrote: switch 1 state False
+2013-03-05 02:41:28.175000: attribute set: switch -> 1 -> fail = True
+2013-03-05 02:41:28.169000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 4.0
+2013-03-05 02:41:28.133000: switch state wrote: switch 1 state True
+2013-03-05 02:41:28.121000: attribute set: switch -> 1 -> fail = False
+2013-03-05 02:41:26.364000: switch state wrote: switch 1 state False
+2013-03-05 02:41:26.353000: attribute set: switch -> 1 -> fail = True
+2013-03-05 02:41:26.349000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 4.0
+2013-03-05 02:41:26.289000: switch state wrote: switch 1 state True
+2013-03-05 02:41:26.275000: attribute set: switch -> 1 -> fail = False
+2013-03-05 02:41:24.595000: switch state wrote: switch 1 state False
+2013-03-05 02:41:24.579000: attribute set: switch -> 1 -> fail = True
+2013-03-05 02:41:24.573000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 4.0
+2013-03-05 02:41:20.417000: switch state wrote: switch 1 state True
+2013-03-05 02:41:20.409000: attribute set: switch -> 1 -> mode = True
+2013-03-05 02:41:00.371000: switch state wrote: switch 2 state False
+2013-03-05 02:41:00.362000: attribute set: switch -> 2 -> fail = True
+2013-03-05 02:41:00.355000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-05 02:41:00.326000: switch state wrote: switch 2 state True
+2013-03-05 02:41:00.304000: attribute set: switch -> 2 -> interlock = True
+2013-03-05 02:40:49.900000: switch state wrote: switch 2 state True
+2013-03-05 02:40:49.884000: attribute set: switch -> 2 -> interlock = False
+2013-03-05 02:40:46.734000: switch state wrote: switch 1 state True
+2013-03-05 02:40:46.717000: attribute set: switch -> 1 -> user = True
+2013-03-05 02:40:42.489000: switch state wrote: switch 2 state True
+2013-03-05 02:40:42.474000: attribute set: switch -> 2 -> fail = False
+2013-03-05 02:38:20.591000: switch state wrote: switch 1 state False
+2013-03-05 02:38:20.580000: attribute set: switch -> 1 -> user = False
+2013-03-05 02:38:19.302000: switch state wrote: switch 1 state True
+2013-03-05 02:38:19.287000: attribute set: switch -> 1 -> user = True
+2013-03-05 02:38:18.293000: switch state wrote: switch 1 state False
+2013-03-05 02:38:18.274000: attribute set: switch -> 1 -> user = False
+2013-03-05 02:38:15.792000: switch state wrote: switch 1 state True
+2013-03-05 02:38:15.775000: attribute set: switch -> 1 -> user = True
+2013-03-05 02:38:14.485000: switch state wrote: switch 1 state False
+2013-03-05 02:38:14.475000: attribute set: switch -> 1 -> user = False
+2013-03-05 02:38:13.605000: switch state wrote: switch 1 state True
+2013-03-05 02:38:13.589000: attribute set: switch -> 1 -> mode = False
+2013-03-05 02:38:10.087000: switch state wrote: switch 1 state True
+2013-03-05 02:38:10.074000: attribute set: switch -> 1 -> fail = False
+2013-03-05 02:38:00.033000: switch state wrote: switch 2 state False
+2013-03-05 02:38:00.016000: attribute set: switch -> 2 -> fail = True
+2013-03-05 02:38:00.004000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-05 02:37:59.992000: switch state wrote: switch 1 state False
+2013-03-05 02:37:59.979000: attribute set: switch -> 1 -> fail = True
+2013-03-05 02:37:59.972000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 4.0
+2013-03-05 02:37:57.662000: switch state wrote: switch 1 state True
+2013-03-05 02:37:57.651000: attribute set: switch -> 1 -> mode = True
+2013-03-05 02:35:52.290000: switch state wrote: switch 2 state True
+2013-03-05 02:35:52.262000: attribute set: switch -> 2 -> fail = False
+2013-03-05 02:35:49.902000: switch state wrote: switch 2 state False
+2013-03-05 02:35:49.879000: attribute set: switch -> 2 -> fail = True
+2013-03-05 02:35:49.873000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-05 02:35:47.592000: switch state wrote: switch 2 state True
+2013-03-05 02:35:47.573000: attribute set: switch -> 2 -> fail = False
+2013-03-05 02:35:43.194000: switch state wrote: switch 2 state False
+2013-03-05 02:35:43.177000: attribute set: switch -> 2 -> fail = True
+2013-03-05 02:35:43.171000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-05 02:35:33.693000: switch state wrote: switch 2 state True
+2013-03-05 02:35:33.676000: attribute set: switch -> 2 -> mode = True
+2013-03-05 02:35:32.511000: switch state wrote: switch 2 state True
+2013-03-05 02:35:32.490000: attribute set: switch -> 2 -> user = True
+2013-03-05 02:35:31.802000: switch state wrote: switch 2 state False
+2013-03-05 02:35:31.785000: attribute set: switch -> 2 -> user = False
+2013-03-05 02:35:31.181000: switch state wrote: switch 2 state True
+2013-03-05 02:35:31.164000: attribute set: switch -> 2 -> user = True
+2013-03-05 02:35:22.044000: switch state wrote: switch 2 state False
+2013-03-05 02:35:22.029000: attribute set: switch -> 2 -> user = False
+2013-03-05 02:35:21.082000: switch state wrote: switch 2 state True
+2013-03-05 02:35:21.067000: attribute set: switch -> 2 -> user = True
+2013-03-05 02:35:20.037000: switch state wrote: switch 2 state False
+2013-03-05 02:35:20.024000: attribute set: switch -> 2 -> user = False
+2013-03-05 02:33:47.967000: switch state wrote: switch 2 state True
+2013-03-05 02:33:47.955000: attribute set: switch -> 2 -> mode = False
+2013-03-05 02:33:21.519000: switch state wrote: switch 2 state True
+2013-03-05 02:33:21.509000: switch state wrote: switch 2 state True
+2013-03-05 02:33:21.502000: attribute set: switch -> 2 -> fail = False
+2013-03-05 02:33:21.498000: switch state wrote: switch 1 state True
+2013-03-05 02:33:21.491000: switch state wrote: switch 1 state True
+2013-03-05 02:33:21.483000: attribute set: switch -> 1 -> fail = False
+2013-03-05 02:33:21.337000: starting
+2013-03-05 02:32:25.098000: attribute set: switch -> 1 -> fail = False
+2013-03-05 02:32:24.957000: starting
+2013-03-05 02:31:42.139000: attribute set: switch -> 1 -> fail = False
+2013-03-05 02:31:41.999000: starting
+2013-03-05 02:31:39.041000: closing
+2013-03-05 02:31:24.676000: switch state wrote: switch 1 state True
+2013-03-05 02:31:24.664000: attribute set: switch -> 1 -> user = True
+2013-03-05 02:27:48.078000: switch state wrote: switch 1 state True
+2013-03-05 02:27:48.068000: attribute set: switch -> 1 -> interlock = False
+2013-03-05 02:27:44.417000: switch state wrote: switch 1 state True
+2013-03-05 02:27:44.403000: attribute set: switch -> 1 -> mode = True
+2013-03-05 02:27:42.316000: switch state wrote: switch 1 state False
+2013-03-05 02:27:42.305000: attribute set: switch -> 1 -> user = False
+2013-03-05 02:27:40.611000: switch state wrote: switch 1 state True
+2013-03-05 02:27:40.602000: attribute set: switch -> 1 -> user = True
+2013-03-05 02:27:36.863000: switch state wrote: switch 1 state False
+2013-03-05 02:27:36.852000: attribute set: switch -> 1 -> user = False
+2013-03-05 02:27:35.962000: switch state wrote: switch 1 state True
+2013-03-05 02:27:35.951000: attribute set: switch -> 1 -> user = True
+2013-03-05 02:25:40.667000: switch state wrote: switch 1 state False
+2013-03-05 02:25:40.655000: attribute set: switch -> 1 -> user = False
+2013-03-05 02:25:39.251000: switch state wrote: switch 1 state True
+2013-03-05 02:25:39.240000: attribute set: switch -> 1 -> user = True
+2013-03-05 02:25:34.924000: switch state wrote: switch 1 state False
+2013-03-05 02:25:34.906000: attribute set: switch -> 1 -> fail = False
+2013-03-05 02:25:26.103000: switch state wrote: switch 1 state False
+2013-03-05 02:25:26.092000: attribute set: switch -> 1 -> user = False
+2013-03-05 02:25:24.507000: switch state wrote: switch 1 state False
+2013-03-05 02:25:24.495000: attribute set: switch -> 1 -> user = True
+2013-03-05 02:25:22.168000: switch state wrote: switch 1 state False
+2013-03-05 02:25:22.159000: attribute set: switch -> 1 -> user = False
+2013-03-05 02:25:19.480000: switch state wrote: switch 1 state False
+2013-03-05 02:25:19.468000: attribute set: switch -> 1 -> user = True
+2013-03-05 02:25:15.947000: switch state wrote: switch 1 state False
+2013-03-05 02:25:15.939000: attribute set: switch -> 1 -> user = False
+2013-03-05 02:25:12.053000: switch state wrote: switch 2 state True
+2013-03-05 02:25:12.043000: attribute set: switch -> 2 -> user = True
+2013-03-05 02:25:11.165000: switch state wrote: switch 2 state False
+2013-03-05 02:25:11.156000: attribute set: switch -> 2 -> user = False
+2013-03-05 02:25:10.378000: switch state wrote: switch 2 state True
+2013-03-05 02:25:10.369000: attribute set: switch -> 2 -> user = True
+2013-03-05 02:25:09.615000: switch state wrote: switch 2 state False
+2013-03-05 02:25:09.599000: attribute set: switch -> 2 -> user = False
+2013-03-05 02:25:08.806000: switch state wrote: switch 2 state True
+2013-03-05 02:25:08.795000: attribute set: switch -> 2 -> user = True
+2013-03-05 02:24:45.867000: switch state wrote: switch 2 state False
+2013-03-05 02:24:45.858000: attribute set: switch -> 2 -> user = False
+2013-03-05 02:24:44.609000: switch state wrote: switch 2 state True
+2013-03-05 02:24:44.600000: attribute set: switch -> 2 -> user = True
+2013-03-05 02:24:42.894000: switch state wrote: switch 2 state False
+2013-03-05 02:24:42.885000: attribute set: switch -> 2 -> user = False
+2013-03-05 02:22:55.702000: switch state wrote: switch 2 state True
+2013-03-05 02:22:55.692000: attribute set: switch -> 2 -> user = True
+2013-03-05 02:20:49.866000: switch state wrote: switch 2 state False
+2013-03-05 02:20:49.854000: attribute set: switch -> 2 -> user = False
+2013-03-05 02:20:47.084000: switch state wrote: switch 2 state True
+2013-03-05 02:20:47.076000: attribute set: switch -> 2 -> user = True
+2013-03-05 02:19:38.391000: switch state wrote: switch 2 state False
+2013-03-05 02:19:38.381000: attribute set: switch -> 2 -> user = False
+2013-03-05 02:19:36.064000: switch state wrote: switch 2 state True
+2013-03-05 02:19:36.054000: attribute set: switch -> 2 -> user = True
+2013-03-05 02:19:27.008000: switch state wrote: switch 2 state False
+2013-03-05 02:19:26.997000: attribute set: switch -> 2 -> user = False
+2013-03-05 02:19:05.516000: switch state wrote: switch 2 state True
+2013-03-05 02:19:05.496000: attribute set: switch -> 2 -> user = True
+2013-03-05 02:19:02.162000: switch state wrote: switch 2 state False
+2013-03-05 02:19:02.152000: attribute set: switch -> 2 -> user = False
+2013-03-05 02:14:26.302000: switch state wrote: switch 2 state True
+2013-03-05 02:14:26.292000: attribute set: switch -> 2 -> fail = False
+2013-03-05 02:14:09.056000: switch state wrote: switch 2 state False
+2013-03-05 02:14:09.051000: attribute set: switch -> 2 -> mode = False
+2013-03-05 02:13:52.779000: switch state wrote: switch 1 state False
+2013-03-05 02:13:52.766000: attribute set: switch -> 1 -> fail = True
+2013-03-05 02:13:03.566000: switch state wrote: switch 1 state True
+2013-03-05 02:13:03.558000: attribute set: switch -> 1 -> fail = False
+2013-03-05 01:57:28.862000: switch state wrote: switch 2 state False
+2013-03-05 01:57:28.853000: attribute set: switch -> 2 -> fail = True
+2013-03-05 01:57:28.847000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-05 01:57:28.703000: switch state wrote: switch 2 state True
+2013-03-05 01:57:28.696000: switch state wrote: switch 2 state True
+2013-03-05 01:57:28.690000: attribute set: switch -> 2 -> fail = False
+2013-03-05 01:57:28.687000: switch state wrote: switch 1 state True
+2013-03-05 01:57:28.680000: switch state wrote: switch 1 state True
+2013-03-05 01:57:28.655000: attribute set: switch -> 1 -> fail = False
+2013-03-05 01:57:28.505000: starting
+2013-03-05 01:55:19.746000: closing
+2013-03-04 23:25:06.085000: switch state wrote: switch 2 state False
+2013-03-04 23:25:06.072000: attribute set: switch -> 2 -> fail = True
+2013-03-04 23:25:06.065000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-04 23:24:13.717000: switch state wrote: switch 2 state True
+2013-03-04 23:24:13.710000: switch state wrote: switch 2 state True
+2013-03-04 23:24:13.701000: attribute set: switch -> 2 -> fail = False
+2013-03-04 23:24:13.697000: switch state wrote: switch 1 state True
+2013-03-04 23:24:13.692000: switch state wrote: switch 1 state True
+2013-03-04 23:24:13.683000: attribute set: switch -> 1 -> fail = False
+2013-03-04 23:24:13.537000: starting
+2013-03-04 23:24:09.773000: closing
+2013-03-04 23:23:14.233000: switch state wrote: switch 2 state True
+2013-03-04 23:23:14.227000: switch state wrote: switch 2 state True
+2013-03-04 23:23:14.218000: attribute set: switch -> 2 -> fail = False
+2013-03-04 23:23:14.214000: switch state wrote: switch 1 state True
+2013-03-04 23:23:14.209000: switch state wrote: switch 1 state True
+2013-03-04 23:23:14.202000: attribute set: switch -> 1 -> fail = False
+2013-03-04 23:23:14.056000: starting
+2013-03-04 23:22:49.202000: starting
+2013-03-04 23:22:21.323000: closing
+2013-03-04 21:54:29.160000: switch state wrote: switch 2 state True
+2013-03-04 21:54:29.150000: attribute set: switch -> 2 -> user = True
+2013-03-04 21:54:20.037000: switch state wrote: switch 2 state False
+2013-03-04 21:54:20.025000: attribute set: switch -> 2 -> user = False
+2013-03-04 21:54:03.643000: switch state wrote: switch 2 state True
+2013-03-04 21:54:03.631000: attribute set: switch -> 2 -> fail = False
+2013-03-04 21:53:56.251000: switch state wrote: switch 2 state False
+2013-03-04 21:53:56.239000: attribute set: switch -> 2 -> mode = False
+2013-03-04 20:53:28.859000: switch state wrote: switch 2 state False
+2013-03-04 20:53:28.849000: attribute set: switch -> 2 -> fail = True
+2013-03-04 20:53:28.843000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-04 20:19:04.694000: switch state wrote: switch 2 state True
+2013-03-04 20:19:04.687000: switch state wrote: switch 2 state True
+2013-03-04 20:19:04.679000: attribute set: switch -> 2 -> fail = False
+2013-03-04 20:19:04.676000: switch state wrote: switch 1 state True
+2013-03-04 20:19:04.671000: switch state wrote: switch 1 state True
+2013-03-04 20:19:04.663000: attribute set: switch -> 1 -> fail = False
+2013-03-04 20:19:04.519000: starting
+2013-03-04 20:19:03.223000: closing
+2013-03-04 20:18:01.687000: switch state wrote: switch 2 state True
+2013-03-04 20:18:01.679000: switch state wrote: switch 2 state True
+2013-03-04 20:18:01.670000: attribute set: switch -> 2 -> fail = False
+2013-03-04 20:18:01.665000: switch state wrote: switch 1 state True
+2013-03-04 20:18:01.659000: switch state wrote: switch 1 state True
+2013-03-04 20:18:01.651000: attribute set: switch -> 1 -> fail = False
+2013-03-04 20:18:01.444000: starting
+2013-03-04 20:17:59.626000: closing
+2013-03-04 20:12:37.652000: switch state wrote: switch 2 state True
+2013-03-04 20:12:37.643000: attribute set: switch -> 2 -> fail = False
+2013-03-04 20:11:44.256000: switch state wrote: switch 2 state True
+2013-03-04 20:11:44.244000: attribute set: switch -> 2 -> fail = False
+2013-03-04 20:11:38.657000: switch state wrote: switch 2 state False
+2013-03-04 20:11:38.647000: attribute set: switch -> 2 -> fail = True
+2013-03-04 20:11:38.641000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-04 20:11:31.188000: switch state wrote: switch 2 state True
+2013-03-04 20:11:31.180000: attribute set: switch -> 2 -> mode = True
+2013-03-04 20:10:57.454000: switch state wrote: switch 2 state True
+2013-03-04 20:10:57.442000: attribute set: switch -> 2 -> user = True
+2013-03-04 20:10:56.454000: switch state wrote: switch 2 state False
+2013-03-04 20:10:56.444000: attribute set: switch -> 2 -> user = False
+2013-03-04 20:10:55.256000: switch state wrote: switch 2 state True
+2013-03-04 20:10:55.246000: attribute set: switch -> 2 -> user = True
+2013-03-04 20:10:53.655000: switch state wrote: switch 2 state False
+2013-03-04 20:10:53.644000: attribute set: switch -> 2 -> user = False
+2013-03-04 20:10:44.168000: switch state wrote: switch 2 state True
+2013-03-04 20:10:44.159000: attribute set: switch -> 2 -> mode = False
+2013-03-04 20:10:42.650000: switch state wrote: switch 2 state True
+2013-03-04 20:10:42.641000: attribute set: switch -> 2 -> mode = False
+2013-03-04 20:10:27.853000: switch state wrote: switch 2 state True
+2013-03-04 20:10:27.843000: attribute set: switch -> 2 -> fail = False
+2013-03-04 20:10:25.387000: switch state wrote: switch 2 state True
+2013-03-04 20:10:25.377000: attribute set: switch -> 2 -> fail = False
+2013-03-04 20:10:03.964000: switch state wrote: switch 2 state False
+2013-03-04 20:10:03.950000: attribute set: switch -> 2 -> fail = True
+2013-03-04 20:10:03.943000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-04 20:09:39.491000: switch state wrote: switch 2 state True
+2013-03-04 20:09:39.486000: switch state wrote: switch 2 state True
+2013-03-04 20:09:39.480000: attribute set: switch -> 2 -> fail = False
+2013-03-04 20:09:39.476000: switch state wrote: switch 1 state True
+2013-03-04 20:09:39.471000: switch state wrote: switch 1 state True
+2013-03-04 20:09:39.463000: attribute set: switch -> 1 -> fail = False
+2013-03-04 20:09:39.328000: starting
+2013-03-04 20:09:38.149000: closing
+2013-03-04 20:07:39.594000: switch state wrote: switch 2 state True
+2013-03-04 20:07:39.585000: switch state wrote: switch 2 state True
+2013-03-04 20:07:39.578000: attribute set: switch -> 2 -> fail = False
+2013-03-04 20:07:39.575000: switch state wrote: switch 1 state True
+2013-03-04 20:07:39.569000: switch state wrote: switch 1 state True
+2013-03-04 20:07:39.561000: attribute set: switch -> 1 -> fail = False
+2013-03-04 20:07:39.424000: starting
+2013-03-04 20:07:37.499000: closing
+2013-03-04 20:01:07.560000: switch state wrote: switch 2 state True
+2013-03-04 20:01:07.553000: switch state wrote: switch 2 state True
+2013-03-04 20:01:07.545000: attribute set: switch -> 2 -> fail = False
+2013-03-04 20:01:07.541000: switch state wrote: switch 1 state True
+2013-03-04 20:01:07.535000: switch state wrote: switch 1 state True
+2013-03-04 20:01:07.528000: attribute set: switch -> 1 -> fail = False
+2013-03-04 20:01:07.394000: starting
+2013-03-04 20:01:06.266000: closing
+2013-03-04 20:00:16.825000: switch state wrote: switch 2 state True
+2013-03-04 20:00:16.817000: switch state wrote: switch 2 state True
+2013-03-04 20:00:16.808000: attribute set: switch -> 2 -> fail = False
+2013-03-04 20:00:16.803000: switch state wrote: switch 1 state True
+2013-03-04 20:00:16.798000: switch state wrote: switch 1 state True
+2013-03-04 20:00:16.791000: attribute set: switch -> 1 -> fail = False
+2013-03-04 20:00:16.652000: starting
+2013-03-04 20:00:15.101000: closing
+2013-03-04 19:57:56.463000: switch state wrote: switch 1 state True
+2013-03-04 19:57:56.453000: attribute set: switch -> 1 -> user = True
+2013-03-04 19:57:54.882000: switch state wrote: switch 1 state False
+2013-03-04 19:57:54.872000: attribute set: switch -> 1 -> user = False
+2013-03-04 19:57:53.943000: switch state wrote: switch 1 state True
+2013-03-04 19:57:53.935000: attribute set: switch -> 1 -> user = True
+2013-03-04 19:57:51.733000: switch state wrote: switch 1 state True
+2013-03-04 19:57:51.722000: attribute set: switch -> 1 -> user = True
+2013-03-04 19:53:10.647000: switch state wrote: switch 1 state False
+2013-03-04 19:53:10.639000: attribute set: switch -> 1 -> user = False
+2013-03-04 19:53:08.624000: switch state wrote: switch 1 state False
+2013-03-04 19:53:08.617000: attribute set: switch -> 1 -> user = False
+2013-03-04 19:52:43.969000: switch state wrote: switch 1 state False
+2013-03-04 19:52:43.962000: attribute set: switch -> 1 -> user = False
+2013-03-04 19:52:21.230000: switch state wrote: switch 1 state False
+2013-03-04 19:52:21.221000: attribute set: switch -> 1 -> user = False
+2013-03-04 19:52:20.014000: switch state wrote: switch 1 state True
+2013-03-04 19:52:20.004000: attribute set: switch -> 1 -> user = True
+2013-03-04 19:52:18.517000: switch state wrote: switch 1 state False
+2013-03-04 19:52:18.506000: attribute set: switch -> 1 -> user = False
+2013-03-04 19:52:10.259000: switch state wrote: switch 1 state True
+2013-03-04 19:52:10.250000: attribute set: switch -> 1 -> user = True
+2013-03-04 19:52:05.622000: switch state wrote: switch 1 state False
+2013-03-04 19:52:05.615000: attribute set: switch -> 1 -> fail = False
+2013-03-04 19:51:56.463000: switch state wrote: switch 1 state False
+2013-03-04 19:51:56.454000: attribute set: switch -> 1 -> mode = False
+2013-03-04 19:40:14.558000: switch state wrote: switch 2 state False
+2013-03-04 19:40:14.541000: attribute set: switch -> 2 -> fail = True
+2013-03-04 19:40:14.536000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-04 19:40:14.530000: switch state wrote: switch 1 state False
+2013-03-04 19:40:14.521000: attribute set: switch -> 1 -> fail = True
+2013-03-04 19:40:14.516000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 4.0
+2013-03-04 19:36:47.867000: switch state wrote: switch 2 state True
+2013-03-04 19:36:47.860000: switch state wrote: switch 2 state True
+2013-03-04 19:36:47.852000: attribute set: switch -> 2 -> fail = False
+2013-03-04 19:36:47.850000: switch state wrote: switch 1 state True
+2013-03-04 19:36:47.843000: switch state wrote: switch 1 state True
+2013-03-04 19:36:47.836000: attribute set: switch -> 1 -> fail = False
+2013-03-04 19:36:47.694000: starting
+2013-03-04 19:36:41.632000: closing
+2013-03-04 19:29:08.394000: switch state wrote: switch 1 state True
+2013-03-04 19:29:08.385000: attribute set: switch -> 1 -> fail = False
+2013-03-04 19:25:47.071000: switch state wrote: switch 2 state False
+2013-03-04 19:25:47.063000: attribute set: switch -> 2 -> fail = True
+2013-03-04 19:25:47.059000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-04 19:25:47.054000: switch state wrote: switch 1 state False
+2013-03-04 19:25:47.043000: attribute set: switch -> 1 -> fail = True
+2013-03-04 19:25:47.037000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 4.0
+2013-03-04 19:25:46.894000: switch state wrote: switch 2 state True
+2013-03-04 19:25:46.887000: switch state wrote: switch 2 state True
+2013-03-04 19:25:46.878000: attribute set: switch -> 2 -> fail = False
+2013-03-04 19:25:46.875000: switch state wrote: switch 1 state True
+2013-03-04 19:25:46.870000: switch state wrote: switch 1 state True
+2013-03-04 19:25:46.860000: attribute set: switch -> 1 -> fail = False
+2013-03-04 19:25:46.717000: starting
+2013-03-04 19:25:43.564000: closing
+2013-03-04 19:24:30.732000: switch state wrote: switch 2 state False
+2013-03-04 19:24:30.716000: attribute set: switch -> 2 -> fail = True
+2013-03-04 19:24:30.705000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-04 19:24:30.688000: switch state wrote: switch 1 state False
+2013-03-04 19:24:30.677000: attribute set: switch -> 1 -> fail = True
+2013-03-04 19:24:30.673000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 4.0
+2013-03-04 19:24:07.527000: switch state wrote: switch 2 state True
+2013-03-04 19:24:07.522000: switch state wrote: switch 2 state True
+2013-03-04 19:24:07.515000: attribute set: switch -> 2 -> fail = False
+2013-03-04 19:24:07.511000: switch state wrote: switch 1 state True
+2013-03-04 19:24:07.506000: switch state wrote: switch 1 state True
+2013-03-04 19:24:07.498000: attribute set: switch -> 1 -> fail = False
+2013-03-04 19:24:07.357000: starting
+2013-03-04 19:24:04.811000: closing
+2013-03-04 19:20:56.974000: switch state wrote: switch 2 state True
+2013-03-04 19:20:56.964000: switch state wrote: switch 2 state True
+2013-03-04 19:20:56.959000: attribute set: switch -> 2 -> fail = False
+2013-03-04 19:20:56.955000: switch state wrote: switch 1 state True
+2013-03-04 19:20:56.947000: switch state wrote: switch 1 state True
+2013-03-04 19:20:56.940000: attribute set: switch -> 1 -> fail = False
+2013-03-04 19:20:56.798000: starting
+2013-03-04 19:20:54.875000: closing
+2013-03-04 19:17:37.436000: switch state wrote: switch 2 state True
+2013-03-04 19:17:37.431000: switch state wrote: switch 2 state True
+2013-03-04 19:17:37.424000: attribute set: switch -> 2 -> fail = False
+2013-03-04 19:17:37.420000: switch state wrote: switch 1 state True
+2013-03-04 19:17:37.415000: switch state wrote: switch 1 state True
+2013-03-04 19:17:37.407000: attribute set: switch -> 1 -> fail = False
+2013-03-04 19:17:37.268000: starting
+2013-03-04 19:17:35.628000: closing
+2013-03-04 19:16:40.891000: switch state wrote: switch 2 state True
+2013-03-04 19:16:40.884000: switch state wrote: switch 2 state True
+2013-03-04 19:16:40.875000: attribute set: switch -> 2 -> fail = False
+2013-03-04 19:16:40.872000: switch state wrote: switch 1 state True
+2013-03-04 19:16:40.867000: switch state wrote: switch 1 state True
+2013-03-04 19:16:40.859000: attribute set: switch -> 1 -> fail = False
+2013-03-04 19:16:40.718000: starting
+2013-03-04 19:16:39.089000: closing
+2013-03-04 19:09:26.651000: switch state wrote: switch 2 state True
+2013-03-04 19:09:26.646000: switch state wrote: switch 2 state True
+2013-03-04 19:09:26.627000: attribute set: switch -> 2 -> fail = False
+2013-03-04 19:09:26.622000: switch state wrote: switch 1 state True
+2013-03-04 19:09:26.616000: switch state wrote: switch 1 state True
+2013-03-04 19:09:26.609000: attribute set: switch -> 1 -> fail = False
+2013-03-04 19:09:26.469000: starting
+2013-03-04 19:09:25.064000: closing
+2013-03-04 19:07:54.327000: switch state wrote: switch 2 state True
+2013-03-04 19:07:54.318000: switch state wrote: switch 2 state True
+2013-03-04 19:07:54.311000: attribute set: switch -> 2 -> fail = False
+2013-03-04 19:07:54.308000: switch state wrote: switch 1 state True
+2013-03-04 19:07:54.301000: switch state wrote: switch 1 state True
+2013-03-04 19:07:54.293000: attribute set: switch -> 1 -> fail = False
+2013-03-04 19:07:54.155000: starting
+2013-03-04 19:07:52.567000: closing
+2013-03-04 18:10:09.876000: switch state wrote: switch 1 state True
+2013-03-04 18:10:09.866000: attribute set: switch -> 1 -> fail = False
+2013-03-04 18:09:57.281000: attribute set: interlock -> 3 -> threshold = 4.0
+2013-03-04 18:09:24.008000: switch state wrote: switch 1 state False
+2013-03-04 18:09:24.001000: attribute set: switch -> 1 -> fail = True
+2013-03-04 18:09:23.998000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 3.0
+2013-03-04 18:09:23.935000: switch state wrote: switch 1 state True
+2013-03-04 18:09:23.926000: attribute set: switch -> 1 -> fail = False
+2013-03-04 18:08:54.794000: switch state wrote: switch 1 state False
+2013-03-04 18:08:54.785000: attribute set: switch -> 1 -> fail = True
+2013-03-04 18:08:54.781000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 3.0
+2013-03-04 18:06:24.533000: switch state wrote: switch 2 state True
+2013-03-04 18:06:24.527000: switch state wrote: switch 2 state True
+2013-03-04 18:06:24.520000: attribute set: switch -> 2 -> fail = False
+2013-03-04 18:06:24.517000: switch state wrote: switch 1 state True
+2013-03-04 18:06:24.511000: switch state wrote: switch 1 state True
+2013-03-04 18:06:24.504000: attribute set: switch -> 1 -> fail = False
+2013-03-04 18:06:24.365000: starting
+2013-03-04 18:06:21.521000: closing
+2013-03-04 18:02:34.780000: switch state wrote: switch 2 state True
+2013-03-04 18:02:34.776000: switch state wrote: switch 2 state True
+2013-03-04 18:02:34.767000: attribute set: switch -> 2 -> fail = False
+2013-03-04 18:02:34.761000: switch state wrote: switch 1 state True
+2013-03-04 18:02:34.756000: switch state wrote: switch 1 state True
+2013-03-04 18:02:34.748000: attribute set: switch -> 1 -> fail = False
+2013-03-04 18:02:34.604000: starting
+2013-03-04 18:02:33.308000: closing
+2013-03-04 18:01:18.770000: switch state wrote: switch 2 state True
+2013-03-04 18:01:18.763000: switch state wrote: switch 2 state True
+2013-03-04 18:01:18.758000: attribute set: switch -> 2 -> fail = False
+2013-03-04 18:01:18.755000: switch state wrote: switch 1 state True
+2013-03-04 18:01:18.749000: switch state wrote: switch 1 state True
+2013-03-04 18:01:18.741000: attribute set: switch -> 1 -> fail = False
+2013-03-04 18:01:18.602000: starting
+2013-03-04 18:01:17.521000: closing
+2013-03-04 17:59:55.586000: switch state wrote: switch 2 state True
+2013-03-04 17:59:55.578000: switch state wrote: switch 2 state True
+2013-03-04 17:59:55.572000: attribute set: switch -> 2 -> fail = False
+2013-03-04 17:59:55.569000: switch state wrote: switch 1 state True
+2013-03-04 17:59:55.564000: switch state wrote: switch 1 state True
+2013-03-04 17:59:55.555000: attribute set: switch -> 1 -> fail = False
+2013-03-04 17:59:55.418000: starting
+2013-03-04 17:59:53.965000: closing
+2013-03-04 17:57:41.908000: switch state wrote: switch 2 state True
+2013-03-04 17:57:41.899000: switch state wrote: switch 2 state True
+2013-03-04 17:57:41.893000: attribute set: switch -> 2 -> fail = False
+2013-03-04 17:57:41.890000: switch state wrote: switch 1 state True
+2013-03-04 17:57:41.884000: switch state wrote: switch 1 state True
+2013-03-04 17:57:41.877000: attribute set: switch -> 1 -> fail = False
+2013-03-04 17:57:41.740000: starting
+2013-03-04 17:57:40.537000: closing
+2013-03-04 17:56:34.482000: switch state wrote: switch 2 state True
+2013-03-04 17:56:34.475000: switch state wrote: switch 2 state True
+2013-03-04 17:56:34.467000: attribute set: switch -> 2 -> fail = False
+2013-03-04 17:56:34.464000: switch state wrote: switch 1 state True
+2013-03-04 17:56:34.459000: switch state wrote: switch 1 state True
+2013-03-04 17:56:34.451000: attribute set: switch -> 1 -> fail = False
+2013-03-04 17:56:34.309000: starting
+2013-03-04 17:40:34.181000: switch state wrote: switch 1 state True
+2013-03-04 17:40:34.168000: attribute set: switch -> 1 -> fail = False
+2013-03-04 17:32:41.588000: switch state wrote: switch 2 state False
+2013-03-04 17:32:41.580000: attribute set: switch -> 2 -> fail = True
+2013-03-04 17:32:41.577000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-04 17:32:41.574000: switch state wrote: switch 1 state False
+2013-03-04 17:32:41.564000: attribute set: switch -> 1 -> fail = True
+2013-03-04 17:32:41.561000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 3.0
+2013-03-04 17:32:41.418000: switch state wrote: switch 2 state True
+2013-03-04 17:32:41.412000: switch state wrote: switch 2 state True
+2013-03-04 17:32:41.405000: attribute set: switch -> 2 -> fail = False
+2013-03-04 17:32:41.402000: switch state wrote: switch 1 state True
+2013-03-04 17:32:41.397000: switch state wrote: switch 1 state True
+2013-03-04 17:32:41.388000: attribute set: switch -> 1 -> fail = False
+2013-03-04 17:32:41.234000: starting
+2013-03-04 17:32:40.088000: closing
+2013-03-04 17:31:36.027000: switch state wrote: switch 2 state False
+2013-03-04 17:31:36.020000: attribute set: switch -> 2 -> fail = True
+2013-03-04 17:31:36.015000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-04 17:31:36.010000: switch state wrote: switch 1 state False
+2013-03-04 17:31:36.001000: attribute set: switch -> 1 -> fail = True
+2013-03-04 17:31:35.997000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 3.0
+2013-03-04 17:31:35.854000: switch state wrote: switch 2 state True
+2013-03-04 17:31:35.846000: switch state wrote: switch 2 state True
+2013-03-04 17:31:35.838000: attribute set: switch -> 2 -> fail = False
+2013-03-04 17:31:35.836000: switch state wrote: switch 1 state True
+2013-03-04 17:31:35.832000: switch state wrote: switch 1 state True
+2013-03-04 17:31:35.822000: attribute set: switch -> 1 -> fail = False
+2013-03-04 17:31:35.687000: starting
+2013-03-04 17:31:11.908000: closing
+2013-03-04 17:24:15.738000: switch state wrote: switch 2 state False
+2013-03-04 17:24:15.729000: attribute set: switch -> 2 -> fail = True
+2013-03-04 17:24:15.726000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-04 17:24:15.723000: switch state wrote: switch 1 state False
+2013-03-04 17:24:15.715000: attribute set: switch -> 1 -> fail = True
+2013-03-04 17:24:15.712000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 3.0
+2013-03-04 17:24:15.569000: switch state wrote: switch 2 state True
+2013-03-04 17:24:15.561000: switch state wrote: switch 2 state True
+2013-03-04 17:24:15.550000: attribute set: switch -> 2 -> fail = False
+2013-03-04 17:24:15.548000: switch state wrote: switch 1 state True
+2013-03-04 17:24:15.541000: switch state wrote: switch 1 state True
+2013-03-04 17:24:15.533000: attribute set: switch -> 1 -> fail = False
+2013-03-04 17:24:15.388000: starting
+2013-03-04 17:24:13.513000: closing
+2013-03-04 17:23:52.649000: switch state wrote: switch 2 state False
+2013-03-04 17:23:52.640000: attribute set: switch -> 2 -> fail = True
+2013-03-04 17:23:52.637000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-04 17:23:52.631000: switch state wrote: switch 1 state False
+2013-03-04 17:23:52.623000: attribute set: switch -> 1 -> fail = True
+2013-03-04 17:23:52.620000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 3.0
+2013-03-04 17:23:52.478000: switch state wrote: switch 2 state True
+2013-03-04 17:23:52.470000: switch state wrote: switch 2 state True
+2013-03-04 17:23:52.460000: attribute set: switch -> 2 -> fail = False
+2013-03-04 17:23:52.457000: switch state wrote: switch 1 state True
+2013-03-04 17:23:52.453000: switch state wrote: switch 1 state True
+2013-03-04 17:23:52.444000: attribute set: switch -> 1 -> fail = False
+2013-03-04 17:23:52.302000: starting
+2013-03-04 17:23:51.194000: closing
+2013-03-04 17:22:25.537000: switch state wrote: switch 2 state False
+2013-03-04 17:22:25.529000: attribute set: switch -> 2 -> fail = True
+2013-03-04 17:22:25.525000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-04 17:22:25.521000: switch state wrote: switch 1 state False
+2013-03-04 17:22:25.507000: attribute set: switch -> 1 -> fail = True
+2013-03-04 17:22:25.504000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 3.0
+2013-03-04 17:22:25.358000: switch state wrote: switch 2 state True
+2013-03-04 17:22:25.353000: switch state wrote: switch 2 state True
+2013-03-04 17:22:25.346000: attribute set: switch -> 2 -> fail = False
+2013-03-04 17:22:25.343000: switch state wrote: switch 1 state True
+2013-03-04 17:22:25.338000: switch state wrote: switch 1 state True
+2013-03-04 17:22:25.330000: attribute set: switch -> 1 -> fail = False
+2013-03-04 17:22:25.188000: starting
+2013-03-04 17:21:15.916000: closing
+2013-03-04 16:49:51.452000: switch state wrote: switch 2 state False
+2013-03-04 16:49:51.443000: attribute set: switch -> 2 -> fail = True
+2013-03-04 16:49:51.439000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-04 16:49:51.434000: switch state wrote: switch 1 state False
+2013-03-04 16:49:51.425000: attribute set: switch -> 1 -> fail = True
+2013-03-04 16:49:51.421000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 3.0
+2013-03-04 16:49:51.278000: switch state wrote: switch 2 state True
+2013-03-04 16:49:51.273000: switch state wrote: switch 2 state True
+2013-03-04 16:49:51.263000: attribute set: switch -> 2 -> fail = False
+2013-03-04 16:49:51.259000: switch state wrote: switch 1 state True
+2013-03-04 16:49:51.254000: switch state wrote: switch 1 state True
+2013-03-04 16:49:51.246000: attribute set: switch -> 1 -> fail = False
+2013-03-04 16:49:51.109000: starting
+2013-03-04 16:49:35.674000: closing
+2013-03-04 16:49:20.100000: switch state wrote: switch 2 state False
+2013-03-04 16:49:20.091000: attribute set: switch -> 2 -> fail = True
+2013-03-04 16:49:20.088000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-04 16:49:20.085000: switch state wrote: switch 1 state False
+2013-03-04 16:49:20.079000: attribute set: switch -> 1 -> fail = True
+2013-03-04 16:49:20.076000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 3.0
+2013-03-04 16:49:19.917000: switch state wrote: switch 2 state True
+2013-03-04 16:49:19.905000: switch state wrote: switch 2 state True
+2013-03-04 16:49:19.895000: attribute set: switch -> 2 -> fail = False
+2013-03-04 16:49:19.891000: switch state wrote: switch 1 state True
+2013-03-04 16:49:19.887000: switch state wrote: switch 1 state True
+2013-03-04 16:49:19.878000: attribute set: switch -> 1 -> fail = False
+2013-03-04 16:49:19.676000: starting
+2013-03-04 16:49:16.303000: closing
+2013-03-04 16:12:38.328000: switch state wrote: switch 2 state False
+2013-03-04 16:12:38.316000: attribute set: switch -> 2 -> fail = True
+2013-03-04 16:12:38.312000: threshold crossed: switch 2 sensor 0 interlock 4 threshold 4.0
+2013-03-04 16:11:17.571000: attribute set: interlock -> 4 -> defeated = False
+2013-03-04 10:51:18.142000: switch state wrote: switch 1 state False
+2013-03-04 10:51:18.134000: attribute set: switch -> 1 -> fail = True
+2013-03-04 10:51:18.129000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 3.0
+2013-03-04 10:51:06.282000: switch state wrote: switch 2 state True
+2013-03-04 10:51:06.276000: switch state wrote: switch 2 state True
+2013-03-04 10:51:06.270000: attribute set: switch -> 2 -> fail = False
+2013-03-04 10:51:06.267000: switch state wrote: switch 1 state True
+2013-03-04 10:51:06.261000: switch state wrote: switch 1 state True
+2013-03-04 10:51:06.253000: attribute set: switch -> 1 -> fail = False
+2013-03-04 10:51:06.108000: starting
+2013-03-04 10:50:38.862000: closing
+2013-03-04 10:50:01.326000: switch state wrote: switch 2 state True
+2013-03-04 10:50:01.321000: switch state wrote: switch 2 state True
+2013-03-04 10:50:01.316000: attribute set: switch -> 2 -> fail = False
+2013-03-04 10:50:01.313000: switch state wrote: switch 1 state True
+2013-03-04 10:50:01.307000: switch state wrote: switch 1 state True
+2013-03-04 10:50:01.301000: attribute set: switch -> 1 -> fail = False
+2013-03-04 10:50:01.159000: starting
+2013-03-04 10:49:58.950000: closing
+2013-03-04 10:46:24.313000: switch state wrote: switch 2 state True
+2013-03-04 10:46:24.306000: switch state wrote: switch 2 state True
+2013-03-04 10:46:24.299000: attribute set: switch -> 2 -> fail = False
+2013-03-04 10:46:24.296000: switch state wrote: switch 1 state True
+2013-03-04 10:46:24.292000: switch state wrote: switch 1 state True
+2013-03-04 10:46:24.285000: attribute set: switch -> 1 -> fail = False
+2013-03-04 10:46:24.140000: starting
+2013-03-04 10:46:20.603000: closing
+2013-03-04 10:45:34.767000: switch state wrote: switch 2 state True
+2013-03-04 10:45:34.761000: switch state wrote: switch 2 state True
+2013-03-04 10:45:34.753000: attribute set: switch -> 2 -> fail = False
+2013-03-04 10:45:34.751000: switch state wrote: switch 1 state True
+2013-03-04 10:45:34.746000: switch state wrote: switch 1 state True
+2013-03-04 10:45:34.739000: attribute set: switch -> 1 -> fail = False
+2013-03-04 10:45:34.590000: starting
+2013-03-04 10:14:55.614000: closing
+2013-03-04 10:03:45.443000: switch state wrote: switch 1 state True
+2013-03-04 10:03:45.426000: attribute set: switch -> 1 -> fail = False
+2013-03-04 10:03:17.447000: switch state wrote: switch 1 state False
+2013-03-04 10:03:17.440000: attribute set: switch -> 1 -> fail = True
+2013-03-04 10:03:17.438000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 3.0
+2013-03-04 10:03:17.282000: switch state wrote: switch 2 state True
+2013-03-04 10:03:17.275000: switch state wrote: switch 2 state True
+2013-03-04 10:03:17.266000: attribute set: switch -> 2 -> fail = False
+2013-03-04 10:03:17.263000: switch state wrote: switch 1 state True
+2013-03-04 10:03:17.255000: switch state wrote: switch 1 state True
+2013-03-04 10:03:17.246000: attribute set: switch -> 1 -> fail = False
+2013-03-04 10:03:17.077000: starting
+2013-03-04 10:02:53.620000: starting
+2013-03-03 18:21:25.077000: closing
+2013-03-03 18:21:17.503000: switch state wrote: switch 1 state False
+2013-03-03 18:21:17.491000: attribute set: switch -> 1 -> fail = True
+2013-03-03 18:21:17.487000: threshold crossed: switch 1 sensor 0 interlock 3 threshold 3.0
+2013-03-03 18:21:02.142000: switch state wrote: switch 2 state True
+2013-03-03 18:21:02.138000: switch state wrote: switch 2 state True
+2013-03-03 18:21:02.128000: attribute set: switch -> 2 -> fail = False
+2013-03-03 18:21:02.126000: switch state wrote: switch 1 state True
+2013-03-03 18:21:02.122000: switch state wrote: switch 1 state True
+2013-03-03 18:21:02.115000: attribute set: switch -> 1 -> fail = False
+2013-03-03 18:21:01.909000: starting
+2013-03-03 18:18:03.796000: closing
+2013-03-03 18:17:54.374000: switch state wrote: switch 1 state False
+2013-03-03 18:17:54.364000: attribute set: switch -> 1 -> fail = True
+2013-03-03 18:17:44.376000: switch state wrote: switch 1 state True
+2013-03-03 18:17:44.365000: attribute set: switch -> 1 -> fail = False
+2013-03-03 18:17:18.841000: attribute set: interlock -> 3 -> threshold = 3.0
+2013-03-03 18:16:53.148000: switch state wrote: switch 1 state False
+2013-03-03 18:16:53.140000: attribute set: switch -> 1 -> fail = True
+2013-03-03 18:16:53.061000: attribute set: interlock -> 3 -> defeated = False
+2013-03-03 18:16:03.693000: attribute set: interlock -> 4 -> defeated = True
+2013-03-03 18:15:54.763000: attribute set: interlock -> 3 -> defeated = True
+2013-03-03 15:14:09.399000: switch state wrote: switch 1 state True
+2013-03-03 15:14:09.391000: attribute set: switch -> 1 -> fail = False
+2013-03-03 15:14:00.529000: switch state wrote: switch 2 state True
+2013-03-03 15:14:00.520000: attribute set: switch -> 2 -> fail = False
+2013-03-03 15:13:47.577000: switch state wrote: switch 2 state False
+2013-03-03 15:13:47.569000: attribute set: switch -> 2 -> fail = True
+2013-03-03 15:13:45.778000: switch state wrote: switch 1 state False
+2013-03-03 15:13:45.770000: attribute set: switch -> 1 -> fail = True
+2013-03-03 15:13:42.976000: switch state wrote: switch 2 state True
+2013-03-03 15:13:42.971000: attribute set: switch -> 2 -> mode = True
+2013-03-03 15:13:36.881000: switch state wrote: switch 2 state True
+2013-03-03 15:13:36.873000: attribute set: switch -> 2 -> user = True
+2013-03-03 15:13:35.287000: switch state wrote: switch 2 state False
+2013-03-03 15:13:35.280000: attribute set: switch -> 2 -> user = False
+2013-03-03 15:13:33.565000: switch state wrote: switch 2 state True
+2013-03-03 15:13:33.556000: attribute set: switch -> 2 -> user = True
+2013-03-03 15:13:28.981000: switch state wrote: switch 2 state False
+2013-03-03 15:13:28.972000: attribute set: switch -> 2 -> mode = False
+2013-03-03 15:11:43.023000: switch state wrote: switch 2 state True
+2013-03-03 15:11:43.019000: switch state wrote: switch 2 state True
+2013-03-03 15:11:43.010000: attribute set: switch -> 2 -> fail = False
+2013-03-03 15:11:43.007000: switch state wrote: switch 1 state True
+2013-03-03 15:11:43.003000: switch state wrote: switch 1 state True
+2013-03-03 15:11:42.995000: attribute set: switch -> 1 -> fail = False
+2013-03-03 15:11:42.855000: starting
