@@ -4,7 +4,7 @@
       "color": "#0000FF",
       "defeated": false,
       "id": "3",
-      "name": "beck",
+      "name": "colmes",
       "polarity": true,
       "sensor": "0",
       "switch": "1",
@@ -14,7 +14,7 @@
       "color": "#FF0000",
       "defeated": false,
       "id": "4",
-      "name": "beck",
+      "name": "hannity",
       "polarity": true,
       "sensor": "0",
       "switch": "2",
@@ -24,7 +24,7 @@
   "sensor": {
     "0": {
       "channel": "gamma/ai0",
-      "color": "#FFFF00",
+      "color": "#00FF00",
       "id": "0",
       "name": "potentiometer"
     }
@@ -33,11 +33,11 @@
     "1": {
       "channel": "gamma/port0/line0",
       "color": "#FF00FF",
-      "fail": false,
+      "fail": true,
       "id": "1",
       "interlock": true,
       "mode": true,
-      "name": "colmes",
+      "name": "beck",
       "user": false
     },
     "2": {
@@ -47,7 +47,7 @@
       "id": "2",
       "interlock": true,
       "mode": true,
-      "name": "hannity",
+      "name": "oreilly",
       "user": true
     }
   }
