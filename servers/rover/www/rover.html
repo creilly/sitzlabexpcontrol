@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>rover</title>
+    <script src="static/jquery.min.js"></script>
+    <script src="static/bootstrap.js"></script>
+    <script src="static/d3.v3.min.js"></script>
+    <script src="static/ws.js"></script>
+    <script src="static/rover.js"></script>
+    <link rel="stylesheet" href="static/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="static/rover.css" type="text/css">
+    <style>
+      {% for id,element in reduce(lambda x,y:x+y,[l.items() for l in state.values()])%}
+      [eID="{{id}}"] {
+      border-color: {{element['color']}};
+      }
+      {% end %}
+    </style>
+  </head>
+  <body>
+    <div class="navbar">
+      <div class="navbar-inner">
+	<a class="brand" href="#">rover</a>	  
+      </div>
+    </div>
+    <div class="container-fluid">      
+      <div class="row-fluid">
+	<div class="span4">
+	  <h2>sensors</h2>
+	  {% for id, sensor in state['sensor'].items() %}
+	  <div eID={{id}} class="sensor">
+	    <h3>{{sensor['name']}}</h3>
+	    <b>sample:</b>
+	    <span class="sample">no sample</span>
+	    <div class="meter-container">
+	      <svg class="meter" width=400 height=100>
+		<rect width=200 height=50 x=5 y=45 rx=3 ry=3 fill=skyblue opacity=.75 stroke=black stroke-width=2>
+		</rect>
+	      </svg>
+	    </div>
+	  </div>
+	  {% end %}
+	</div>
+	<div class="span7">
+	  <h2>switches</h2>
+	  {% for id, switch in state['switch'].items() %}
+	  <div eID={{id}} class="switch">
+	    <h3>{{switch['name']}}</h3>
+	    <div class="row-fluid switch-controls">
+	      <div class="span1">
+		<div class="state">
+		  na
+		</div>
+	      </div>
+	      <div class="span3">
+		user:
+		<button type="button" class="btn user-state">
+		  na
+		</button>
+	      </div>
+	      <div class="span4 mode">
+		mode:
+		<div class="btn-group">
+		  <button type="button" class="btn" rover-mode="user">
+		    user
+		  </button>
+		  <button type="button" class="btn" rover-mode="interlock">
+		    interlock
+		  </button>
+		</div>	      
+	      </div>
+	      <div class="span3">
+		interlocks:
+		<button type="button" class="btn interlock-state">
+		  NA
+		</button>		
+	      </div>
+	      <div class="span1">
+		<button type="button" class="btn fail-state">
+		  NA
+		</button>		
+	      </div>
+	    </div>	    
+	  </div>
+	  {% end %}
+	</div>
+      </div>
+      <div class="row-fluid">
+	<h3>interlocks</h3>
+	{% for id, interlock in state['interlock'].items() %}
+	<div class="interlock" eID={{id}}>	      
+	  <h4>{{interlock['name']}}</h4>	    
+	  <b>threshold:</b>
+	  <span class="{{'threshold ' + ('above' if interlock['polarity'] else 'below')}}">
+	    {{'%.2f' % interlock['threshold']}}
+	  </span>
+	</div>
+	{% end %}
+      </div>
+    </div>
+  </body>
+</html>

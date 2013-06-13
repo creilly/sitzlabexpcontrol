@@ -1,0 +1,6 @@
+********python requirements********
+tornado
+
+websocket (for client)
+https://github.com/mtah/python-websocket
+
