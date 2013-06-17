@@ -1,15 +1,16 @@
-from abserver import BaseWAMP, command, runServer
+from ab.abserver import BaseWAMP, command, runServer
 from twisted.internet.defer  import Deferred, inlineCallbacks, returnValue, succeed
 from twisted.internet import reactor
-from abbase import selectFromList, getFloat, getUserInput
+from ab.abbase import selectFromList, getFloat, getUserInput
 from functools import partial
 import daqmx
-from daqmx.task.ai import VoltMeter 
+from daqmx.task.ai import VoltMeter
 from sitz import VOLTMETER_SERVER, TEST_VOLTMETER_SERVER
 
 import sys
 DEBUG = len(sys.argv) > 1
 TRIGGERING = not DEBUG
+
 
 URL = VOLTMETER_SERVER if not DEBUG else TEST_VOLTMETER_SERVER
 
@@ -39,7 +40,7 @@ class VoltMeterWAMP(BaseWAMP):
 
     def onVoltages(self,voltages):
         self.voltages = voltages
-        self.voltMeter.startSampling()
+        self.voltMeter.startSampling() 
         self.dispatch('voltages-acquired',voltages)
 
     @command('get-voltages','returns most recently measured voltages')
@@ -63,8 +64,9 @@ class VoltMeterWAMP(BaseWAMP):
         self.voltMeter.setCallbackRate(rate)
      
 def getTriggerSourceEdge():
-    return succeed(('dev1/pfi0','falling'))
-        
+    return succeed(('/dev1/pfi0','falling'))
+
+
 defaultVM = partial(
     VoltMeter,
     (
@@ -99,10 +101,12 @@ defaultVM = partial(
     ) if not DEBUG else ({'physicalChannel':'alpha/ai0'},)
 )
 
+
 def getVoltMeter():
     vm = defaultVM()
     vm.setSamplingRate(SAMPLING_RATE)
     vm.setCallbackRate(CALLBACK_RATE)
+    return vm
     
 @inlineCallbacks
 def configureVoltMeter():
@@ -168,5 +172,5 @@ def configureVoltMeter():
     returnValue(vm)
 
 if __name__ == '__main__':
-    runServer(WAMP = VoltMeterWAMP,URL=URL,outputToConsole=True)
+    runServer(WAMP = VoltMeterWAMP,debug=DEBUG,URL=URL,outputToConsole=True)
     reactor.run()
