@@ -35,7 +35,6 @@ def compose(func_1, func_2):
         return func_1(func_2(*args, **kwargs))
     return composition
 
-=======
 class SitzException(Exception): pass
     
 TAG = '__tag__'
