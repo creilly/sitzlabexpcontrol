@@ -16,11 +16,11 @@ from utilwidgets import ToggleWidget, ToggleObject
 from abbase import sleep
 from functools import partial
 
-from toggle import Looper, ToggleWidget
+from toggle import ToggleObject, ToggleWidget
 
 from sitz import compose
 
-from steppermotorclient import StepperMotorClient
+from steppermotorclient import ChunkedStepperMotorClient
 
 MIN = -99999
 MAX = 99999
@@ -47,39 +47,27 @@ class StepperMotorWidget(QtGui.QWidget):
 
         ## GOTO ##
 
-        looper = Looper()
-        
+        toggle = ToggleObject(False)
+
         spin = QtGui.QSpinBox()
         spin.setMinimum(MIN)
         spin.setMaximum(MAX)
 
-        looper.toggled.connect(
-            compose(
-                spin.setDisabled,
-                spin.isEnabled
-            )
-        )
-
         layout.addRow('goto',spin)
 
-        gotoToggleWidget = ToggleWidget(looper,('goto','stop'))
+        gotoToggleWidget = ToggleWidget(toggle,('goto','stop'))
         layout.addRow(gotoToggleWidget)
 
+        toggle.activationRequested.connect(toggle.toggle)
+        
         @inlineCallbacks
-        def onLoopRequested(loopRequest):
-            current = yield client.getPosition()
-            desired = spin.value()
-            delta = desired - current
-            if abs(delta) > GOTO_MAX:
-                # sometimes hangs here (?)
-                yield client.setPosition(current + delta / abs(delta) * GOTO_MAX)
-                loopRequest.completeRequest(True)
-            else:
-                yield client.setPosition(desired)
-                loopRequest.completeRequest(False)
+        def onActivated():
+            yield client.setPosition(spin.value())
+            toggle.toggle()
 
-        looper.activated.connect(looper.startLooping)        
-        looper.loopRequested.connect(onLoopRequested)
+        toggle.activated.connect(onActivated)
+
+        toggle.deactivationRequested.connect(client.cancel)
 
         ## SLIDER ##
         slider = QtGui.QSlider()
@@ -94,8 +82,8 @@ class StepperMotorWidget(QtGui.QWidget):
         slider.sliderReleased.connect(partial(slider.setValue,0))
         slider.sliderReleased.connect(partial(gotoToggleWidget.setEnabled,True))
 
-        looper.activated.connect(partial(slider.setEnabled,False))
-        looper.deactivated.connect(partial(slider.setEnabled,True))
+        toggle.activated.connect(partial(slider.setEnabled,False))
+        toggle.deactivated.connect(partial(slider.setEnabled,True))
 
         layout.addRow(slider)
 
@@ -145,7 +133,7 @@ def main():
     url = options['url']
     protocol = yield getProtocol(url)
     widget = StepperMotorWidget(
-        StepperMotorClient(
+        ChunkedStepperMotorClient(
             protocol
         )
     )
