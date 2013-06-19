@@ -5,7 +5,7 @@ from sitz import compose
 
 """
 
-convient object for starting and stopping tasks with startup/shutdown procedures.
+convenient object for starting and stopping tasks with startup/shutdown procedures.
 
 methods :
 
