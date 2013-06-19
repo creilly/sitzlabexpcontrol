@@ -1,4 +1,6 @@
 from twisted.internet.defer import inlineCallbacks
+from operator import contains
+from scan.input import IntervalScanInput
 class StepperMotorClient:
     def __init__(self,protocol):        
         self.protocol = protocol
@@ -8,7 +10,6 @@ class StepperMotorClient:
         
     def setPosition(self,position):
         return self.protocol.sendCommand('set-position',position)
-
         
     def setStepRate(self,rate):
         return self.protocol.sendCommand('set-step-rate',rate)
@@ -28,13 +29,35 @@ class StepperMotorClient:
     def removeRateListener(self,listener=None):
         self.protocol.messageUnsubscribe('step-rate-changed',listener)
 
-class PDLClient(StepperMotorClient):
-    def getWavelength(self):
-        return self.protocol.sendCommand('get-wavelength')
+class ChunkedStepperMotor(StepperMotorClient):
+    def __init__(self,protocol,duration=1.0):
+        StepperMotorClient.__init__(self,protocol)
+        self.duration = duration
         
-    def setWavelength(self,wavelength):
-        return self.protocol.sendCommand('set-wavelength',wavelength)
-
+    @inlineCallbacks
+    def setPosition(self,position):
+        self.abort = False
+        start = yield self.getPosition()
+        stop = position
+        rate = yield self.getStepRate()
+        step = rate * self.duration
+        def callback(_,output):
+            return not output
+        yield Scan(
+            IntervalScanInput(
+                self.setPosition,
+                start,
+                stop,
+                step
+            ),
+            partial(getattr,self,'abort')
+            callback
+        ).start()
+        position = yield self.getPosition()
+        returnValue(position)
+        
+    def cancel(self):
+        self.abort = True
 
 @inlineCallbacks
 def main():
