@@ -4,3 +4,7 @@ tornado
 websocket (for client)
 https://github.com/mtah/python-websocket
 
+
+numpy
+scipy >0.12
+http://www.scipy.org/scipylib/download.html

@@ -6,24 +6,46 @@ app = QtGui.QApplication(sys.argv)
 qt4reactor.install()
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks, returnValue, succeed
-from ab.abclient import getProtocol
+from abclient import getProtocol
 from sitz import VOLTMETER_SERVER
 from steppermotorserver import getStepperMotorNameURL
 from functools import partial
-from ab.abbase import selectFromList
+from abbase import selectFromList
 from scan import Scan, StepperMotorScanInput, VoltMeterScanOutput
 
 MIN = -99999
 MAX = 99999
 
-class StepperMotorScanWidget(QtGui.QWidget):
-    START, STOP, STEP, WAIT = 0,1,2,3
-    SPINS = {
-        START:('start',MIN,MAX,-500),
-        STOP:('stop',MIN,MAX,500),
-        STEP:('step',1,100,5),
-        WAIT:('wait',0,10000,300) # time to wait ( in milliseconds )
-    }
+class ScanInputWidget(QtGui.QWidget):
+    def __init__(self,scan):
+        QtGui.QWidget.__init__(self)
+
+        self.scan = scan
+
+        self.abort = False
+
+        @inlineCallbacks
+        onStart():
+            startButton.setEnabled(False)
+            stopButton.setEnabled(True)
+            yield self.scan.doScan(start,stop,step,wait,onStep)
+            stopButton.setEnabled(False)
+            startButton.setEnabled(True)
+
+        startButton = QtGui.QPushButton('start scan')
+        startButton.clicked.connect(onStart)
+        controlPanel.addRow(startButton)
+        
+        stopButton = QtGui.QPushButton('stop scan')
+        stopButton.clicked.connect(partial(setattr,self,'abort',True))
+        stopButton.setEnabled(False)
+        controlPanel.addRow(stopButton)
+
+
+
+        
+        
+class PlotWidget(QtGui.QWidget):
     def __init__(self,scan):
         QtGui.QWidget.__init__(self)
 
@@ -85,8 +107,11 @@ class StepperMotorScanWidget(QtGui.QWidget):
 
         layout.addLayout(controlPanel)
 
-        self.setLayout(layout)
-
+        self.setLayout(layout)        
+        
+        
+        
+        
 @inlineCallbacks
 def main():
     smName, smURL = yield getStepperMotorNameURL()

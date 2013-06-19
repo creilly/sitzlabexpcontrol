@@ -1,29 +1,54 @@
-import sys
 from PySide import QtGui, QtCore
 from pyqtgraph import PlotWidget
 import qt4reactor
 app = QtGui.QApplication(sys.argv)
 qt4reactor.install()
-from twisted.internet import reactor
-from twisted.internet.defer import inlineCallbacks, returnValue, succeed
-from ab.abclient import getProtocol
-from sitz import VOLTMETER_SERVER
-from steppermotorserver import getStepperMotorNameURL
-from functools import partial
-from ab.abbase import selectFromList
 from scan import Scan, StepperMotorScanInput, VoltMeterScanOutput
+from qtutils.toggle import ToggleObject, ToggleWidget
+from libs.sitz import compose
+import os
 
 MIN = -99999
 MAX = 99999
 
-class StepperMotorScanWidget(QtGui.QWidget):
-    START, STOP, STEP, WAIT = 0,1,2,3
-    SPINS = {
-        START:('start',MIN,MAX,-500),
-        STOP:('stop',MIN,MAX,500),
-        STEP:('step',1,100,5),
-        WAIT:('wait',0,10000,300) # time to wait ( in milliseconds )
-    }
+class ScanInputWidget(QtGui.QWidget):
+    def __init__(self):
+        scanToggle = ToggleObject()
+        scanInputWidget = ToggleWidget(scanToggle)
+        
+        QtGui.QWidget.__init__(self)
+        
+        scanToggle.activationRequested.connect(
+
+        
+       
+        scanToggleWidget = ToggleWidget(looper,('start','stop'))
+        layout.addRow(scanToggleWidget)
+
+        @inlineCallbacks
+        def onLoopRequested(loopRequest):
+            #start scan here
+            
+            current = yield client.getPosition()
+            desired = spin.value()
+            delta = desired - current
+            if abs(delta) > GOTO_MAX:
+                # sometimes hangs here (?)
+                yield client.setPosition(current + delta / abs(delta) * GOTO_MAX)
+                loopRequest.completeRequest(True)
+            else:
+                yield client.setPosition(desired)
+                loopRequest.completeRequest(False)
+
+        looper.activated.connect(looper.startLooping)        
+        looper.loopRequested.connect(onLoopRequested)
+
+
+
+
+        
+        
+class PlotWidget(QtGui.QWidget):
     def __init__(self,scan):
         QtGui.QWidget.__init__(self)
 
@@ -85,21 +110,16 @@ class StepperMotorScanWidget(QtGui.QWidget):
 
         layout.addLayout(controlPanel)
 
-        self.setLayout(layout)
-
+        self.setLayout(layout)        
+        
+        
+        
+        
 @inlineCallbacks
 def main():
-    smName, smURL = yield getStepperMotorNameURL()
-    smp = yield getProtocol(smURL)
-    vmp = yield getProtocol(VOLTMETER_SERVER)
-    channels = yield vmp.sendCommand('get-channels')
-    channel = yield selectFromList(channels,'select channel to monitor during scan')
-    smsi = StepperMotorScanInput(smp)
-    vmso = VoltMeterScanOutput(vmp,channel)
-    title = '(%s) scan gui' % smName
-    import os
+    title = 'scan gui'
     os.system('title %s' % title)
-    widget = StepperMotorScanWidget(Scan(smsi,vmso))
+    widget = ScanInputWidget(Scan(smsi,vmso))
     widget.setWindowTitle(title)
     widget.show()
 
