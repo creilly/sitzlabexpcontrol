@@ -1,7 +1,9 @@
 from twisted.internet.defer import inlineCallbacks
 from operator import contains
 from scan.input import IntervalScanInput
+
 class StepperMotorClient:
+
     def __init__(self,protocol):        
         self.protocol = protocol
         
@@ -9,7 +11,7 @@ class StepperMotorClient:
         return self.protocol.sendCommand('get-position')
         
     def setPosition(self,position):
-        return self.protocol.sendCommand('set-position',position)
+        return self.protocol.sendCommand('set-position')
         
     def setStepRate(self,rate):
         return self.protocol.sendCommand('set-step-rate',rate)

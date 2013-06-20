@@ -22,10 +22,7 @@ class DelayGenerator:
     def __init__(self,usbChan):
         self.timeToDelay = 0
         self.ser = serial.Serial(usbChan,9600,timeout=5)
-
-    def __enter__(self):
-        return self
-        
+       
     def writeToUSB(self,strToWrite):
         self.ser.write(strToWrite)
         echo = self.ser.readline().replace('\r\n','')
@@ -42,24 +39,33 @@ class DelayGenerator:
         stringToSend = clockCyclesBinary+AD9501IntervalsBinary
         return stringToSend
 
-    def setDelay(self,timeToDelay,callback=lambda:None):
+    def setDelay(self,timeToDelay):
         #get a timeToDelay, calculate # of 50ns clock cycles and 
         #the number of 10ps intervals, convert these to binary, send
         #these strings to channel via usb, fire callback when device replies
         self.timeToDelay = timeToDelay
         stringToSend = self.convertDelay(self.timeToDelay)
-        if self.writeToUSB(stringToSend):
-            print 'Write Succeeded!'
-            self.onDelaySet(callback)
-        else:
-            print 'Write Failed!'
-
-    def onDelaySet(self,callback):        
-        callback()
+        if not self.writeToUSB(stringToSend):
+            raise SitzException('write to delay generator %s failed' % self)
 
     def getDelay(self):
-        return self._timeToDelay
+        return self.timeToDelay
         
     def close(self):
         self.ser.close()
 
+
+class FakeDelayGenerator(DelayGenerator):
+    def __init__(self,fakeUSBChan):
+        self.timeToDelay = 0
+    
+    def writeToUSB(self,strToWrite):
+        print "This is when I'd write to the USB, but I'm not because I'm a big ol' liar."
+        print strToWrite
+        echo = strToWrite
+        if echo == strToWrite: return True
+        if echo != strToWrite: return False
+    
+    def close(self):
+        print "What are you thinking? There is no USB device to close!"
+        
