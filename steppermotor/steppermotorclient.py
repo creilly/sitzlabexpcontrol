@@ -29,7 +29,7 @@ class StepperMotorClient:
     def removeRateListener(self,listener=None):
         self.protocol.messageUnsubscribe('step-rate-changed',listener)
 
-class ChunkedStepperMotor(StepperMotorClient):
+class ChunkedStepperMotorClient(StepperMotorClient):
     def __init__(self,protocol,duration=1.0):
         StepperMotorClient.__init__(self,protocol)
         self.duration = duration

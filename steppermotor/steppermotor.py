@@ -12,10 +12,11 @@ class BaseStepperMotor:
 
     # MAKE SURE TO CALL THIS IF YOU OVERRIDE    
     def __init__(self):
-        self.busy = False        
+        self.busy = False
         self.queue = []
         self.lock = Lock()
         self._position = 0
+        self.name = name
 
     def setPosition(self,position,callback=lambda:None):
         if self.busy:
