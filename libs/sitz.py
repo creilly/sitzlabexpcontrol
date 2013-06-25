@@ -65,7 +65,6 @@ tagger.CALLABLE = 0
 tagger.NAME = 1
 tagger.DESCRIPTION = 2
 
-
 #a simple printer for the return of the below config functions
 def printConfigDict(configDict):
     for name,conf in configDict.items():
@@ -102,6 +101,8 @@ VOLTMETER_SERVER = 'ws://172.17.13.201:8789'
 
 STEPPER_MOTOR_SERVER = 'ws://172.17.13.201:8787'
 TEST_STEPPER_MOTOR_SERVER = 'ws://localhost:8788'
+
+WAVELENGTH_SERVER = 'ws://localhost:8786'
 
 MESSAGE_SERVER = 'ws://172.17.13.204:8790'
 
