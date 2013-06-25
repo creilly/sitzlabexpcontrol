@@ -7,16 +7,11 @@ if QtCore.QCoreApplication.instance() is None:
     qt4reactor.install()
 ## BOILERPLATE ##
 
-from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.defer import inlineCallbacks
 
-from abclient import getProtocol
-from steppermotorserver import getStepperMotorOptions, getConfig
-
-from utilwidgets import ToggleWidget, ToggleObject
-from abbase import sleep
+from qtutils.toggle import ToggleWidget, ToggleObject
+from ab.abbase import sleep
 from functools import partial
-
-from toggle import ToggleObject, ToggleWidget
 
 from sitz import compose
 
@@ -32,7 +27,7 @@ RATE_MIN = 20
 RATE_MAX = 1000
 
 class StepperMotorWidget(QtGui.QWidget):
-    
+    NUDGE = .3
     def __init__(self,client):
         QtGui.QWidget.__init__(self)
         layout = QtGui.QFormLayout()
@@ -41,7 +36,7 @@ class StepperMotorWidget(QtGui.QWidget):
         
         lcd = QtGui.QLCDNumber(6)
         lcd.setSegmentStyle(lcd.Flat)
-        client.setPositionListener(lcd.display)
+        client.addListener(client.POSITION,lcd.display)
 
         layout.addRow('position',lcd)
 
@@ -106,7 +101,8 @@ class StepperMotorWidget(QtGui.QWidget):
                     rateSpin.value
                 )
             )
-            client.setRateListener(
+            client.addListener(
+                client.RATE,
                 compose(
                     rateSpin.setValue,
                     int
@@ -118,32 +114,64 @@ class StepperMotorWidget(QtGui.QWidget):
     # HACK: THIS WILL CRASH UNLESS IT IS AN INSTANCE METHOD (CAN'T BE A REGULAR FUNCTION) (WEIIIIIIIIIRD)
     @inlineCallbacks
     def nudgeLoop(self,slider,client):
-        delta = slider.value()        
+        delta = slider.value()
         if delta:
             delta = int(delta / abs(delta) * pow(SLIDER_RANGE,(float(abs(delta))-1.0)/99.0))
             position = yield client.getPosition()
             yield client.setPosition(position + delta)
-        yield sleep(.300)
+        yield sleep(self.NUDGE)
         if slider.isSliderDown():
             yield self.nudgeLoop(slider,client)
         
 @inlineCallbacks
-def main():
-    options = yield getStepperMotorOptions()
-    url = options['url']
-    protocol = yield getProtocol(url)
-    widget = StepperMotorWidget(
-        ChunkedStepperMotorClient(
-            protocol
-        )
-    )
-    consoleTitle = '(%s) sm gui' % options['name']
-    import os    
-    os.system('title %s' % consoleTitle)
-    widget.setWindowTitle(options["name"]+"[*]")
+def main(container):
+    # check if debugging / testing
+    import sys
+    debug = len(sys.argv) > 1 and sys.argv[1] == 'debug'
+
+    # initialize widget
+    widget = QtGui.QWidget()
+    container.append(widget)
     widget.show()
+    widget.setWindowTitle('%s stepper motor client' % ('debug' if debug else 'real'))
+
+    layout = QtGui.QHBoxLayout()
+    widget.setLayout(layout)
+
+    from sitz import STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER
+    from ab.abclient import getProtocol
+    protocol = yield getProtocol(
+        TEST_STEPPER_MOTOR_SERVER
+        if debug else
+        STEPPER_MOTOR_SERVER
+    )
+
+    config = yield protocol.sendCommand('get-configuration')
+    for id in config.keys():
+        groupBox = QtGui.QGroupBox(config[id]['name'])
+        gLayout = QtGui.QVBoxLayout()
+        groupBox.setLayout(gLayout)
+        gLayout.addWidget(
+            StepperMotorWidget(
+                ChunkedStepperMotorClient(
+                    protocol,
+                    id
+                )
+            )
+        )
+        layout.addWidget(groupBox)
+
+    def onConnectionLost(reason):
+        if reactor.running: 
+            QtGui.QMessageBox.information(widget,'connection lost','connect to server terminated. program quitting.')
+            widget.close()
+            reactor.stop()
+            protocol.__class__.connectionLost(protocol,reason)
+
+    protocol.connectionLost = onConnectionLost
 
 if __name__ == '__main__':
     from twisted.internet import reactor
-    main()
+    container = []
+    main(container)
     reactor.run()

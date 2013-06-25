@@ -13,7 +13,6 @@ from sitz import tagger, SITZ_RPC_URI
 
 from abbase import uriFromMessage
 from abclient import getProtocol
-from sitz import INSPECTOR_SERVER
 
 PROPERTIES = 'PROPERTIES'
 
@@ -79,20 +78,10 @@ def runServer(
     wamp = factory.wamp = WAMP(factory,*args,**kwargs)
     yield wamp.onReady
     log.startLogging(
-        sys.stdout if outputToConsole else open('serverlogs/' + WAMP.__name__ + '.log','a')
+        sys.stdout if outputToConsole or debug else open('serverlogs/' + WAMP.__name__ + '.log','a')
     )
     listenWS(factory)
-    # try:
-    #     inspector = yield getProtocol(INSPECTOR_SERVER)
-    #     inspector.sendCommand('register',URL,WAMP.__wampname__)
-    #     def stopFactory(hook):
-    #         inspector.sendCommand('unregister',URL)
-    #         print 'sent unregister command'
-    #         hook()
-    #     inspector.factory.stopFactory = partial(stopFactory,inspector.factory.stopFactory)
-    #     factory.stopFactory = partial(stopFactory,factory.stopFactory)
-    # except Exception, e:
-    #     print 'not registered with inspector server (%s)' % e.message
+
 if __name__ == '__main__':
     runServer(BaseWAMP)
     reactor.run()
