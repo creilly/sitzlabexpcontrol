@@ -29,10 +29,10 @@ class ScanToggleObject(ToggleObject):
             return d
         scan = Scan(input,output,callback)
         closedToggle = self.closedToggle = ClosedToggle(False)
-        self.toggleRequested.connect(closedToggle.requestToggle)
+        self.deactivationRequested.connect(closedToggle.requestToggle)
+        self.activated.connect(closedToggle.requestToggle)
         @inlineCallbacks
         def onStart():
-            self.toggle()
             yield scan.start()
             if closedToggle.isToggled(): closedToggle.requestToggle()
             self.toggle()
@@ -104,6 +104,9 @@ def test():
     def input(): return inputData.pop() if inputData else None
     def output(): return outputData.pop()
     scanToggle = ScanToggleObject(input,output)
+
+    # not performing any setup, so go ahead and connect activation requests to toggle
+    scanToggle.activationRequested.connect(scanToggle.toggle)
 
     # create a toggle widget
 
