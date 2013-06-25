@@ -65,7 +65,17 @@ tagger.CALLABLE = 0
 tagger.NAME = 1
 tagger.DESCRIPTION = 2
 
-#functions for reading config files
+
+#a simple printer for the return of the below config functions
+def printConfigDict(configDict):
+    for name,conf in configDict.items():
+        print name
+        for key,value in conf.items():
+            print '\t'+key+':'+value
+
+
+#functions for reading config files, returns a dictionary of dictionaries
+#see above for a nice printer
 def readConfigFile(fileToRead):
     Config = ConfigParser.ConfigParser()
     Config.read(fileToRead)
