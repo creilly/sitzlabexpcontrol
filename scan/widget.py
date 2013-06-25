@@ -115,7 +115,7 @@ def test():
     ## BOILERPLATE ##
     import sys
     from PySide import QtGui, QtCore
-    if QtCore.QCoreApplication.instance() is None:    
+    if QtCore.QCoreApplication.instance() is None:
         app = QtGui.QApplication(sys.argv)
         import qt4reactor
         qt4reactor.install()
@@ -140,9 +140,9 @@ def test():
     controlPanel.setLayout(cpLayout)
 
     # create a scan toggle
-    size = 30
+    size = 200
     inputData = range(size)
-    outputData = [x**2 for x in range(size)]
+    outputData = [(x/float(size))**2 - (x/float(size))**3 for x in inputData]
     def input(): return inputData.pop() if inputData else None
     def output(): return outputData.pop()
     scanToggle = ScanToggleObject(input,output)
@@ -162,7 +162,7 @@ def test():
         x.append(input)
         y.append(output)
         plot.setData(x,y)
-        yield sleep(.1)
+        yield sleep(.05)
         scanToggle.completeStep()
     scanToggle.stepped.connect(onStepped)
 

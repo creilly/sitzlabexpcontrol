@@ -33,7 +33,7 @@ class IntervalScanInput(AgentScanInput):
             self.position = self.begin            
         else:
             self.position += self.step * (1 if polarity else -1)
-        if (self.position < self.end) is polarity:
+        if (self.position < self.stop) is not polarity:
             self.position = None
         return self.position
 

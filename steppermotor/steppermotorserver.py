@@ -1,56 +1,25 @@
 from steppermotor import StepperMotor, FakeStepperMotor
 
-from functools import partial
 from ab.abserver import BaseWAMP, command, runServer
 
 from twisted.internet.defer  import Deferred, inlineCallbacks, returnValue
+
 from twisted.internet  import reactor
-from twisted.internet.task import LoopingCall
 
-import pprint
-
-from sitz import readConfigFile, ConfigSectionMap, compose
+from sitz import readConfigFile, STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER
 
 from functools import partial
 
-from ab.abbase import getDigit, selectFromList, sleep
+from ab.abbase import sleep
 
-CONFIG = 'stepperMotorServerConfig.ini'
+import sys
 
-def getStepperMotor(options):
-    if options["name"] in ("Fake Stepper Motor 1","Fake Stepper Motor 2"):
-        return FakeStepperMotor()
-    else:
-        return StepperMotor(
-            options["pulse_channel"],
-            options["direction_channel"],
-            options["counter_channel"],
-            int(options["backlash"])
-        )
-        
-def getConfig():
-    return readConfigFile(CONFIG)
+CONFIG = 'config.ini'
 
-@inlineCallbacks
-def getStepperMotorOptions(prompt='Which Server to Run?'):
-    config = getConfig()
-    serverKey = yield selectFromList(config.keys(),prompt)
-    options = config[serverKey]
-    print '\n'.join('\t%s:\t%s' % (key, value) for key, value in options.items())
-    returnValue(options)
+DEBUG_CONFIG = 'testconfig.ini'
 
-@inlineCallbacks
-def getStepperMotorURL(options = None):
-    if options is None:
-        options = yield getStepperMotorOptions('which stepper motor?')
-    returnValue('ws://%s:%s' % (options["host_machine_ip"],options["serve_on_port"]))            
-
-# returns name, url pair
-@inlineCallbacks
-def getStepperMotorNameURL(prompt='select stepper motor: '):
-    options = yield getStepperMotorOptions(prompt)
-    returnValue( (options['name'], options['url'] ) )
-        
+DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
+    
 class StepperMotorWAMP(BaseWAMP):
     UPDATE = 0.1 # duration between position notifications
     __wampname__ = 'stepper motor server'
@@ -59,48 +28,77 @@ class StepperMotorWAMP(BaseWAMP):
         'step-rate-changed':'notify when stepping rate changes'
     }
 
-    def initializeWAMP(self,stepperMotor):
-        self.stepperMotor = stepperMotor
+    def initializeWAMP(self):
+        ## read in config file
+        config = self.config = readConfigFile(DEBUG_CONFIG if DEBUG else CONFIG)
+        ## construct a dictionary of steppermotor objects
+        self.sms = {
+            id:(
+                StepperMotor if not DEBUG else FakeStepperMotor
+            )(
+                *(
+                    (
+                        options['pulse_channel'],
+                        options['direction_channel'],
+                        options['counter_channel'],
+                        int(options['backlash'])
+                    ) if not DEBUG else tuple([])
+                )
+            ) for id, options in config.items()
+        }
+        ## complete initialization
         BaseWAMP.initializeWAMP(self)
 
     @command('get-position','query position of stepper motor')
-    def _getPosition(self):
-        return self.getPosition()        
-
-    def getPosition(self):
-        return self.stepperMotor.getPosition()
+    def getPosition(self,sm):
+        return self.sms[sm].getPosition()
 
     @command('set-position','set position of stepper motor')
     @inlineCallbacks
-    def setPosition(self,position):
+    def setPosition(self,sm,position):
+        ## initialize deferred that will fire at end of stepping journey
         d = Deferred()
-        def loop(_):            
-            self.dispatch('position-changed',self.getPosition())
+        ## function that is called periodically to update listeners on journey progress
+        def loop(_):
+            self.dispatch(
+                'position-changed',
+                (
+                    sm,
+                    self.getPosition(sm)
+                )
+            )
             if not d.called:
                 sleep(self.UPDATE).addCallback(loop)
-        self.stepperMotor.setPosition(position,partial(d.callback,None))
+        ## start journey
+        self.sms[sm].setPosition(position,partial(d.callback,None))
+        ## start updates
         loop(None)
+        ## wait until journey done
         yield d
-        returnValue(self.getPosition())
+        ## return ending position
+        returnValue(self.getPosition(sm))
 
     @command('set-step-rate')
-    def setStepRate(self,stepRate):
-        self.stepperMotor.setStepRate(stepRate)
-        self.dispatch('step-rate-changed',stepRate)
+    def setStepRate(self,sm,stepRate):
+        self.sms[sm].setStepRate(stepRate)
+        self.dispatch(
+            'step-rate-changed',
+            (
+                sm,
+                stepRate
+            )
+        )
 
     @command('get-step-rate')
-    def getStepRate(self):
-        return self.stepperMotor.getStepRate()      
+    def getStepRate(self,sm):
+        return self.sms[sm].getStepRate()
 
-@inlineCallbacks
+    @command('get-configuration','retrieve dictionary of sm server configuration')
+    def getConfig(self):
+        return self.config
+
 def main():
-    import sys
-    if len(sys.argv) < 2: options = yield getStepperMotorOptions()
-    else: options = getConfig()[sys.argv[1]]
-    url = yield getStepperMotorURL(options)
-    stepperMotor = getStepperMotor(options)
-    StepperMotorWAMP.__wampname__ += ' ' + options['name']
-    runServer(WAMP = StepperMotorWAMP, URL = url,debug = True, outputToConsole=True, args=[stepperMotor])
+    runServer(WAMP = StepperMotorWAMP, URL = STEPPER_MOTOR_SERVER if not DEBUG else TEST_STEPPER_MOTOR_SERVER,debug = True)
 if __name__ == '__main__':
     main()
     reactor.run()
