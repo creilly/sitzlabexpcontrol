@@ -1,5 +1,5 @@
 from PySide import QtGui
-from PySide.QtCore import Signal
+from PySide import QtCore
 
 from twisted.internet.defer import inlineCallbacks, Deferred
 from qtutils.toggle import ToggleObject, ClosedToggle
@@ -13,6 +13,7 @@ from scan import Scan
 from input import IntervalScanInput, ListScanInput
 
 DEFAULTS = [(-50000,50000),(-50000,50000),(1,1000)]
+
 
 '''
 update on 2013/06/24 by stevens4: rectified language of IntervalScanInput \
@@ -33,7 +34,7 @@ plugs straightforwardly into a ToggleWidget
 
 '''
 class ScanToggleObject(ToggleObject):
-    stepped = Signal(object)
+    stepped = QtCore.Signal(object)
     def __init__(self,input,output):
         ToggleObject.__init__(self,initialState=False)
         def callback(input,output):
@@ -91,24 +92,61 @@ class IntervalScanInputWidget(QtGui.QWidget):
 class ListScanInputWidget(QtGui.QWidget):
     def __init__(self,listScanInput):
         QtGui.QWidget.__init__(self)
-        self.input = listScanInput
-        layout = QtGui.QFormLayout()
-        self.textEdit = QtGui.QTextEdit()
+        self.listScanInput = listScanInput
+        layout = QtGui.QVBoxLayout()
+        self.setLayout(layout)
+        self.label = QtGui.QLabel(self)
+        positions = []
+        fname = 'nothing'
        
         def loadPosList():
-            filename, _ = QtGui.QFileDialog.getOpenFileName(self, 'Open file',
+            fname, _ = QtGui.QFileDialog.getOpenFileName(self, 'Open file',
                 'Z:\stevens4\gitHub\sitzlabexpcontrol\scan')
             fileObj = open(fname, 'r')
             with fileObj:
-                positions = fileObj.read()
-                self.textEdit.setText(positions) #display the list in a text edit widget
-            partial(setattr, listScanInput,
-                    {self.positions:'positions'}
-                )
+                plainText = fileObj.read()
+                try: 
+                    for pos in plainText.split('\n'): positions.append(float(pos.replace(',','')))
+                except ValueError:
+                    print 'somebody done messed up'
+                    msgBox = QtGui.QMessageBox()
+                    msgBox.setText("Error processing file - must be a list of floats on newlines.")
+                    msgBox.exec_()
+                    loadPosList()
+                    return
+                self.listScanInput.positions = positions
+                self.label.setText(fname.split('/')[-1]+' is loaded.')
+                self.label.adjustSize()
+                for pos in self.listScanInput.positions: 
+                    self.queueWidget.addItem(str(pos))
+                    print 'added %s to queue' % pos
+            fileObj.close()
         
-        loadPosListButton = QtGui.QPushButton('load positions list')
-        loadPosListButton.clicked.connect(loadPosList)
-        controlPanel.addRow(loadPosListButton)
+        def clearQueue():
+            while positions: positions.pop()
+            while self.listScanInput.positions: self.listScanInput.positions.pop()
+            self.label.setText('nothing is loaded.')
+            self.queueWidget.clear()
+        
+        self.loadPosListButton = QtGui.QPushButton('load queue')
+        self.loadPosListButton.clicked.connect(loadPosList)
+        layout.addWidget(self.loadPosListButton)
+        self.label.setText(fname+' is loaded.')
+        
+        self.queueWidget = QtGui.QListWidget()
+        self.queueWidget.setMaximumSize(200,150)
+        layout.addWidget(self.queueWidget)
+        
+        self.clrQueueButton = QtGui.QPushButton('clear queue')
+        self.clrQueueButton.clicked.connect(clearQueue)
+        layout.addWidget(self.clrQueueButton)
+        
+    def updateQueue(self):
+        #pops the first elements off the queue to represent typical scan behavior
+        self.queueWidget.takeItem(0)
+
+
+        
 
             
 def test():
@@ -139,16 +177,21 @@ def test():
     cpLayout = QtGui.QVBoxLayout()
     controlPanel.setLayout(cpLayout)
 
+    
+    #crease a list scan input
+    listScanInput = ListScanInput(lambda(x):x,None)
+    
+    
     # create a scan toggle
     size = 200
     inputData = range(size)
     outputData = [(x/float(size))**2 - (x/float(size))**3 for x in inputData]
     def input(): return inputData.pop() if inputData else None
     def output(): return outputData.pop()
-    scanToggle = ScanToggleObject(input,output)
+    #scanToggle = ScanToggleObject(input,output)
+    scanToggle = ScanToggleObject(listScanInput.nextPosition,output)
+    
 
-    
-    
     # create a toggle widget
     from qtutils.toggle import ToggleWidget
     cpLayout.addWidget(ToggleWidget(scanToggle))
@@ -164,16 +207,17 @@ def test():
         plot.setData(x,y)
         yield sleep(.05)
         scanToggle.completeStep()
+        listScanInputWidget.updateQueue()
     scanToggle.stepped.connect(onStepped)
 
     def log(x): print x
     scanToggle.toggled.connect(partial(log,'toggled'))
     scanToggle.toggleRequested.connect(partial(log,'toggleRequested'))
     
-    '''
+
     #setPosition method takes a position, returns read position
     #for testing purposes use: " return lambda(x): x "
-    
+    '''
     #create a IntervalScanInput and associated widget
     intScanInput = IntervalScanInput(lambda(x):x,0,1000,10)
     intScanInputWidget = IntervalScanInputWidget(intScanInput,DEFAULTS)
@@ -185,12 +229,22 @@ def test():
         )
     )
     '''
-    dummyPos = range(30)
-    listScanInput = ListScanInput(lambda(x):x,dummyPos)
     listScanInputWidget = ListScanInputWidget(listScanInput)
     cpLayout.addWidget(listScanInputWidget)
-    
-    
+    scanToggle.toggled.connect(
+        compose(
+            listScanInputWidget.loadPosListButton.setDisabled,
+            scanToggle.isToggled
+        )
+    )
+    scanToggle.toggled.connect(
+        compose(
+            listScanInputWidget.clrQueueButton.setDisabled,
+            scanToggle.isToggled
+        )
+    )
+    scanToggle.toggled.connect(partial(log,listScanInputWidget.listScanInput.positions))
+
     
     
     #add the control panel to the plot window layout

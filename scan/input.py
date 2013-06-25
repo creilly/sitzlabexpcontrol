@@ -1,6 +1,6 @@
 '''
 update on 2013/06/24 by stevens4: rectified language of IntervalScanInput \
-such that first and last points are referred to as 'begin' and 'end' to \
+such that first and last points are referred to as 'start' and 'stop' to \
 avoid confusion with 'start' and 'stop' actions of a scan.
 
 some input objects for use with the scan object. to use either an interval \
@@ -22,15 +22,15 @@ class AgentScanInput:
         return None
 
 class IntervalScanInput(AgentScanInput):
-    def __init__(self,agent,begin,end,step):
+    def __init__(self,agent,start,stop,step):
         AgentScanInput.__init__(self,agent)
-        self.begin, self.end, self.step = begin, end, step        
+        self.start, self.stop, self.step = start, stop, step        
         self.position = None
 
     def nextPosition(self):
-        polarity = self.begin < self.end
+        polarity = self.start < self.stop
         if self.position is None:
-            self.position = self.begin            
+            self.position = self.start            
         else:
             self.position += self.step * (1 if polarity else -1)
         if (self.position < self.stop) is not polarity:
