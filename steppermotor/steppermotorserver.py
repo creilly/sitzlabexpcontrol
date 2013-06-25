@@ -6,7 +6,7 @@ from twisted.internet.defer  import Deferred, inlineCallbacks, returnValue
 
 from twisted.internet  import reactor
 
-from sitz import readConfigFile, SM_SERVER, TEST_SM_SERVER
+from sitz import readConfigFile, STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER
 
 from functools import partial
 
@@ -42,7 +42,7 @@ class StepperMotorWAMP(BaseWAMP):
                         options['direction_channel'],
                         options['counter_channel'],
                         int(options['backlash'])
-                    ) if not DEBUG else (,)
+                    ) if not DEBUG else tuple([])
                 )
             ) for id, options in config.items()
         }
@@ -64,7 +64,7 @@ class StepperMotorWAMP(BaseWAMP):
                 'position-changed',
                 (
                     sm,
-                    self.getPosition()
+                    self.getPosition(sm)
                 )
             )
             if not d.called:
@@ -80,7 +80,7 @@ class StepperMotorWAMP(BaseWAMP):
 
     @command('set-step-rate')
     def setStepRate(self,sm,stepRate):
-        self.sms[sm].stepperMotor.setStepRate(stepRate)
+        self.sms[sm].setStepRate(stepRate)
         self.dispatch(
             'step-rate-changed',
             (
@@ -97,9 +97,8 @@ class StepperMotorWAMP(BaseWAMP):
     def getConfig(self):
         return self.config
 
-@inlineCallbacks
 def main():
-    runServer(WAMP = StepperMotorWAMP, URL = SM_SERVER if not DEBUG else TEST_SM_SERVER,debug = True)
+    runServer(WAMP = StepperMotorWAMP, URL = STEPPER_MOTOR_SERVER if not DEBUG else TEST_STEPPER_MOTOR_SERVER,debug = True)
 if __name__ == '__main__':
     main()
     reactor.run()

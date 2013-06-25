@@ -16,7 +16,6 @@ class BaseStepperMotor:
         self.queue = []
         self.lock = Lock()
         self._position = 0
-        self.name = name
 
     def setPosition(self,position,callback=lambda:None):
         if self.busy:
@@ -129,12 +128,12 @@ class FakeStepperMotor(BaseStepperMotor):
         class Gradual(Thread):
             def run(self):
                 steps = int(float(abs(position - this.position)) / this.INTERVAL / this.rate)
-                positions = list(linspace(this.position,position,steps if steps > 2 else 2))                
+                positions = list(linspace(this.position,position,steps if steps > 2 else 2))
                 for newPosition in positions:
                     this.position = int(newPosition)
                     sleep(this.INTERVAL)
                 this.onPositionSet(callback)
-        Gradual().start()        
+        Gradual().start()     
 
     # set pulse rate in Hz
     def setStepRate(self,rate):
