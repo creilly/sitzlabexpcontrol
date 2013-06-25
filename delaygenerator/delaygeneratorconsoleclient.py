@@ -1,10 +1,10 @@
-from abclient import getProtocol
-from consoleclient import ConsoleClient, runConsoleClient, consoleCommand
-from abbase import log, getType
+from ab.abclient import getProtocol
+from ab.consoleclient import ConsoleClient, runConsoleClient, consoleCommand
+from ab.abbase import log, getType, selectFromList
 from twisted.internet.defer import inlineCallbacks, returnValue, Deferred
 from twisted.internet import reactor
-from steppermotorclient import StepperMotorClient
-from steppermotorserver import getStepperMotorURL, getStepperMotorOptions
+from delaygeneratorserver import getConfig
+from delaygeneratorclient import DelayGeneratorClient
 
 class DelayGeneratorConsoleClient(ConsoleClient):
     __ccname__ = 'delay generator client'    
@@ -12,36 +12,31 @@ class DelayGeneratorConsoleClient(ConsoleClient):
         self.client = client
         ConsoleClient.__init__(self)
     
-    @consoleCommand('get delay','query the delay of a delay generator')
+    @consoleCommand('get delay','query the delays on all delay generators')
     def getDelay(self):
-        return self.client.getDelay()
+        return self.client.getDelays()
 
-    @consoleCommand('set position','sets the position of the stepper motor')
+    @consoleCommand('set delay','sets the delay on requested delay generator')
     @inlineCallbacks
-    def _setPosition(self):
-        position = yield getType(int,'input position: ')
-        yield self.client.setPosition(position)
+    def setDelay(self):
+        dgDict = yield self.getDelay()
+        dgName = yield selectFromList(dgDict.keys(),'which delay to change?')
+        delay = yield getType(float,'input delay: ')
+        yield self.client.setDelay(dgName,delay)
 
-    @consoleCommand('set step rate','set the stepping rate of the motor')
-    @inlineCallbacks
-    def _setStepRate(self):
-        rate = yield getType(float,'enter stepping rate (in Hz): ')
-        yield self.client.setStepRate(rate)
 
-    @consoleCommand('get step rate','get the stepping rate of the motor')
-    def _getStepRate(self):
-        return self.client.getStepRate()
 
 @inlineCallbacks
 def main():
-    options = yield getStepperMotorOptions()
-    url = yield getStepperMotorURL(options)
-    StepperMotorClient.__ccname__ = '(%s) sm client' % options['name']
+    serverOptions, dgOptions = getConfig()
+    url = serverOptions["url"]
+    
+    DelayGeneratorConsoleClient.__ccname__ = 'delay generator client'
     protocol = yield getProtocol(url)
-    smc = StepperMotorClient(protocol)
+    dgc = DelayGeneratorClient(protocol)
     runConsoleClient(
-        StepperMotorConsoleClient,
-        smc
+        DelayGeneratorConsoleClient,
+        dgc
     )
 if __name__ == '__main__':
     main()

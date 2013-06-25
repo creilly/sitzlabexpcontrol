@@ -49,7 +49,7 @@ class DelayGeneratorWAMP(BaseWAMP):
         BaseWAMP.initializeWAMP(self)
     
     @command('get-delays','query delay of ALL delay generators and return dict')
-    def getDelay(self):
+    def getDelays(self):
         return {name:dg.getDelay() for name,dg in self.dgDict.items()}
 
     @command('set-delay','set delay of specified delay generator')
