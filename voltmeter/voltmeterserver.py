@@ -7,6 +7,8 @@ import daqmx
 from daqmx.task.ai import VoltMeter
 from sitz import VOLTMETER_SERVER, TEST_VOLTMETER_SERVER
 
+from config.voltmeter import VM_CONFIG
+
 import sys
 DEBUG = len(sys.argv) > 1
 TRIGGERING = not DEBUG
@@ -66,111 +68,14 @@ class VoltMeterWAMP(BaseWAMP):
 def getTriggerSourceEdge():
     return succeed(('/dev1/pfi0','falling'))
 
-
-defaultVM = partial(
-    VoltMeter,
-    (
-        {
-            'physicalChannel':'dev1/ai4',
-            'name':'dye power meter',
-            'minVal':0.0,
-            'maxVal':5.0,
-            'terminalConfig':'differential'
-        },
-        {
-            'physicalChannel':'dev1/ai7',
-            'name':'xtals power meter',
-            'minVal':0.0,
-            'maxVal':0.1,
-            'terminalConfig':'differential'
-        },
-        {
-            'physicalChannel':'dev1/ai6',
-            'name':'gated integrator',
-            'minVal':0.0,
-            'maxVal':10.0,
-            'terminalConfig':'default'
-        },
-        {
-            'physicalChannel':'dev1/ai5',
-            'name':'thermocouple',
-            'minVal':0.0,
-            'maxVal':0.1,
-            'terminalConfig':'default'
-        }
-    ) if not DEBUG else ({'physicalChannel':'alpha/ai0'},)
-)
-
-
 def getVoltMeter():
+    defaultVM = partial(VoltMeter, VM_CONFIG.values() 
+        if not DEBUG else ({'physicalChannel':'alpha/ai0'},))
     vm = defaultVM()
     vm.setSamplingRate(SAMPLING_RATE)
     vm.setCallbackRate(CALLBACK_RATE)
     return vm
     
-@inlineCallbacks
-def configureVoltMeter():
-    device = yield selectFromList(daqmx.getDevices(),'select device')
-    channelDicts = []
-    while True:
-        channelDict = {}
-        aborted = False
-        #HACK
-        channelDict['minVal'] = 0.0
-        for optionKey, getOption in (
-            (
-                'physicalChannel',
-                partial(
-                    selectFromList,
-                    [None] + daqmx.getPhysicalChannels(device)[daqmx.AI],
-                    'select channel'
-                )
-            ),
-            (
-                'name',
-                partial(
-                    getUserInput,
-                    'enter name: '
-                )
-            ),            
-            (
-                'maxVal',
-                partial(
-                    getFloat,
-                    'insert max voltage: '
-                )
-            ),
-            (
-                'terminalConfig',
-                partial(
-                    selectFromList,
-                    (
-                        'default',
-                        'differential'
-                    ),
-                    'select terminal configuration'
-                )
-            )
-        ):
-            opt = yield getOption()
-            if opt is None:
-                aborted = True
-                break
-            channelDict[optionKey] = opt            
-        if aborted:
-            if channelDicts:
-                quit = yield selectFromList([True,False],'end task configuration?')
-                if quit:
-                    break
-            continue
-        channelDicts.append(channelDict)
-    vm = VoltMeter(channelDicts)
-    samplingRate = yield getFloat('enter sampling rate: ')
-    vm.setSamplingRate(samplingRate)
-    callbackRate = yield getFloat('enter callback rate: ')
-    vm.setCallbackRate(callbackRate)
-    returnValue(vm)
-
 if __name__ == '__main__':
     runServer(WAMP = VoltMeterWAMP,debug=DEBUG,URL=URL,outputToConsole=True)
     reactor.run()

@@ -1,9 +1,9 @@
-from abclient import BaseClientFactory, BaseClientProtocol, getProtocol
+from ab.abclient import BaseClientFactory, BaseClientProtocol, getProtocol
 from consoleclient import ConsoleClient, runConsoleClient, consoleCommand
-from abbase import log, getDigit
+from ab.abbase import log, getDigit
 from twisted.internet.defer import inlineCallbacks, returnValue, Deferred
 from twisted.internet import reactor
-from sitz import VOLTMETER_SERVER
+from libs.sitz import VOLTMETER_SERVER
 from time import clock
 
 class VoltMeterClient(ConsoleClient):
