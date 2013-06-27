@@ -62,9 +62,11 @@ class ChunkedStepperMotorClient(StepperMotorClient):
     def __init__(self,protocol,id,duration=0.3):
         StepperMotorClient.__init__(self,protocol,id)
         self.duration = duration
+        self.stepping = False
         
     @inlineCallbacks
     def setPosition(self,position):
+        self.stepping = True
         self.abort = False
         start = yield self.getPosition()
         stop = position
@@ -86,6 +88,7 @@ class ChunkedStepperMotorClient(StepperMotorClient):
             lambda:None,
             lambda a,b: not self.abort
         ).start()
+        self.stepping = False
         position = yield self.getPosition()
         returnValue(position)
         
