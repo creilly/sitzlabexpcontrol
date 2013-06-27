@@ -1,5 +1,6 @@
 from twisted.internet.defer import inlineCallbacks
 from ab.abbase import getFloat
+
 class DelayGeneratorClient:
     def __init__(self,protocol):        
         self.protocol = protocol
@@ -19,10 +20,12 @@ class DelayGeneratorClient:
 @inlineCallbacks
 def main():
     from ab.abclient import getProtocol    
-    from delaygeneratorserver import getConfig
     from ab.abbase import selectFromList
-    serverConf, delayConf = getConfig()
-    serverURL = serverConf["url"]
+    from config.delaygenerator import DG_CONFIG
+    import config.delaygenerator as dgKeys
+
+    serverOptions = DG_CONFIG[dgKeys.GLOBAL]
+    serverURL = serverOptions["url"]
     protocol = yield getProtocol(serverURL)
     client = DelayGeneratorClient(protocol)
     
