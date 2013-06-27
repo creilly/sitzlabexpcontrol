@@ -58,8 +58,8 @@ class ScanToggleObject(ToggleObject):
 
         
 class IntervalScanInputWidget(QtGui.QWidget):
-    BEGIN,END,STEP = 0,1,2
-    PROPERTIES = (BEGIN,END,STEP)
+    START,STOP,STEP = 0,1,2
+    PROPERTIES = (START,STOP,STEP)
     def __init__(self,intervalScanInput,defaults):
         QtGui.QWidget.__init__(self)
         self.input = intervalScanInput
@@ -73,16 +73,16 @@ class IntervalScanInputWidget(QtGui.QWidget):
                     setattr,
                     intervalScanInput,
                     {
-                        self.BEGIN:'begin',
-                        self.END:'end',
+                        self.START:'start',
+                        self.STOP:'stop',
                         self.STEP:'step'
                     }[id]
                 )
             ),
             layout.addRow(
                 {
-                    self.BEGIN:'begin',
-                    self.END:'end',
+                    self.START:'start',
+                    self.STOP:'stop',
                     self.STEP:'step'
                 }[id],
                 spin
@@ -117,9 +117,7 @@ class ListScanInputWidget(QtGui.QWidget):
                 self.listScanInput.positions = positions
                 self.label.setText(fname.split('/')[-1]+' is loaded.')
                 self.label.adjustSize()
-                for pos in self.listScanInput.positions: 
-                    self.queueWidget.addItem(str(pos))
-                    print 'added %s to queue' % pos
+                for pos in self.listScanInput.positions: self.queueWidget.addItem(str(pos))
             fileObj.close()
         
         def clearQueue():

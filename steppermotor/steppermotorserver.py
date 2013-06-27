@@ -14,7 +14,9 @@ from ab.abbase import sleep
 
 import sys
 
-CONFIG = 'config.ini'
+from os import path
+
+CONFIG = 'steppermotorconfig.ini'
 
 DEBUG_CONFIG = 'testconfig.ini'
 
@@ -30,7 +32,8 @@ class StepperMotorWAMP(BaseWAMP):
 
     def initializeWAMP(self):
         ## read in config file
-        config = self.config = readConfigFile(DEBUG_CONFIG if DEBUG else CONFIG)
+        absPath = path.abspath(DEBUG_CONFIG) if DEBUG else path.abspath(CONFIG)
+        config = self.config = readConfigFile(absPath)
         ## construct a dictionary of steppermotor objects
         self.sms = {
             id:(
