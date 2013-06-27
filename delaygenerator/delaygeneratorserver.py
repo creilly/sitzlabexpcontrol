@@ -1,5 +1,8 @@
 '''
-by stevens4. last mod: 2013/06/20
+by stevens4. last mod: 2013/06/27
+
+updated to meet new configuration standard where ../config/delaygenerator.py has a
+dictionary of all the required parameters
 
 constructs a server to manage multiple delay generator objects. the objects are stored
 in a dictionary with the key set to the NAME option under delayGeneratorServerConfig.ini.
@@ -21,19 +24,13 @@ from twisted.internet.task import LoopingCall
 
 import pprint
 
-from sitz import readConfigFile, ConfigSectionMap, compose, printConfigDict
+from config.delaygenerator import DG_CONFIG
+import config.delaygenerator as dgKeys
 
-CONFIG = 'delayGeneratorServerConfig.ini'
+from sitz import compose, printDict
+
 dgDict = {}
 
-def getConfig():
-    config = readConfigFile(CONFIG)
-    serverOptions = config["GlobalServerProperties"]
-    del config["GlobalServerProperties"]
-    print config
-    print 'Configuring a server with these properties: '
-    print '\n'.join('\t%s:\t%s' % (key, value) for key, value in serverOptions.items())
-    return serverOptions, config
 
 def addDelayGenerator(options):
     return DelayGenerator(options["usb_chan"])
@@ -49,7 +46,7 @@ class DelayGeneratorWAMP(BaseWAMP):
         BaseWAMP.initializeWAMP(self)
     
     @command('get-delays','query delay of ALL delay generators and return dict')
-    def getDelay(self):
+    def getDelays(self):
         return {name:dg.getDelay() for name,dg in self.dgDict.items()}
 
     @command('set-delay','set delay of specified delay generator')
@@ -59,10 +56,13 @@ class DelayGeneratorWAMP(BaseWAMP):
 
 @inlineCallbacks
 def main():
-    serverOptions, dgOptions = getConfig()
+    serverOptions = DG_CONFIG[dgKeys.GLOBAL]
+    del DG_CONFIG[dgKeys.GLOBAL]
+    dgOptions = DG_CONFIG
+    
     url = serverOptions["url"]
     
-    printConfigDict(dgOptions)
+    printDict(dgOptions)
     
     configList = dgOptions.keys()
     if type(configList) is not list: configList = [configList] #if it is only 1 element, convert to list
@@ -71,10 +71,10 @@ def main():
     while True:
         dgToAdd = yield selectFromList(configList,"Which delay generator to add?")
         if dgToAdd == "Done" or configList == ["Done"]: break
-        if dgOptions[dgToAdd]["__name__"].startswith("Fake"):
-            dgDict[dgOptions[dgToAdd]["__name__"]] = FakeDelayGenerator(dgOptions[dgToAdd]["usb_chan"])
+        if dgToAdd.startswith('fake'):
+            dgDict[dgToAdd] = FakeDelayGenerator(dgOptions[dgToAdd]["usb_chan"])
         else:
-           dgDict[dgOptions[dgToAdd]["__name__"]] = DelayGenerator(dgOptions[dgToAdd]["usb_chan"])
+           dgDict[dgToAdd] = DelayGenerator(dgOptions[dgToAdd]["usb_chan"])
         configList.pop(configList.index(dgToAdd))
         
 

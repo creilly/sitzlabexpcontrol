@@ -1,3 +1,15 @@
+'''
+update on 2013/06/24 by stevens4: rectified language of IntervalScanInput \
+such that first and last points are referred to as 'start' and 'stop' to \
+avoid confusion with 'start' and 'stop' actions of a scan.
+
+some input objects for use with the scan object. to use either an interval \
+or list scan, specify an 'agent' which is an object that accepts a position \
+input, eg. a StepperMotorProtocol.setPosition() ???? chris, can you confirm?
+
+
+'''
+
 class AgentScanInput:
     def __init__(self,agent):
         self.agent = agent

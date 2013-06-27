@@ -1,6 +1,5 @@
 from twisted.internet.defer import Deferred, inlineCallbacks, returnValue
-"""
-
+'''
 Scan(input,output,callback)
 
 input:
@@ -20,7 +19,7 @@ input and output and returns either True \
 to continue the scan or False to stop \
 the scan.
 
-"""
+'''
 class Scan:
     def __init__(self,input,output,callback):
         self.input = input
