@@ -56,7 +56,7 @@ class StepperMotorWidget(QtGui.QWidget):
         toggle.activationRequested.connect(toggle.toggle)
         
         @inlineCallbacks
-        def onActivated():
+        def onActivated():            
             yield client.setPosition(spin.value())
             toggle.toggle()
 
@@ -121,7 +121,7 @@ class StepperMotorWidget(QtGui.QWidget):
             yield client.setPosition(position + delta)
         yield sleep(self.NUDGE)
         if slider.isSliderDown():
-            yield self.nudgeLoop(slider,client)
+            yield self.nudgeLoop(slider,client)            
         
 @inlineCallbacks
 def main(container):

@@ -91,7 +91,7 @@ class ChunkedStepperMotorClient(StepperMotorClient):
         
     def cancel(self):
         self.abort = True
-
+    
 @inlineCallbacks
 def main():
     from sitz import TEST_STEPPER_MOTOR_SERVER
