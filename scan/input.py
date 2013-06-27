@@ -18,11 +18,13 @@ class IntervalScanInput(AgentScanInput):
     def nextPosition(self):
         polarity = self.start < self.stop
         if self.position is None:
-            self.position = self.start            
+            self.position = self.start
         else:
             self.position += self.step * (1 if polarity else -1)
-        if (self.position < self.stop) is not polarity:
+        if self.position == self.stop:
             self.position = None
+        if (self.position < self.stop) is not polarity:
+            self.position = self.stop
         return self.position
 
 class ListScanInput(AgentScanInput):
