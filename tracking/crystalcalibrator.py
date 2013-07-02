@@ -7,8 +7,8 @@ class CrystalCalibrator(object):
     
     D = 0.02400960384
     E = 24200.0
-    def __init__(self,dyeCalibrationPoint = (0,24222)):        
-        self.calibrateDye(dyeCalibrationPoint)
+    def __init__(self):        
+        self.calibrateDye((0,24222))
         self.calibrateCrystal((0,0))
 
     def getPosition(self,alpha):
@@ -41,8 +41,8 @@ class CrystalCalibrator(object):
 class KDPCrystalCalibrator(CrystalCalibrator):
     
     A = -504.120788450589
-    B = -33.94 #-33.1515246331159
-    C = 0.0 #0.005625477013309
+    B = -33.1515246331159
+    C = 0.005625477013309
     J = 0
     
     D = 0.02400960384
