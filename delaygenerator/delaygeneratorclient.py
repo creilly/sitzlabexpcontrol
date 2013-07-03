@@ -21,11 +21,9 @@ class DelayGeneratorClient:
 def main():
     from ab.abclient import getProtocol    
     from ab.abbase import selectFromList
-    from config.delaygenerator import DG_CONFIG
-    import config.delaygenerator as dgKeys
+    from config.delaygenerator import GLOBAL_CONFIG
 
-    serverOptions = DG_CONFIG[dgKeys.GLOBAL]
-    serverURL = serverOptions["url"]
+    serverURL = GLOBAL_CONFIG["url"]
     protocol = yield getProtocol(serverURL)
     client = DelayGeneratorClient(protocol)
     

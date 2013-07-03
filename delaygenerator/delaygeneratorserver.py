@@ -24,8 +24,7 @@ from twisted.internet.task import LoopingCall
 
 import pprint
 
-from config.delaygenerator import DG_CONFIG
-import config.delaygenerator as dgKeys
+from config.delaygenerator import GLOBAL_CONFIG, DG_CONFIG
 
 from sitz import compose, printDict
 
@@ -56,12 +55,8 @@ class DelayGeneratorWAMP(BaseWAMP):
 
 @inlineCallbacks
 def main():
-    serverOptions = DG_CONFIG[dgKeys.GLOBAL]
-    del DG_CONFIG[dgKeys.GLOBAL]
+    url = GLOBAL_CONFIG["url"]
     dgOptions = DG_CONFIG
-    
-    url = serverOptions["url"]
-    
     printDict(dgOptions)
     
     configList = dgOptions.keys()

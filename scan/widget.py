@@ -35,31 +35,48 @@ plugs straightforwardly into a ToggleWidget
 '''
 class ScanToggleObject(ToggleObject):
     stepped = QtCore.Signal(object)
-    def __init__(self,input,output):
+    def __init__(self):
         ToggleObject.__init__(self,initialState=False)
         def callback(input,output):
             d = self._d = Deferred()
             self.stepped.emit((input,output))
             return d
-        scan = Scan(input,output,callback)
         closedToggle = self.closedToggle = ClosedToggle(False)
         self.deactivationRequested.connect(closedToggle.requestToggle)
         self.activated.connect(closedToggle.requestToggle)
         @inlineCallbacks
         def onStart():
-            yield scan.start()
+            yield Scan(self.input,self.output,callback).start()
             if closedToggle.isToggled(): closedToggle.requestToggle()
             self.toggle()
         closedToggle.activated.connect(onStart)
 
     def completeStep(self):
         self._d.callback(self.closedToggle.isToggled())
-
-
+        
+    def setInput(self,input):
+        self.input = input
+        
+    def setOutput(self,output):
+        self.output = output
         
 class IntervalScanInputWidget(QtGui.QWidget):
     START,STOP,STEP = 0,1,2
-    PROPERTIES = (START,STOP,STEP)
+    NAME, ATTRIBUTE = 0,1
+    PROPERTIES = {
+        START:{
+            NAME: 'begin',
+            ATTRIBUTE: 'start'
+        },
+        STOP:{
+            NAME: 'end',
+            ATTRIBUTE: 'stop'
+        },
+        STEP:{
+            NAME: 'step',
+            ATTRIBUTE: 'step'
+        }
+    }
     def __init__(self,intervalScanInput,defaults):
         QtGui.QWidget.__init__(self)
         self.input = intervalScanInput
@@ -72,19 +89,17 @@ class IntervalScanInputWidget(QtGui.QWidget):
                 partial(
                     setattr,
                     intervalScanInput,
-                    {
-                        self.START:'start',
-                        self.STOP:'stop',
-                        self.STEP:'step'
-                    }[id]
+                    self.PROPERTIES[id][self.ATTRIBUTE]
                 )
-            ),
+            )
+            spin.setValue(
+                getattr(
+                    intervalScanInput,
+                    self.PROPERTIES[id][self.ATTRIBUTE]
+                )
+            )
             layout.addRow(
-                {
-                    self.START:'start',
-                    self.STOP:'stop',
-                    self.STEP:'step'
-                }[id],
+                self.PROPERTIES[id][self.NAME],
                 spin
             )
 
@@ -95,10 +110,8 @@ class ListScanInputWidget(QtGui.QWidget):
         self.listScanInput = listScanInput
         layout = QtGui.QVBoxLayout()
         self.setLayout(layout)
-        self.label = QtGui.QLabel(self)
         positions = []
-        fname = 'nothing'
-       
+        
         def loadPosList():
             fname, _ = QtGui.QFileDialog.getOpenFileName(self, 'Open file',
                 'Z:\stevens4\gitHub\sitzlabexpcontrol\scan')
@@ -115,21 +128,17 @@ class ListScanInputWidget(QtGui.QWidget):
                     loadPosList()
                     return
                 self.listScanInput.positions = positions
-                self.label.setText(fname.split('/')[-1]+' is loaded.')
-                self.label.adjustSize()
                 for pos in self.listScanInput.positions: self.queueWidget.addItem(str(pos))
             fileObj.close()
         
         def clearQueue():
             while positions: positions.pop()
             while self.listScanInput.positions: self.listScanInput.positions.pop()
-            self.label.setText('nothing is loaded.')
             self.queueWidget.clear()
         
         self.loadPosListButton = QtGui.QPushButton('load queue')
         self.loadPosListButton.clicked.connect(loadPosList)
         layout.addWidget(self.loadPosListButton)
-        self.label.setText(fname+' is loaded.')
         
         self.queueWidget = QtGui.QListWidget()
         self.queueWidget.setMaximumSize(200,150)
@@ -151,12 +160,19 @@ def test():
     ## BOILERPLATE ##
     import sys
     from PySide import QtGui, QtCore
+    from math import sin
     if QtCore.QCoreApplication.instance() is None:
         app = QtGui.QApplication(sys.argv)
         import qt4reactor
         qt4reactor.install()
     ## BOILERPLATE ##
 
+    #create the widget name even if you're not using it so that onStepped doesn't error
+    listScanInputWidget = None  
+    def log(x): print x
+    
+    
+    
     #configure a layout for the plot widget & controls to go side by side on
     widget = QtGui.QWidget()
     widget.show()
@@ -175,52 +191,27 @@ def test():
     cpLayout = QtGui.QVBoxLayout()
     controlPanel.setLayout(cpLayout)
 
+    #create a scanToggleObject
+    scanToggle = ScanToggleObject()
     
-    #crease a list scan input
+    
+    #create a list scan input & widget
     listScanInput = ListScanInput(lambda(x):x,None)
+    listScanInputWidget = ListScanInputWidget(listScanInput)
+    cpLayout.addWidget(listScanInputWidget)
+    scanToggle.toggled.connect(
+        compose(
+            listScanInputWidget.setDisabled,
+            scanToggle.isToggled
+        )
+    )
+    scanToggle.toggled.connect(partial(log,listScanInputWidget.listScanInput.positions))
+    scanToggle.setInput(listScanInput.next)
     
-    
-    # create a scan toggle
-    size = 200
-    inputData = range(size)
-    outputData = [(x/float(size))**2 - (x/float(size))**3 for x in inputData]
-    def input(): return inputData.pop() if inputData else None
-    def output(): return outputData.pop()
-    #scanToggle = ScanToggleObject(input,output)
-    scanToggle = ScanToggleObject(listScanInput.nextPosition,output)
-    
-
-    # not performing any setup, so go ahead and connect activation requests to toggle
-    scanToggle.activationRequested.connect(scanToggle.toggle)
-
-    # create a toggle widget
-    from qtutils.toggle import ToggleWidget
-    cpLayout.addWidget(ToggleWidget(scanToggle))
-
-    # handle the stepped signal
-    x, y = [], []
-    from ab.abbase import sleep
-    @inlineCallbacks
-    def onStepped(data):
-        input, output = data
-        x.append(input)
-        y.append(output)
-        plot.setData(x,y)
-        yield sleep(.05)
-        scanToggle.completeStep()
-        listScanInputWidget.updateQueue()
-    scanToggle.stepped.connect(onStepped)
-
-    def log(x): print x
-    scanToggle.toggled.connect(partial(log,'toggled'))
-    scanToggle.toggleRequested.connect(partial(log,'toggleRequested'))
-    
-
-    #setPosition method takes a position, returns read position
-    #for testing purposes use: " return lambda(x): x "
     '''
-    #create a IntervalScanInput and associated widget
+    #create an interval scan input & widget
     intScanInput = IntervalScanInput(lambda(x):x,0,1000,10)
+    scanToggle.setInput(intScanInput.next)
     intScanInputWidget = IntervalScanInputWidget(intScanInput,DEFAULTS)
     cpLayout.addWidget(intScanInputWidget)
     scanToggle.toggled.connect(
@@ -230,25 +221,58 @@ def test():
         )
     )
     '''
-    listScanInputWidget = ListScanInputWidget(listScanInput)
-    cpLayout.addWidget(listScanInputWidget)
-    scanToggle.toggled.connect(
-        compose(
-            listScanInputWidget.loadPosListButton.setDisabled,
-            scanToggle.isToggled
+    
+    #create scan output, for now a sine wave, this is where voltmeter would go
+    def output(): 
+        result = sin(float(output.i)/output.res)
+        output.i+=1
+        return result
+    output.i = 0
+    output.res = 10
+    scanToggle.setOutput(output)
+    
+    
+    # create a scan toggle
+    x, y = [], []
+    def onActivationRequested(x,y):
+        while x: x.pop()
+        while y: y.pop()
+        scanToggle.toggle()
+    
+    # not performing any setup, so go ahead and connect activation requests to toggle
+    scanToggle.activationRequested.connect(
+        partial(
+            onActivationRequested,
+            x,
+            y
         )
     )
-    scanToggle.toggled.connect(
-        compose(
-            listScanInputWidget.clrQueueButton.setDisabled,
-            scanToggle.isToggled
-        )
-    )
-    scanToggle.toggled.connect(partial(log,listScanInputWidget.listScanInput.positions))
 
     
+    # create a toggle widget
+    from qtutils.toggle import ToggleWidget
+    cpLayout.addWidget(ToggleWidget(scanToggle))
+
     
-    #add the control panel to the plot window layout
+    # handle the stepped signal
+    from ab.abbase import sleep
+    @inlineCallbacks
+    def onStepped(data):
+        input, output = data
+        x.append(input)
+        y.append(output)
+        plot.setData(x,y)
+        yield sleep(.05)
+        scanToggle.completeStep()
+        if listScanInputWidget is not None: listScanInputWidget.updateQueue()
+    scanToggle.stepped.connect(onStepped)
+
+    #for debug purposes, connect to toggle signal
+    scanToggle.toggled.connect(partial(log,'toggled'))
+    scanToggle.toggleRequested.connect(partial(log,'toggleRequested'))
+
+    
+    #add the control panel to the window and execute
     layout.addWidget(controlPanel)
    
     app.exec_()

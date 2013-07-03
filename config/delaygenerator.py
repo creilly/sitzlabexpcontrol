@@ -7,7 +7,6 @@ with the necessary parameters as key/val pairs in that dictionary
 
 '''
 
-GLOBAL = 'global'
 FAKE1 = 'fake delay gen 1'
 FAKE2 = 'fake delay gen 2'
 MGDELAY = 'm gostein delay gen'
@@ -17,12 +16,14 @@ PROBELAMP = 'probe laser lamps'
 PROBEQSW = 'probe laser q-switch'
 
 
+GLOBAL_CONFIG = {
+    'host_machine_ip':'localhost',
+    'serve_on_port':'9002',
+    'url':'ws://localhost:9002'
+    }
+
+    
 DG_CONFIG = {
-    GLOBAL:{
-        'host_machine_ip':'localhost',
-        'serve_on_port':'9002',
-        'url':'ws://localhost:9002'
-        },
     MGDELAY:{
         'usb_chan':'COM3'
         },
