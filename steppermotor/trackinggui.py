@@ -5,8 +5,17 @@ CRYSTALS = {
     id: SM_CONFIG[id]['name'] for id in (KDP,BBO)
 }
 
+MIN = 24100.0
+MAX = 24500.0
+STEP = .01
+
 class TrackingWidget(QtGui.QWidget):
     def __init__(self,trackingProtocol,stepperMotorProtocol):
+        
+        ########################
+        ## wavelength display ##
+        ########################
+
         # initialize wavelength display
         lcd = QtGui.QLCDNumber(7)
         # get handle to pdl stepper motor
@@ -23,7 +32,18 @@ class TrackingWidget(QtGui.QWidget):
             updateWavelegnth
         )
 
+        #####################
+        ## wavelength goto ##
+        #####################
+
+        gotoGB
+
+        gotoToggle = ToggleObject()
+        gotoToggle
+        
+        #########################
         ## crystal calibration ##
+        #########################
         
         tuningGB = QtGui.QGroupBox('tune crystal')
         tuningLayout = QtGui.QHBoxLayout()
@@ -38,4 +58,19 @@ class TrackingWidget(QtGui.QWidget):
         # combo box to select crystal #
 
         tuningCombo = DictComboBox(CRYSTALS)
+
+        tuningLayout.addWidget(tuningCombo)
+
+        # connect button to combo
+
+        tuningButton.clicked.connect(
+            compose(
+                partial(
+                    trackingProtocol.sendCommand,
+                    'configure-crystal'
+                ),
+                tuningCombo.getCurrentKey
+            )
+        )
+
         

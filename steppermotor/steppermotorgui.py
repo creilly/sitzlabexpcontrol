@@ -6,137 +6,76 @@ if QtCore.QCoreApplication.instance() is None:
     import qt4reactor
     qt4reactor.install()
 ## BOILERPLATE ##
-
 from twisted.internet.defer import inlineCallbacks
-
-from qtutils.toggle import ToggleWidget, ToggleObject
-from ab.abbase import sleep
-from functools import partial
-
-from sitz import compose
-
 from steppermotorclient import ChunkedStepperMotorClient
+from goto import MIN, MAX, PRECISION, SLIDER, GotoWidget
+from qtutils.label import LabelWidget
+from qtutils.qled import LEDWidget
+from operator import index
+from sitz import compose
+from ab.abclient import getProtocol
 
-MIN = -99999
-MAX = 99999
-UPDATE = 300
-WARN = 1000
-GOTO_MAX = 250
-SLIDER_RANGE = 200
-RATE_MIN = 20
-RATE_MAX = 1000
+PARAMS = {
+    MIN:-99999,
+    MAX:99999,
+    PRECISION:0,
+    SLIDER:200
+}
+
+RATE_MIN = 50.0
+RATE_MAX = 1000.0
 
 class StepperMotorWidget(QtGui.QWidget):
-    NUDGE = .3
-    def __init__(self,client):
+    def __init__(self,protocol):
         QtGui.QWidget.__init__(self)
-        layout = QtGui.QFormLayout()
-        
-        ## LCD ##
-        
-        lcd = QtGui.QLCDNumber(6)
-        lcd.setSegmentStyle(lcd.Flat)
-        client.addListener(client.POSITION,lcd.display)
-
-        layout.addRow('position',lcd)
-
-        ## GOTO ##
-
-        toggle = ToggleObject(False)
-
-        spin = QtGui.QSpinBox()
-        spin.setMinimum(MIN)
-        spin.setMaximum(MAX)
-
-        layout.addRow('goto',spin)
-
-        gotoToggleWidget = ToggleWidget(toggle,('goto','stop'))
-        layout.addRow(gotoToggleWidget)
-
-        toggle.activationRequested.connect(toggle.toggle)
-        
-        @inlineCallbacks
-        def onActivated():            
-            yield client.setPosition(spin.value())
-            toggle.toggle()
-
-        toggle.activated.connect(onActivated)
-
-        toggle.deactivationRequested.connect(client.cancel)
-
-        ## SLIDER ##
-        slider = QtGui.QSlider()
-        slider.setMinimum(-100)
-        slider.setMaximum(100)
-        slider.setOrientation(QtCore.Qt.Horizontal)
-        slider.setTickInterval(25)
-        slider.setTickPosition(slider.TicksBelow)
-        slider.sliderPressed.connect(partial(self.nudgeLoop,slider,client))
-        slider.sliderPressed.connect(partial(gotoToggleWidget.setEnabled,False))
-        
-        slider.sliderReleased.connect(partial(slider.setValue,0))
-        slider.sliderReleased.connect(partial(gotoToggleWidget.setEnabled,True))
-
-        toggle.activated.connect(partial(slider.setEnabled,False))
-        toggle.deactivated.connect(partial(slider.setEnabled,True))
-
-        layout.addRow(slider)
-
-        ## STEPPING RATE ##
-
-        rateSpin = QtGui.QSpinBox()
-        layout.addRow('stepping rate',rateSpin)
-
-        @inlineCallbacks
-        def init():
-            position = yield client.getPosition()
-            lcd.display(position)
-            rate = yield client.getStepRate()
-            rate = int(rate)
-            rateSpin.setRange(RATE_MIN if RATE_MIN < rate else rate,RATE_MAX if RATE_MAX > rate else rate)
-            rateSpin.setValue(rate)
-            rateSpin.editingFinished.connect(
-                compose(                
-                    client.setStepRate,
-                    rateSpin.value
+        self.setLayout(QtGui.QHBoxLayout())
+        def onConnectionLost(reason):
+            if reactor.running: 
+                QtGui.QMessageBox.information(self,'connection lost','connect to server terminated. program quitting.')
+                self.close()
+                reactor.stop()
+                protocol.__class__.connectionLost(protocol,reason)
+        protocol.connectionLost = onConnectionLost
+        def onConfig(config):
+            for id in config.keys():
+                layout = QtGui.QVBoxLayout()
+                gotoWidget = GotoWidget(PARAMS)
+                layout.addWidget(gotoWidget)
+                sm = ChunkedStepperMotorClient(protocol,id)
+                gotoWidget.gotoRequested.connect(
+                    compose(
+                        sm.setPosition,
+                        index
+                    )
                 )
-            )
-            client.addListener(
-                client.RATE,
-                compose(
-                    rateSpin.setValue,
-                    int
+                gotoWidget.cancelRequested.connect(sm.cancel)
+                rate = yield sm.getStepRate()
+                rateSpin = QtGui.QDoubleSpinBox()
+                layout.addWidget(LabelWidget('rate',rateSpin))
+                rateSpin.setValue(rate)
+                rateSpin.setRange(
+                    RATE_MIN if rate > RATE_MIN else rate,
+                    RATE_MAX if rate < RATE_MAX else rate
                 )
-            )
-        init()
-        self.setLayout(layout)
-
-    # HACK: THIS WILL CRASH UNLESS IT IS AN INSTANCE METHOD (CAN'T BE A REGULAR FUNCTION) (WEIIIIIIIIIRD)
-    @inlineCallbacks
-    def nudgeLoop(self,slider,client):
-        delta = slider.value()
-        if delta:
-            delta = int(delta / abs(delta) * pow(SLIDER_RANGE,(float(abs(delta))-1.0)/99.0))
-            position = yield client.getPosition()
-            yield client.setPosition(position + delta)
-        yield sleep(self.NUDGE)
-        if slider.isSliderDown():
-            yield self.nudgeLoop(slider,client)            
+                sm.addListener(sm.RATE,rateSpin.setValue)
+                self.layout().addWidget(
+                    LabelWidget(
+                        config[id]['name'],
+                        layout
+                    )
+                )
+            self.show()
+        protocol.sendCommand('get-configuration').addCallback(onConfig)
+        def log(x):
+            print x
+            onConfig(x)
+        protocol.sendCommand('get-configuration').addCallback(log)
         
 @inlineCallbacks
 def main(container):
     # check if debugging / testing
     import sys
     debug = len(sys.argv) > 1 and sys.argv[1] == 'debug'
-
-    # initialize widget
-    widget = QtGui.QWidget()
-    container.append(widget)
-    widget.show()
-    widget.setWindowTitle('%s stepper motor client' % ('debug' if debug else 'real'))
-
-    layout = QtGui.QHBoxLayout()
-    widget.setLayout(layout)
 
     from sitz import STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER
     from ab.abclient import getProtocol
@@ -145,30 +84,9 @@ def main(container):
         if debug else
         STEPPER_MOTOR_SERVER
     )
-
-    config = yield protocol.sendCommand('get-configuration')
-    for id in config.keys():
-        groupBox = QtGui.QGroupBox(config[id]['name'])
-        gLayout = QtGui.QVBoxLayout()
-        groupBox.setLayout(gLayout)
-        gLayout.addWidget(
-            StepperMotorWidget(
-                ChunkedStepperMotorClient(
-                    protocol,
-                    id
-                )
-            )
-        )
-        layout.addWidget(groupBox)
-
-    def onConnectionLost(reason):
-        if reactor.running: 
-            QtGui.QMessageBox.information(widget,'connection lost','connect to server terminated. program quitting.')
-            widget.close()
-            reactor.stop()
-            protocol.__class__.connectionLost(protocol,reason)
-
-    protocol.connectionLost = onConnectionLost
+    widget = StepperMotorWidget(protocol)
+    container.append(widget)    
+    widget.setWindowTitle('%s stepper motor client' % ('debug' if debug else 'real'))    
 
 if __name__ == '__main__':
     from twisted.internet import reactor
