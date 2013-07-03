@@ -33,12 +33,11 @@ class IntervalScanInput(AgentScanInput):
             self.position = self.start
         elif self.position == self.stop:
             self.position = None
-        elif (self.position < self.stop) is not polarity:
-            self.position = None
         else:
             self.position += self.step * (1 if polarity else -1)
-        return self.position
-    
+            if (self.position < self.stop) is not polarity:
+                self.position = self.stop
+        return self.position 
     
     def reset(self):
         self.position = None
