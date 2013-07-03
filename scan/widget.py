@@ -167,6 +167,12 @@ def test():
         qt4reactor.install()
     ## BOILERPLATE ##
 
+    #create the widget name even if you're not using it so that onStepped doesn't error
+    listScanInputWidget = None  
+    def log(x): print x
+    
+    
+    
     #configure a layout for the plot widget & controls to go side by side on
     widget = QtGui.QWidget()
     widget.show()
@@ -185,12 +191,25 @@ def test():
     cpLayout = QtGui.QVBoxLayout()
     controlPanel.setLayout(cpLayout)
 
-    
-    #crease a list scan input
-    listScanInput = ListScanInput(lambda(x):x,None)
-    
+    #create a scanToggleObject
     scanToggle = ScanToggleObject()
     
+    
+    #create a list scan input & widget
+    listScanInput = ListScanInput(lambda(x):x,None)
+    listScanInputWidget = ListScanInputWidget(listScanInput)
+    cpLayout.addWidget(listScanInputWidget)
+    scanToggle.toggled.connect(
+        compose(
+            listScanInputWidget.setDisabled,
+            scanToggle.isToggled
+        )
+    )
+    scanToggle.toggled.connect(partial(log,listScanInputWidget.listScanInput.positions))
+    scanToggle.setInput(listScanInput.next)
+    
+    '''
+    #create an interval scan input & widget
     intScanInput = IntervalScanInput(lambda(x):x,0,1000,10)
     scanToggle.setInput(intScanInput.next)
     intScanInputWidget = IntervalScanInputWidget(intScanInput,DEFAULTS)
@@ -201,16 +220,18 @@ def test():
             scanToggle.isToggled
         )
     )
+    '''
     
-    #create scan output
+    #create scan output, for now a sine wave, this is where voltmeter would go
     def output(): 
         result = sin(float(output.i)/output.res)
         output.i+=1
         return result
     output.i = 0
     output.res = 10
-        
     scanToggle.setOutput(output)
+    
+    
     # create a scan toggle
     x, y = [], []
     def onActivationRequested(x,y):
@@ -227,10 +248,12 @@ def test():
         )
     )
 
+    
     # create a toggle widget
     from qtutils.toggle import ToggleWidget
     cpLayout.addWidget(ToggleWidget(scanToggle))
 
+    
     # handle the stepped signal
     from ab.abbase import sleep
     @inlineCallbacks
@@ -241,39 +264,15 @@ def test():
         plot.setData(x,y)
         yield sleep(.05)
         scanToggle.completeStep()
-        #listScanInputWidget.updateQueue()
+        if listScanInputWidget is not None: listScanInputWidget.updateQueue()
     scanToggle.stepped.connect(onStepped)
 
-    def log(x): print x
+    #for debug purposes, connect to toggle signal
     scanToggle.toggled.connect(partial(log,'toggled'))
     scanToggle.toggleRequested.connect(partial(log,'toggleRequested'))
-    
 
-    #setPosition method takes a position, returns read position
-    #for testing purposes use: " return lambda(x): x "
-
-    #create a IntervalScanInput and associated widget
-
-    '''
-    listScanInputWidget = ListScanInputWidget(listScanInput)
-    cpLayout.addWidget(listScanInputWidget)
-    scanToggle.toggled.connect(
-        compose(
-            listScanInputWidget.loadPosListButton.setDisabled,
-            scanToggle.isToggled
-        )
-    )
-    scanToggle.toggled.connect(
-        compose(
-            listScanInputWidget.clrQueueButton.setDisabled,
-            scanToggle.isToggled
-        )
-    )
-    scanToggle.toggled.connect(partial(log,listScanInputWidget.listScanInput.positions))
-    '''
     
-    
-    #add the control panel to the plot window layout
+    #add the control panel to the window and execute
     layout.addWidget(controlPanel)
    
     app.exec_()
