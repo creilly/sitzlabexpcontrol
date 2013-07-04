@@ -12,5 +12,5 @@ class LabelWidget(QtGui.QGroupBox):
             self.setLayout(contents)
         elif isinstance(contents,QtGui.QWidget):
             l = QtGui.QVBoxLayout()
-            l.addWidget(widget)
-            g.setLayout(l)
+            l.addWidget(contents)
+            self.setLayout(l)
