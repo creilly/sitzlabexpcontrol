@@ -1,50 +1,70 @@
+## BOILERPLATE ##
+import sys
+from PySide import QtGui, QtCore
+if QtCore.QCoreApplication.instance() is None:    
+    app = QtGui.QApplication(sys.argv)
+    import qt4reactor
+    qt4reactor.install()
+## BOILERPLATE ##
+from goto import MIN, MAX, PRECISION, SLIDER, GotoWidget
 from config.steppermotor import PDL, KDP, BBO, SM_CONFIG
 from qtutils.dictcombobox import DictComboBox
+from qtutils.toggle import ToggleObject, ToggleWidget
+from qtutils.label import LabelWidget
+from qtutils.qled import LEDWidget
+from steppermotorclient import StepperMotorClient
+from twisted.internet.defer import inlineCallbacks
+from functools import partial
+from sitz import WAVELENGTH_SERVER, STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER, compose
 
 CRYSTALS = {
     id: SM_CONFIG[id]['name'] for id in (KDP,BBO)
 }
 
-MIN = 24100.0
-MAX = 24500.0
-STEP = .01
-
 class TrackingWidget(QtGui.QWidget):
-    def __init__(self,trackingProtocol,stepperMotorProtocol):
+    def __init__(self,wavelengthProtocol,stepperMotorProtocol):
+        QtGui.QWidget.__init__(self)
         
-        ########################
-        ## wavelength display ##
-        ########################
+        self.setLayout(QtGui.QVBoxLayout())
 
-        # initialize wavelength display
-        lcd = QtGui.QLCDNumber(7)
-        # get handle to pdl stepper motor
-        pdl = StepperMotorClient(PDL,stepperMotorProtocol)
-        # updates wavelength display with current wavelength
-        def updateWavelength():
-            wavelength = yield trackingProtocol.getWavelength()
-            lcd.display(wavelength)
-        # update display on pdl position change
-        pdl.addListener(pdl.POSITION,lambda _:updateWavelength())
-        # also update display on calibration changes
-        trackingProtocol.messageSubscribe(
-            'calibration-changed',
-            updateWavelegnth
+        ##########
+        ## goto ##
+        ##########
+        
+        gotoWidget = GotoWidget(
+            {
+                MIN:24100,
+                MAX:24500,
+                PRECISION:2,
+                SLIDER:2.0
+            }
         )
+        self.layout().addWidget(gotoWidget)
 
-        #####################
-        ## wavelength goto ##
-        #####################
-
-        gotoGB
-
-        gotoToggle = ToggleObject()
-        gotoToggle
+        # send command to tracking server when goto requested
+        @inlineCallbacks
+        def onGotoRequested(payload):
+            position, deferred = payload
+            yield wavelengthProtocol.sendCommand('set-wavelength',position)
+            deferred.callback(None)
+        gotoWidget.gotoRequested.connect(onGotoRequested)
         
+        # send cancel request when goto widget requests
+        gotoWidget.cancelRequested.connect(partial(wavelengthProtocol.sendCommand,'cancel-wavelength-set'))
+        
+        # set goto widget position on pdl position change
+        StepperMotorClient(stepperMotorProtocol,PDL).addListener(
+            StepperMotorClient.POSITION,
+            lambda _:wavelengthProtocol.sendCommand('get-wavelength').addCallback(gotoWidget.setPosition)
+        )
+        
+        # initialize position of goto widget
+        wavelengthProtocol.sendCommand('get-wavelength').addCallback(gotoWidget.setPosition)        
+                
         #########################
         ## crystal calibration ##
         #########################
-        
+
         tuningGB = QtGui.QGroupBox('tune crystal')
         tuningLayout = QtGui.QHBoxLayout()
         tuningGB.setLayout(tuningLayout)
@@ -66,11 +86,68 @@ class TrackingWidget(QtGui.QWidget):
         tuningButton.clicked.connect(
             compose(
                 partial(
-                    trackingProtocol.sendCommand,
-                    'configure-crystal'
+                    wavelengthProtocol.sendCommand,
+                    'calibrate-crystal'
                 ),
                 tuningCombo.getCurrentKey
             )
         )
 
+        self.layout().addWidget(LabelWidget('tuning',tuningLayout))
+
+        #####################
+        ## tracking toggle ##
+        #####################
+
+        toggleLayout = QtGui.QHBoxLayout()        
+
+        toggle = ToggleObject()
+
+        # toggle tracking server on toggle request
+        toggle.toggleRequested.connect(
+            partial(
+                wavelengthProtocol.sendCommand,
+                'toggle-tracking'
+            )
+        )
+
+        # toggle widget upon receipt of tracking change server notification
+        wavelengthProtocol.messageSubscribe(
+            'tracking-changed',
+            lambda _:toggle.toggle()
+        )
+
+        # create toggle widget
+        toggleLayout.addWidget(ToggleWidget(toggle,('track','stop')),1)        
+
+        # have pretty light
+        led = LEDWidget()
+        toggle.toggled.connect(led.toggle)
+
+        toggleLayout.addWidget(led)
+
+        self.layout().addWidget(LabelWidget('tracking',toggleLayout))
+
+        # init tracking toggle
+        def initTracking(tracking):
+            if tracking: toggle.toggle()            
+        wavelengthProtocol.sendCommand('is-tracking').addCallback(initTracking)
         
+@inlineCallbacks
+def main():
+    import sys
+    from ab.abclient import getProtocol
+    DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
+    wavelengthProtocol = yield getProtocol(WAVELENGTH_SERVER)
+    stepperMotorProtocol = yield getProtocol(
+        TEST_STEPPER_MOTOR_SERVER if DEBUG else STEPPER_MOTOR_SERVER
+    )
+    #memory management nonsense
+    container.append(TrackingWidget(wavelengthProtocol,stepperMotorProtocol))
+    container[0].show()
+
+if __name__ == '__main__':
+    from twisted.internet import reactor
+    container = []
+    main()
+    reactor.run()

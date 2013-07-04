@@ -8,17 +8,33 @@ if QtCore.QCoreApplication.instance() is None:
 ## BOILERPLATE ##
 from PySide.QtCore import Signal
 
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, Deferred
 
 from qtutils.toggle import ToggleWidget, ToggleObject
 from ab.abbase import sleep
 from functools import partial
-
 from sitz import compose
 
+'''
+
+general widget for controlling the position of something. \
+users request position changes by specifying a position with \
+the goto button/spin combo, or by tugging a slider.
+
+to use the widget, connect to the gotoRequested((@position,@deferred)) \
+signal, setting the specified @position and firing the @deferred \
+(passing None) when finished.
+
+in order for the slider to work properly it is necessary to update the \
+widget with the current position.
+
+The user can also cancel the goto request. manage this request by connecting \
+to the cancelRequested signal.
+
+'''
 MIN, MAX, PRECISION, SLIDER = 0,1,2,3
 class GotoWidget(QtGui.QWidget):
-    gotoRequested = Signal(float)
+    gotoRequested = Signal(object)
     cancelRequested = Signal()
     NUDGE = .3
     def __init__(
@@ -35,7 +51,7 @@ class GotoWidget(QtGui.QWidget):
         
         ## LCD ##
         
-        lcd = self.lcd = QtGui.QLCDNumber(6)
+        lcd = self.lcd = QtGui.QLCDNumber(8)
         lcd.setSegmentStyle(lcd.Flat)
         self.setPosition = lcd.display
 
@@ -49,7 +65,7 @@ class GotoWidget(QtGui.QWidget):
         spin.setMinimum(params[MIN])
         spin.setMaximum(params[MAX])
         spin.setSingleStep(10 ** (-1 * params[PRECISION]))
-        spin.setPrecision(params[PRECISION])
+        spin.setDecimals(params[PRECISION])
 
         layout.addRow('goto',spin)
 
@@ -57,14 +73,13 @@ class GotoWidget(QtGui.QWidget):
         layout.addRow(gotoToggleWidget)
 
         toggle.activationRequested.connect(toggle.toggle)
-        
-        toggle.activated.connect(
-            compose(
-                self.gotoRequested.emit,
-                spin.value
-            )
-        )
-
+        @inlineCallbacks
+        def onActivated():
+            d = Deferred()
+            self.gotoRequested.emit((spin.value(),d))
+            yield d
+            toggle.toggle()
+        toggle.activated.connect(onActivated)
         toggle.deactivationRequested.connect(self.cancelRequested.emit)
 
         ## SLIDER ##
@@ -73,11 +88,16 @@ class GotoWidget(QtGui.QWidget):
         def nudgeLoop():
             delta = slider.value()
             if delta:
-                delta = int(delta / abs(delta) * pow(SLIDER_RANGE,(float(abs(delta))-1.0)/99.0))                
-                yield self.gotoRequested(spin.value()+delta)
+                delta = int(delta / abs(delta) * pow(params[SLIDER],(float(abs(delta))-1.0)/99.0))
+                d = Deferred()
+                print lcd.value()
+                self.gotoRequested.emit((lcd.value()+delta,d))
+                yield d
             yield sleep(self.NUDGE)
             if slider.isSliderDown():
-                yield self.nudgeLoop()
+                yield nudgeLoop()
+            else:
+                self.cancelRequested.emit()
         slider.setMinimum(-100)
         slider.setMaximum(100)
         slider.setOrientation(QtCore.Qt.Horizontal)

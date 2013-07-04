@@ -14,6 +14,7 @@ from qtutils.qled import LEDWidget
 from operator import index
 from sitz import compose
 from ab.abclient import getProtocol
+from functools import partial
 
 PARAMS = {
     MIN:-99999,
@@ -36,22 +37,35 @@ class StepperMotorWidget(QtGui.QWidget):
                 reactor.stop()
                 protocol.__class__.connectionLost(protocol,reason)
         protocol.connectionLost = onConnectionLost
-        def onConfig(config):
+        @inlineCallbacks
+        def onInit():
+            config = yield protocol.sendCommand('get-configuration')
+            self.show()
             for id in config.keys():
                 layout = QtGui.QVBoxLayout()
                 gotoWidget = GotoWidget(PARAMS)
                 layout.addWidget(gotoWidget)
                 sm = ChunkedStepperMotorClient(protocol,id)
-                gotoWidget.gotoRequested.connect(
-                    compose(
-                        sm.setPosition,
-                        index
-                    )
-                )
+                position = yield sm.getPosition()
+                gotoWidget.setPosition(position)
+                @inlineCallbacks
+                def onGotoRequested(sm,payload):
+                    position, deferred = payload
+                    print position, deferred
+                    yield sm.setPosition(int(position))
+                    deferred.callback(None)
+                gotoWidget.gotoRequested.connect(partial(onGotoRequested,sm))
+                sm.addListener(sm.POSITION,gotoWidget.setPosition)
                 gotoWidget.cancelRequested.connect(sm.cancel)
                 rate = yield sm.getStepRate()
                 rateSpin = QtGui.QDoubleSpinBox()
                 layout.addWidget(LabelWidget('rate',rateSpin))
+                rateSpin.editingFinished.connect(
+                    compose(
+                        sm.setStepRate,
+                        rateSpin.value
+                    )
+                )
                 rateSpin.setValue(rate)
                 rateSpin.setRange(
                     RATE_MIN if rate > RATE_MIN else rate,
@@ -64,12 +78,8 @@ class StepperMotorWidget(QtGui.QWidget):
                         layout
                     )
                 )
-            self.show()
-        protocol.sendCommand('get-configuration').addCallback(onConfig)
-        def log(x):
-            print x
-            onConfig(x)
-        protocol.sendCommand('get-configuration').addCallback(log)
+        onInit()
+        
         
 @inlineCallbacks
 def main(container):
