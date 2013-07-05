@@ -13,7 +13,6 @@ XPM = 'xtals power meter'
 IONINTEG = 'ion integrator'
 KDPTHERM = 'kdp thermocouple'
 
-
 VM_CONFIG = {
     DYEPM:{
         'physicalChannel':'dev1/ai4',

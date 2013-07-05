@@ -11,6 +11,7 @@ from PySide.QtCore import Signal
 from twisted.internet.defer import inlineCallbacks, Deferred
 
 from qtutils.toggle import ToggleWidget, ToggleObject
+from qtutils.label import LabelWidget
 from ab.abbase import sleep
 from functools import partial
 from sitz import compose
@@ -47,17 +48,20 @@ class GotoWidget(QtGui.QWidget):
             }
     ):
         QtGui.QWidget.__init__(self)
-        layout = QtGui.QFormLayout()
+        layout = QtGui.QVBoxLayout()
         
         ## LCD ##
         
         lcd = self.lcd = QtGui.QLCDNumber(8)
+        lcd.setSmallDecimalPoint(True)
         lcd.setSegmentStyle(lcd.Flat)
         self.setPosition = lcd.display
 
-        layout.addRow('position',lcd)
+        layout.addWidget(LabelWidget('position',lcd),1)
 
         ## GOTO ##
+
+        gotoLayout = QtGui.QVBoxLayout()
 
         toggle = ToggleObject(False)
 
@@ -67,10 +71,10 @@ class GotoWidget(QtGui.QWidget):
         spin.setSingleStep(10 ** (-1 * params[PRECISION]))
         spin.setDecimals(params[PRECISION])
 
-        layout.addRow('goto',spin)
+        gotoLayout.addWidget(spin)
 
         gotoToggleWidget = ToggleWidget(toggle,('goto','stop'))
-        layout.addRow(gotoToggleWidget)
+        gotoLayout.addWidget(gotoToggleWidget)
 
         toggle.activationRequested.connect(toggle.toggle)
         @inlineCallbacks
@@ -90,7 +94,6 @@ class GotoWidget(QtGui.QWidget):
             if delta:
                 delta = int(delta / abs(delta) * pow(params[SLIDER],(float(abs(delta))-1.0)/99.0))
                 d = Deferred()
-                print lcd.value()
                 self.gotoRequested.emit((lcd.value()+delta,d))
                 yield d
             yield sleep(self.NUDGE)
@@ -112,6 +115,8 @@ class GotoWidget(QtGui.QWidget):
         toggle.activated.connect(partial(slider.setEnabled,False))
         toggle.deactivated.connect(partial(slider.setEnabled,True))
 
-        layout.addRow(slider)
+        gotoLayout.addWidget(slider)
+
+        layout.addWidget(LabelWidget('goto',gotoLayout))
 
         self.setLayout(layout)

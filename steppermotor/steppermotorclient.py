@@ -2,6 +2,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from scan import Scan
 from scan.input import IntervalScanInput
 from functools import partial
+from sitz import compose
 
 class StepperMotorClient:
     POSITION = 0
@@ -77,9 +78,12 @@ class ChunkedStepperMotorClient(StepperMotorClient):
             return not self.abort
         yield Scan(
             IntervalScanInput(
-                partial(
-                    StepperMotorClient.setPosition,
-                    self
+                compose(
+                    partial(
+                        StepperMotorClient.setPosition,
+                        self
+                    ),
+                    compose(int,round)
                 ),
                 start,
                 stop,

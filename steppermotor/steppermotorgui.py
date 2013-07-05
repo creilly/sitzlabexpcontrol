@@ -43,20 +43,22 @@ class StepperMotorWidget(QtGui.QWidget):
             self.show()
             for id in config.keys():
                 layout = QtGui.QVBoxLayout()
+
                 gotoWidget = GotoWidget(PARAMS)
                 layout.addWidget(gotoWidget)
-                sm = ChunkedStepperMotorClient(protocol,id)
-                position = yield sm.getPosition()
-                gotoWidget.setPosition(position)
+                sm = ChunkedStepperMotorClient(protocol,id)                
                 @inlineCallbacks
                 def onGotoRequested(sm,payload):
                     position, deferred = payload
-                    print position, deferred
+                    print position
                     yield sm.setPosition(int(position))
                     deferred.callback(None)
                 gotoWidget.gotoRequested.connect(partial(onGotoRequested,sm))
                 sm.addListener(sm.POSITION,gotoWidget.setPosition)
                 gotoWidget.cancelRequested.connect(sm.cancel)
+                position = yield sm.getPosition()
+                gotoWidget.setPosition(position)
+
                 rate = yield sm.getStepRate()
                 rateSpin = QtGui.QDoubleSpinBox()
                 layout.addWidget(LabelWidget('rate',rateSpin))

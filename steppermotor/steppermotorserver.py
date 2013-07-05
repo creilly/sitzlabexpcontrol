@@ -13,7 +13,7 @@ DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
     
 class StepperMotorWAMP(BaseWAMP):
     
-    UPDATE = 0.1 # duration between position notifications
+    UPDATE = .1 # duration between position notifications
     __wampname__ = 'stepper motor server'
     MESSAGES = {
         'position-changed':'notify when position changes',
@@ -50,6 +50,7 @@ class StepperMotorWAMP(BaseWAMP):
         ## initialize deferred that will fire at end of stepping journey
         d = Deferred()
         ## function that is called periodically to update listeners on journey progress
+        done = False
         def loop(_):
             self.dispatch(
                 'position-changed',
@@ -58,7 +59,7 @@ class StepperMotorWAMP(BaseWAMP):
                     self.getPosition(sm)
                 )
             )
-            if not d.called:
+            if not done:
                 sleep(self.UPDATE).addCallback(loop)
         ## start journey
         self.sms[sm].setPosition(position,partial(d.callback,None))
@@ -66,6 +67,7 @@ class StepperMotorWAMP(BaseWAMP):
         loop(None)
         ## wait until journey done
         yield d
+        done = True
         ## return ending position
         returnValue(self.getPosition(sm))
 
@@ -89,7 +91,7 @@ class StepperMotorWAMP(BaseWAMP):
         return self.config
 
 def main():
-    runServer(WAMP = StepperMotorWAMP, URL = STEPPER_MOTOR_SERVER if not DEBUG else TEST_STEPPER_MOTOR_SERVER,debug = True)
+    runServer(WAMP = StepperMotorWAMP, URL = STEPPER_MOTOR_SERVER if not DEBUG else TEST_STEPPER_MOTOR_SERVER,debug = False,outputToConsole=True)
 if __name__ == '__main__':
     main()
     reactor.run()

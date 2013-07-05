@@ -48,8 +48,8 @@ class WavelengthWAMP(BaseWAMP):
             )
         }        
         self.offsets = {}        
-        BaseWAMP.initializeWAMP(self)
-        wavelength = 24210.5 #yield getType(float,'enter surf wavelength: ')
+        wavelength = yield getType(float,'enter surf wavelength: ')
+        BaseWAMP.initializeWAMP(self)        
         yield self.calibrateWavelength(wavelength)        
 
     @command('calibrate-wavelength','recalibrate SURF wavelength')
@@ -126,7 +126,7 @@ class WavelengthWAMP(BaseWAMP):
         return self.tracking
         
 def main():
-    runServer(WAMP = WavelengthWAMP, URL = WAVELENGTH_SERVER, debug = DEBUG)
+    runServer(WAMP = WavelengthWAMP, URL = WAVELENGTH_SERVER, debug = True)
 if __name__ == '__main__':
     main()
     reactor.run()
