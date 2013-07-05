@@ -15,6 +15,9 @@ from qtutils.label import LabelWidget
 from ab.abbase import sleep
 from functools import partial
 from sitz import compose
+from os import path
+
+REFRESH_ICON = path.join(path.dirname(__file__),'refresh.png')
 
 '''
 
@@ -35,6 +38,7 @@ to the cancelRequested signal.
 '''
 MIN, MAX, PRECISION, SLIDER = 0,1,2,3
 class GotoWidget(QtGui.QWidget):
+    updateRequested = Signal()
     gotoRequested = Signal(object)
     cancelRequested = Signal()
     NUDGE = .3
@@ -51,13 +55,21 @@ class GotoWidget(QtGui.QWidget):
         layout = QtGui.QVBoxLayout()
         
         ## LCD ##
+
+        lcdLayout = QtGui.QHBoxLayout()
         
         lcd = self.lcd = QtGui.QLCDNumber(8)
         lcd.setSmallDecimalPoint(True)
         lcd.setSegmentStyle(lcd.Flat)
         self.setPosition = lcd.display
 
-        layout.addWidget(LabelWidget('position',lcd),1)
+        lcdLayout.addWidget(lcd,1)
+
+        refreshIcon = QtGui.QPushButton(QtGui.QIcon(REFRESH_ICON),'')
+        refreshIcon.clicked.connect(self.updateRequested.emit)
+        lcdLayout.addWidget(refreshIcon)
+
+        layout.addWidget(LabelWidget('position',lcdLayout))
 
         ## GOTO ##
 

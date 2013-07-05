@@ -55,6 +55,9 @@ class StepperMotorWidget(QtGui.QWidget):
                     deferred.callback(None)
                 gotoWidget.gotoRequested.connect(partial(onGotoRequested,sm))
                 sm.addListener(sm.POSITION,gotoWidget.setPosition)
+                def onUpdateRequested(stepperMotor,gw):
+                    stepperMotor.getPosition().addCallback(gw.setPosition)
+                gotoWidget.updateRequested.connect(partial(onUpdateRequested,sm,gotoWidget))
                 gotoWidget.cancelRequested.connect(sm.cancel)
                 position = yield sm.getPosition()
                 gotoWidget.setPosition(position)

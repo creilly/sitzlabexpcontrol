@@ -48,6 +48,11 @@ class TrackingWidget(QtGui.QWidget):
             yield wavelengthProtocol.sendCommand('set-wavelength',position)
             deferred.callback(None)
         gotoWidget.gotoRequested.connect(onGotoRequested)
+
+        # handle update requests (should the position fall out of sync)
+        def onUpdateReqested():
+            wavelengthProtocol.sendCommand('get-wavelength').addCallback(gotoWidget.setPosition)
+        gotoWidget.updateRequested.connect(onUpdateReqested)
         
         # send cancel request when goto widget requests
         gotoWidget.cancelRequested.connect(partial(wavelengthProtocol.sendCommand,'cancel-wavelength-set'))
