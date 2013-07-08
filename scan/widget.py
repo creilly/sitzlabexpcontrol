@@ -108,56 +108,46 @@ class IntervalScanInputWidget(QtGui.QWidget):
 
 
 class ListScanInputWidget(QtGui.QWidget):
-    def __init__(self,listScanInput):
+    def __init__(self,positions = None):
         QtGui.QWidget.__init__(self)
-        self.listScanInput = listScanInput
         layout = QtGui.QVBoxLayout()
         self.setLayout(layout)
-        positions = []
-        
-        def loadPosList():
-            fname, _ = QtGui.QFileDialog.getOpenFileName(self, 'Open file',
-                'Z:\stevens4\gitHub\sitzlabexpcontrol\scan')
-            fileObj = open(fname, 'r')
-            with fileObj:
-                plainText = fileObj.read()
-                try: 
-                    for pos in plainText.split('\n'): positions.append(float(pos.replace(',','')))
-                except ValueError:
-                    print 'somebody done messed up'
-                    msgBox = QtGui.QMessageBox()
-                    msgBox.setText("Error processing file - must be a list of floats on newlines.")
-                    msgBox.exec_()
-                    loadPosList()
-                    return
-                self.listScanInput.positions = positions
-                for pos in self.listScanInput.positions: self.queueWidget.addItem(str(pos))
-            fileObj.close()
-        
-        def clearQueue():
-            while positions: positions.pop()
-            while self.listScanInput.positions: self.listScanInput.positions.pop()
-            self.queueWidget.clear()
-        
         self.loadPosListButton = QtGui.QPushButton('load queue')
-        self.loadPosListButton.clicked.connect(loadPosList)
+        self.loadPosListButton.clicked.connect(
+            compose(
+                self.setPositions,
+                self.loadPositions
+            )
+        )
         layout.addWidget(self.loadPosListButton)
-        
+
         self.queueWidget = QtGui.QListWidget()
         self.queueWidget.setMaximumSize(200,150)
         layout.addWidget(self.queueWidget)
-        
-        self.clrQueueButton = QtGui.QPushButton('clear queue')
-        self.clrQueueButton.clicked.connect(clearQueue)
-        layout.addWidget(self.clrQueueButton)
-        
-    def updateQueue(self):
-        #pops the first elements off the queue to represent typical scan behavior
-        self.queueWidget.takeItem(0)
+        self.setPositions([] if positions is None else positions)
 
+    def setPositions(self,positions):
+        self.positions = list
+        for position in positions:
+            self.queueWidget.addItem(str(position))
 
-        
+    def loadPositions(self):
+        fname, result = QtGui.QFileDialog.getOpenFileName(
+            self,
+            'Open file',
+            'Z:\stevens4\gitHub\sitzlabexpcontrol\scan'
+        )
+        with open(fname, 'r') as fileObj:
+            try:
+                return [
+                    float(position.replace(',','')) for position in fileObj.read().split('\n')
+                ]
+            except ValueError:
+                QtGui.QMessageBox.warning('Error processing file - must be a list of newline separated numbers.')
+                return self.loadPositions()
 
+    def getInput(self,agent):
+        return ListScanInput(agent,self.positions)
             
 def test():
     ## BOILERPLATE ##

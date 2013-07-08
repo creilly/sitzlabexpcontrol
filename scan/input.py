@@ -21,6 +21,9 @@ class AgentScanInput:
     def nextPosition(self):
         return None
 
+    def setAgent(self,agent):
+        self.agent = agent
+
 class IntervalScanInput(AgentScanInput):
     def __init__(self,agent,start,stop,step):
         AgentScanInput.__init__(self,agent)
