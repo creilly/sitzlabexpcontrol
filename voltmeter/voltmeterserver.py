@@ -7,18 +7,15 @@ import daqmx
 from daqmx.task.ai import VoltMeter
 from sitz import VOLTMETER_SERVER, TEST_VOLTMETER_SERVER
 
-from config.voltmeter import VM_CONFIG
+from config.voltmeter import VM_CONFIG, VM_SERVER_CONFIG, VM_DEBUG_SERVER_CONFIG, VM_DEBUG_CONFIG
 
 import sys
 DEBUG = len(sys.argv) > 1
 TRIGGERING = not DEBUG
 
 
-URL = VOLTMETER_SERVER if not DEBUG else TEST_VOLTMETER_SERVER
+URL = VM_SERVER_CONFIG['url'] if not DEBUG else VM_DEBUG_SERVER_CONFIG['url']
 
-# default rates
-SAMPLING_RATE = 10000
-CALLBACK_RATE = 20
 
 class VoltMeterWAMP(BaseWAMP):
 
@@ -52,28 +49,32 @@ class VoltMeterWAMP(BaseWAMP):
     @command('get-channels','get list of active channels')
     def getChannels(self):
         return self.voltMeter.getChannels()
+    
     @command('get-sampling-rate')
     def getSamplingRate(self):
         return self.voltMeter.getSamplingRate()
+    
     @command('set-sampling-rate')
     def setSamplingRate(self,rate):
         self.voltMeter.setSamplingRate(rate)
+    
     @command('get-callback-rate')
     def getCallbackRate(self):
         return self.voltMeter.getCallbackRate()
+    
     @command('set-callback-rate')
     def setCallbackRate(self,rate):
         self.voltMeter.setCallbackRate(rate)
      
 def getTriggerSourceEdge():
-    return succeed(('/dev1/pfi0','falling'))
+    return succeed((VM_SERVER_CONFIG['trigChannel'],VM_SERVER_CONFIG['trigEdge']))
 
 def getVoltMeter():
     defaultVM = partial(VoltMeter, VM_CONFIG.values() 
-        if not DEBUG else ({'physicalChannel':'alpha/ai0'},))
+        if not DEBUG else VM_DEBUG_CONFIG.values())
     vm = defaultVM()
-    vm.setSamplingRate(SAMPLING_RATE)
-    vm.setCallbackRate(CALLBACK_RATE)
+    vm.setSamplingRate(VM_SERVER_CONFIG['samplingRate'])
+    vm.setCallbackRate(VM_SERVER_CONFIG['callbackRate'])
     return vm
     
 if __name__ == '__main__':

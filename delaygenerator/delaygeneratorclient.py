@@ -1,6 +1,7 @@
 from twisted.internet.defer import inlineCallbacks
-from ab.abbase import getFloat
 
+#instantiate this class to have access to methods that make calls to the server
+#this is how you make all interactions with the server
 class DelayGeneratorClient:
     def __init__(self,protocol):        
         self.protocol = protocol
@@ -14,13 +15,14 @@ class DelayGeneratorClient:
     def setDelayListener(self,listener):
         self.protocol.messageSubscribe('delay-changed',listener)
 
-    def removePositionListener(self,listener = None):
+    def removeDelayListener(self,listener = None):
         self.protocol.messageUnsubscribe('delay-changed',listener)
 
+        
 @inlineCallbacks
 def main():
     from ab.abclient import getProtocol    
-    from ab.abbase import selectFromList
+    from ab.abbase import selectFromList, getFloat
     from config.delaygenerator import GLOBAL_CONFIG
 
     serverURL = GLOBAL_CONFIG["url"]

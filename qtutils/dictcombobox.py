@@ -17,5 +17,8 @@ class DictComboBox(QtGui.QComboBox):
             self.choiceMade.emit(self.itemsDict.keys()[index])
         
         self.currentIndexChanged.connect(madeChoice)
-        
+    
+    def updateCombo(self,itemsDict):
+        self.clear()
+        for item in self.itemsDict.values(): self.addItem(item)
  

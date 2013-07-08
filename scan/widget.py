@@ -194,7 +194,7 @@ def test():
     #create a scanToggleObject
     scanToggle = ScanToggleObject()
     
-    
+    '''
     #create a list scan input & widget
     listScanInput = ListScanInput(lambda(x):x,None)
     listScanInputWidget = ListScanInputWidget(listScanInput)
@@ -220,7 +220,7 @@ def test():
             scanToggle.isToggled
         )
     )
-    '''
+
     
     #create scan output, for now a sine wave, this is where voltmeter would go
     def output(): 

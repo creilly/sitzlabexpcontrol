@@ -12,13 +12,13 @@ from time import clock
 from ab.abbase import selectFromList, sleep
 from functools import partial
 
-URL = VOLTMETER_SERVER
+URL = TEST_VOLTMETER_SERVER
 MAX = 200
 SLEEP = .1
-mapEnabled = False
 
 class VoltMeterWidget(QtGui.QWidget):
     def __init__(self,protocol):
+        print 'running'
         QtGui.QWidget.__init__(self)
         self.setLayout(QtGui.QVBoxLayout())
         plotter = PlotWidget()
@@ -60,6 +60,7 @@ class VoltMeterWidget(QtGui.QWidget):
             yield sleep(SLEEP)
             loop()
         loop()
+
 @inlineCallbacks
 def main():
     protocol = yield getProtocol(URL)
