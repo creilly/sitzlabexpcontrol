@@ -1,8 +1,5 @@
 from PySide import QtGui, QtCore
 
-
-
-
 #by stevens4, given a dictionary, populates a combo out of the values and emits
 #the associated key via the choiceMade signal.
 class DictComboBox(QtGui.QComboBox):
@@ -21,4 +18,8 @@ class DictComboBox(QtGui.QComboBox):
     def updateCombo(self,itemsDict):
         self.clear()
         for item in self.itemsDict.values(): self.addItem(item)
+
+    def getCurrentKey(self):
+        return self.itemsDict.keys()[self.currentIndex()]
+        
  

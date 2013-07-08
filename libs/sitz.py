@@ -94,12 +94,11 @@ def ConfigSectionMap(config, section):
     return dict
 
     
-#all of these urls are being exported to the appropriate config files    
 SITZ_RPC_URI = 'http://localhost/sitzRPC#'
 SITZ_MESSAGE_URI = 'http://localhost/sitzMESSAGE#'
 
-#TEST_VOLTMETER_SERVER = 'ws://localhost:8789'
-#VOLTMETER_SERVER = 'ws://172.17.13.201:8789'
+TEST_VOLTMETER_SERVER = 'ws://localhost:8789'
+VOLTMETER_SERVER = 'ws://172.17.13.201:8789'
 
 STEPPER_MOTOR_SERVER = 'ws://172.17.13.201:8787'
 TEST_STEPPER_MOTOR_SERVER = 'ws://localhost:8788'

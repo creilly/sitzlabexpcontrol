@@ -80,6 +80,9 @@ class StepperMotor(BaseStepperMotor):
 
     def _setPosition(self,position,callback):
         delta = position - self.getPosition()
+        if delta is 0:
+            self.onPositionSet(callback)
+            return
         direction = self.FORWARDS if delta > 0 else self.BACKWARDS
         if direction is not self.direction:
             self.doTask.writeState(

@@ -1,9 +1,11 @@
 from PySide import QtGui, QtCore
 from functools import partial
 import sys
+from os import path
 
-LED_ON = 'led_on.png'
-LED_OFF = 'led_off.png'
+fullPath = partial(path.join,path.dirname(__file__))
+LED_ON = fullPath('led_on.png')
+LED_OFF = fullPath('led_off.png')
 
 class LEDWidget(QtGui.QLabel):
 

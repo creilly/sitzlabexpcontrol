@@ -14,6 +14,7 @@ IONINTEG = 'ion integrator'
 KDPTHERM = 'kdp thermocouple'
 DEV0 = 'virtual analog input'
 
+
 VM_SERVER_CONFIG = {
     'url':'ws://172.17.13.201:8789',
     'samplingRate':10000,
@@ -34,6 +35,7 @@ VM_DEBUG_CONFIG = {
         'maxVal':5.0
         }
     }
+
 
 VM_CONFIG = {
     DYEPM:{
