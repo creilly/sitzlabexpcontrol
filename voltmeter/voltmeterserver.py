@@ -13,9 +13,7 @@ import sys
 DEBUG = len(sys.argv) > 1
 TRIGGERING = not DEBUG
 
-
 URL = VM_SERVER_CONFIG['url'] if not DEBUG else VM_DEBUG_SERVER_CONFIG['url']
-
 
 class VoltMeterWAMP(BaseWAMP):
 
@@ -39,7 +37,7 @@ class VoltMeterWAMP(BaseWAMP):
 
     def onVoltages(self,voltages):
         self.voltages = voltages
-        self.voltMeter.startSampling() 
+        self.voltMeter.startSampling()
         self.dispatch('voltages-acquired',voltages)
 
     @command('get-voltages','returns most recently measured voltages')
@@ -78,5 +76,5 @@ def getVoltMeter():
     return vm
     
 if __name__ == '__main__':
-    runServer(WAMP = VoltMeterWAMP,debug=DEBUG,URL=URL,outputToConsole=True)
+    runServer(WAMP=VoltMeterWAMP,debug=False,URL=URL,outputToConsole=True)
     reactor.run()

@@ -77,31 +77,34 @@ class IntervalScanInputWidget(QtGui.QWidget):
             ATTRIBUTE: 'step'
         }
     }
-    def __init__(self,intervalScanInput,defaults):
+    def __init__(self,ranges):
         QtGui.QWidget.__init__(self)
-        self.input = intervalScanInput
         layout = QtGui.QFormLayout()
         self.setLayout(layout)
         for id in self.PROPERTIES:
             spin = QtGui.QSpinBox()
-            spin.setRange(*defaults[id])
+            spin.setRange(*ranges[id])
             spin.valueChanged.connect(
                 partial(
                     setattr,
-                    intervalScanInput,
+                    self,
                     self.PROPERTIES[id][self.ATTRIBUTE]
                 )
             )
-            spin.setValue(
-                getattr(
-                    intervalScanInput,
-                    self.PROPERTIES[id][self.ATTRIBUTE]
-                )
-            )
+            setattr(self,self.PROPERTIES[id][self.ATTRIBUTE],spin.value())
             layout.addRow(
                 self.PROPERTIES[id][self.NAME],
                 spin
             )
+    def getInput(self,agent):
+        return IntervalScanInput(
+            agent,
+            **{
+                attr:getattr(self,attr) for attr in (
+                    d[self.ATTRIBUTE] for d in self.PROPERTIES.values()
+                )
+            }
+        )
 
 
 class ListScanInputWidget(QtGui.QWidget):

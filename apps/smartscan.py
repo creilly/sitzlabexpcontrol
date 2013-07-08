@@ -14,7 +14,7 @@ from qtutils.dictcombobox import DictComboBox
 
 from functools import partial
 
-from sitz import compose
+from sitz import compose, STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER
 
 from scan import Scan
 
@@ -25,12 +25,17 @@ from voltmeter.voltmeterclient import VoltMeterClient
 
 from ab.abclient import getProtocol    
 
-from config.steppermotor import SM_CONFIG
+from config.steppermotor import SM_CONFIG, KDP, BBO, PDL
 from config.voltmeter import VM_SERVER_CONFIG, VM_DEBUG_SERVER_CONFIG
 from config.scantypes import SCAN_TYPES
 
-DEFAULTS = [(-50000,50000),(-50000,50000),(1,1000)]
+MAX = 99999
+MIN_STEP = 1
+MAX_STEP = 1000
 
+DEFAULTS = [(-1 * MAX, MAX),(-1 * MAX, MAX),(MIN_STEP,MAX_STEP)]
+
+DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 
 '''
 created by stevens4 on 2013/06/27
@@ -40,16 +45,43 @@ positions on a stepper motor, eg. SmartScan of PDL while observing
 ion signal
 
 '''
+# @inlineCallbacks
+# def pollVMServer(serverURL):
+    # protocol = yield getProtocol(serverURL)
+    # client = VoltMeterClient(protocol)
+    # vmNameList = yield client.getChannels()
+    # vmDict = {' ':' '}
+    # for vm in vmNameList: vmDict[vm] = vm
+    # returnValue(vmDict)
 
+
+@inlineCallbacks
 def SmartScanGUI():
-
+    print (VM_DEBUG_SERVER_CONFIG if DEBUG else VM_SERVER_CONFIG)['url']
+    vmProtocol = yield getProtocol(
+        (VM_DEBUG_SERVER_CONFIG if DEBUG else VM_SERVER_CONFIG)['url']
+    )
+    smProtocol = yield getProtocol(
+        TEST_STEPPER_MOTOR_SERVER if DEBUG else STEPPER_MOTOR_SERVER 
+    )
+    class StepperMotorAgent:
+        def __init__(self,protocol,stepperMotor=SM_CONFIG.keys()[0]):
+            self.protocol = protocol
+            self.stepperMotor = stepperMotor
+        def setPosition(self,position):
+            return self.protocol.sendCommand('set-position',self.stepperMotor,position)
+        def setStepperMotor(self,stepperMotor):
+            self.stepperMotor = stepperMotor
+        def getStepperMotor(self):
+            return self.stepperMotor
+    stepperMotorAgent = StepperMotorAgent(smProtocol)
     
     #configure a layout for the plot widget & controls to go side by side on
     widget = QtGui.QWidget()
+    container.append(widget)
     widget.show()
     layout = QtGui.QHBoxLayout()
     widget.setLayout(layout)
-
     
     # create a plot and associated widget
     from pyqtgraph import PlotWidget
@@ -70,46 +102,30 @@ def SmartScanGUI():
     scanTypesCombo = QtGui.QComboBox()
     scanTypesCombo.addItems(SCAN_TYPES.keys())
     cpLayout.addRow('configuration', scanTypesCombo)
-    
-
-    
+       
     #add a combobox for the stepper motors
-    smDict = {'pdl':'dye laser', 'kdp':'kdp xtal', 'bbo':'bbo xtal'}
+    smDict = {PDL:'dye laser', KDP:'kdp xtal', BBO:'bbo xtal'}
     smCombo = DictComboBox(smDict)
     cpLayout.addRow('stepper motor',smCombo)
     smCombo.choiceMade.connect(log)
     
-    
-    '''
-    def getVM():
-        vmServerURL = VM_DEBUG_SERVER_CONFIG['url']
-        protocol = yield getProtocol(vmServerURL)
-        vmp = yield getProtocol(protocol)
-        channels = yield vmp.sendCommand('get-channels')
-        return vmp
-    
-    vmp = getVM()
-    vmp.addCallback(log)
-    '''
-    
-    
     #add a combobox for the voltmeters populated by a server request result
-    def getVMDict():
-        d = Deferred()
-        vmServerURL = VM_DEBUG_SERVER_CONFIG['url']
-        protocol = yield getProtocol(vmServerURL)
-        client = VoltMeterClient(protocol)
-        list = client.getChannels()
-        self.d.callback(list)
-        return d
-        
-    getVM = getVMDict()
-    #getVM.addCallback(log)
-    
-    vmDictTemp = {'test1':'test vm 1','test2':'test vm 2','test3':'test vm 3'}
-    vmCombo = DictComboBox(vmDictTemp)
+    vmClient = VoltMeterClient(vmProtocol)
+    channels = yield vmClient.getChannels()
+    vmCombo = DictComboBox({channel:channel for channel in channels})
     cpLayout.addRow('voltmeter',vmCombo)
-    vmCombo.choiceMade.connect(log)
+    # vmCombo.choiceMade.connect(log)
+    # vmPoll.addCallback(vmCombo.updateCombo)
+    
+    def testUpdate():
+        dict = {'changed1':'changed1','changed2':'changed2'}
+        vmCombo.updateCombo(dict)
+
+    testUpdateButton = QtGui.QPushButton('test update')
+    testUpdateButton.clicked.connect(testUpdate)
+    cpLayout.addWidget(testUpdateButton)
+    
+    
     '''
     dict = {' ':' '}
         for vm in list: dict.add({vm:vm})
@@ -120,18 +136,21 @@ def SmartScanGUI():
     scanInputTabs = QtGui.QTabWidget()
     scanInputTabs.setTabPosition(QtGui.QTabWidget.West)
     cpLayout.addWidget(scanInputTabs)
-
     
-    #crease a list scan input & widget and put it on a scanInputTab
-    listScanInput = ListScanInput(lambda(x):x,None)
-    listScanInputWidget = ListScanInputWidget(listScanInput)
-    scanInputTabs.addTab(listScanInputWidget,'list')
+    INTERVAL, LIST = 0, 1
+    INPUTS = (INTERVAL,LIST)
 
-
-    #crease a interval scan input & widget and put it on a scanInputTab
-    intScanInput = IntervalScanInput(lambda(x):x,0,1000,10)
-    intScanInputWidget = IntervalScanInputWidget(intScanInput,DEFAULTS)
-    scanInputTabs.addTab(intScanInputWidget,'interval')
+    for inputType in INPUTS:
+        if inputType is LIST:
+            #create a list scan input & widget and put it on a scanInputTab
+            listScanInput = ListScanInput(stepperMotorAgent.setPosition,None)
+            listScanInputWidget = ListScanInputWidget(listScanInput)
+            scanInputTabs.addTab(listScanInputWidget,'list')
+        elif inputType is INTERVAL:
+            #create a interval scan input & widget and put it on a scanInputTab
+            # intScanInput = IntervalScanInput(stepperMotorAgent.setPosition,0,1000,10)
+            intScanInputWidget = IntervalScanInputWidget(DEFAULTS)
+            scanInputTabs.addTab(intScanInputWidget,'interval')
     
     '''
     scanToggle.setInput(intScanInput.next)
@@ -158,20 +177,20 @@ def SmartScanGUI():
     scanToggle.setOutput(output)
    
     
-    #depending on which input tab is active, set that as the scanToggle input
-    def switchInput(activeInput):
-        print activeInput
-        if activeInput == 'list':
-            scanToggle.setInput(listScanInput.next)
-        if activeInput == 'interval':
-            scanToggle.setInput(intScanInput.next)
-    scanInputTabs.currentChanged.connect(
-        compose(
-            switchInput,
-            scanInputTabs.tabText
-        )
-    )
-    scanInputTabs.currentChanged.emit(0)
+    # # depending on which input tab is active, set that as the scanToggle input
+    # def switchInput(activeInput):
+        # print activeInput
+        # if activeInput == 'list':
+            # scanToggle.setInput(listScanInput.next)
+        # if activeInput == 'interval':
+            # scanToggle.setInput(intScanInput.next)
+    # scanInputTabs.currentChanged.connect(
+        # compose(
+            # switchInput,
+            # scanInputTabs.tabText
+        # )
+    # )
+    # scanInputTabs.currentChanged.emit(0)
 
     
     #on start button click, clear data arrays & toggle scan
@@ -179,7 +198,26 @@ def SmartScanGUI():
     def onActivationRequested(x,y):
         while x: x.pop()
         while y: y.pop()
+        activeInputWidget = INPUTS[scanInputTabs.currentIndex()]
+        if activeInputWidget is INTERVAL:
+            scanToggle.setInput(intScanInputWidget.getInput(stepperMotorAgent.setPosition).next)
+        else:
+            scanToggle.setInput(listScanInput.next)
+        def output(channel,total):
+            output.count = 0
+            output.average = 0
+            d = Deferred()
+            def onVoltages(voltages):
+                output.average += voltages[channel]
+                output.count += 1
+                if output.count is total:
+                    vmClient.removeListener(onVoltages)
+                    d.callback(output.average / total)
+            vmClient.addListener(onVoltages)
+            return d
+        scanToggle.setOutput(partial(output,vmCombo.getCurrentKey(),shotsSpin.value()))
         scanToggle.toggle()
+        
     scanToggle.activationRequested.connect(
         partial(
             onActivationRequested,
@@ -227,12 +265,10 @@ def SmartScanGUI():
     #saveCSVButton.clicked.connect(saveCSVButFunc)
     cpLayout.addWidget(saveCSVButton)
     
-    
     #spectrum analyzer button to fit and return peaks
     analyzeButton = QtGui.QPushButton('analyze spectrum')
     #analyzeButton.clicked.connect(onAnalyze)
     cpLayout.addWidget(analyzeButton)
-        
     
     # handle the stepped signal
     from ab.abbase import sleep
@@ -246,21 +282,18 @@ def SmartScanGUI():
         if listScanInputWidget is not None: listScanInputWidget.updateQueue()
         scanToggle.completeStep()
     scanToggle.stepped.connect(onStepped)
-
         
     def log(x): print x
     scanToggle.toggled.connect(partial(log,'toggled'))
     scanToggle.toggleRequested.connect(partial(log,'toggleRequested'))
 
-    
     #add the control panel to the plot window layout
     layout.addWidget(controlPanel)
-   
-    app.exec_()
-
-
 
 if __name__ == '__main__':
+    from twisted.internet import reactor
+    container = []
     SmartScanGUI()
+    reactor.run()
     
     

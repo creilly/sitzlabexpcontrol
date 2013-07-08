@@ -17,7 +17,8 @@ class DictComboBox(QtGui.QComboBox):
     
     def updateCombo(self,itemsDict):
         self.clear()
-        for item in self.itemsDict.values(): self.addItem(item)
+        self.itemsDict = itemsDict
+        for item in itemsDict.values(): self.addItem(item)
 
     def getCurrentKey(self):
         return self.itemsDict.keys()[self.currentIndex()]

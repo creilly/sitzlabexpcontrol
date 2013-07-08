@@ -25,6 +25,8 @@ VM_SERVER_CONFIG = {
 
 VM_DEBUG_SERVER_CONFIG = {
     'url':'ws://localhost:8789',
+    'samplingRate':10000,
+    'callbackRate':10
 }
 
 VM_DEBUG_CONFIG = {
