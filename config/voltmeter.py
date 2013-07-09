@@ -38,7 +38,6 @@ VM_DEBUG_CONFIG = {
         }
     }
 
-
 VM_CONFIG = {
     DYEPM:{
         'physicalChannel':'dev1/ai4',

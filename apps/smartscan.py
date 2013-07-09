@@ -29,6 +29,8 @@ from config.steppermotor import SM_CONFIG, KDP, BBO, PDL
 from config.voltmeter import VM_SERVER_CONFIG, VM_DEBUG_SERVER_CONFIG
 from config.scantypes import SCAN_TYPES
 
+from steppermotor.steppermotorclient import ChunkedStepperMotorClient
+
 MAX = 99999
 MIN_STEP = 1
 MAX_STEP = 1000
@@ -45,7 +47,6 @@ positions on a stepper motor, eg. SmartScan of PDL while observing
 ion signal
 
 '''
-
 @inlineCallbacks
 def SmartScanGUI():
     vmProtocol = yield getProtocol(
@@ -74,12 +75,37 @@ def SmartScanGUI():
     layout.addLayout(cpLayout)
 
     # create dictionary of agents
+    SET_POSITION, CANCEL = 0,1
+    AGENT_CALLS = (SET_POSITION,CANCEL)
     agents = {
-        partial(smProtocol.sendCommand,'set-position',smID):SM_CONFIG[smID]['name'] for smID in SM_CONFIG
+        tuple(
+            ( 
+                {
+                    SET_POSITION:smClient.setPosition,
+                    CANCEL:smClient.cancel
+                }[agent_call] for agent_call in AGENT_CALLS
+            )
+        ):name        
+        for name, smClient in
+        (
+            (
+                SM_CONFIG[smID]['name'],
+                ChunkedStepperMotorClient(smProtocol,smID)
+            )
+            for smID in
+            SM_CONFIG.keys()
+        )
     }
     agents.update(
         {
-            partial(wlProtocol.sendCommand,'set-wavelength'):'surf'
+            tuple(
+                (
+                    {
+                        SET_POSITION:partial(wlProtocol.sendCommand,'set-wavelength'),
+                        CANCEL:partial(wlProtocol.sendCommand,'cancel-wavelength-set')
+                    }[agent_call] for agent_call in AGENT_CALLS
+                )
+            ):'surf'
         }
     )
 
@@ -127,7 +153,7 @@ def SmartScanGUI():
                     scanInputTabs.currentIndex()
                 ]
             ].getInput(
-                agentsCombo.getCurrentKey()
+                agentsCombo.getCurrentKey()[AGENT_CALLS.index(SET_POSITION)]
             ).next
         )
         def output(channel,total):
@@ -146,6 +172,9 @@ def SmartScanGUI():
         scanToggle.toggle()
         
     scanToggle.activationRequested.connect(partial(onActivationRequested,x,y))
+    def onDeactivationRequested():
+        agentsCombo.getCurrentKey()[AGENT_CALLS.index(CANCEL)]()
+    scanToggle.deactivationRequested.connect(onDeactivationRequested)
     
     #create a spinbox for the shots to average parameter
     shotsSpin = QtGui.QSpinBox()
@@ -155,12 +184,6 @@ def SmartScanGUI():
     # create a toggle widget
     from qtutils.toggle import ToggleWidget
     cpLayout.addWidget(ToggleWidget(scanToggle))
-    
-    #save button for use on plots with errorbars
-    def saveCSVButFunc():
-        measure = scanTypeCombo.currentText()
-        dataArray = np.asarray([self.x,self.y,self.yerr],dtype=np.dtype(np.float32))
-        saveCSV(measure,dataArray.T,DATAPATH)
 
     # plot on step completion
     def onStepped(data):

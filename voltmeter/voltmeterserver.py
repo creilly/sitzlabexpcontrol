@@ -10,10 +10,10 @@ from sitz import VOLTMETER_SERVER, TEST_VOLTMETER_SERVER
 from config.voltmeter import VM_CONFIG, VM_SERVER_CONFIG, VM_DEBUG_SERVER_CONFIG, VM_DEBUG_CONFIG
 
 import sys
-DEBUG = len(sys.argv) > 1
+DEBUG = len(sys.argv) > 1 and sys.argv == 'debug'
 TRIGGERING = not DEBUG
 
-URL = VM_SERVER_CONFIG['url'] if not DEBUG else VM_DEBUG_SERVER_CONFIG['url']
+URL = (VM_SERVER_CONFIG if not DEBUG else VM_DEBUG_SERVER_CONFIG)['url']
 
 class VoltMeterWAMP(BaseWAMP):
 
