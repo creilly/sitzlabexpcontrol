@@ -75,6 +75,7 @@ def SmartScanGUI():
     layout.addLayout(cpLayout)
 
     # create dictionary of agents
+    # <BLACK BOX>
     SET_POSITION, CANCEL = 0,1
     AGENT_CALLS = (SET_POSITION,CANCEL)
     agents = {
@@ -96,18 +97,24 @@ def SmartScanGUI():
             SM_CONFIG.keys()
         )
     }
+    @inlineCallbacks
+    def wavelengthAgent(position):
+        yield wlProtocol.sendCommand('set-wavelength',position)
+        wavelength = yield wlProtocol.sendCommand('get-wavelength')
+        returnValue(wavelength)
     agents.update(
         {
             tuple(
                 (
                     {
-                        SET_POSITION:partial(wlProtocol.sendCommand,'set-wavelength'),
+                        SET_POSITION:wavelengthAgent,
                         CANCEL:partial(wlProtocol.sendCommand,'cancel-wavelength-set')
                     }[agent_call] for agent_call in AGENT_CALLS
                 )
             ):'surf'
         }
     )
+    # </BLACK BOX>
 
     # create a dict combo box to allow user to select agent
     agentsCombo = DictComboBox(agents)
