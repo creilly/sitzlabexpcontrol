@@ -8,12 +8,7 @@ with the necessary parameters as key/val pairs in that dictionary
 
 '''
 
-DYEPM = 'dye power meter'
-XPM = 'xtals power meter'
-IONINTEG = 'ion integrator'
-KDPTHERM = 'kdp thermocouple'
-DEV0 = 'virtual analog input'
-
+DYEPM, XPM, IONINTEG, KDPTHERM, DEV0 = 0,1,2,3,4
 
 VM_SERVER_CONFIG = {
     'url':'ws://172.17.13.201:8789',
@@ -41,21 +36,21 @@ VM_DEBUG_CONFIG = {
 VM_CONFIG = {
     DYEPM:{
         'physicalChannel':'dev1/ai4',
-        'name':'gated integrator (dye)',
+        'name':'dye power',
         'minVal':0.0,
         'maxVal':5.0,
         'terminalConfig':'differential'
         },
     XPM:{
         'physicalChannel':'dev1/ai7',
-        'name':'xtals power meter',
+        'name':'crystals power',
         'minVal':0.0,
         'maxVal':0.1,
         'terminalConfig':'differential'
         },
     IONINTEG:{
         'physicalChannel':'dev1/ai6',
-        'name':'gated integrator (ions)',
+        'name':'mpc signal',
         'minVal':0.0,
         'maxVal':10.0,
         'terminalConfig':'default'
