@@ -39,25 +39,37 @@ class CrystalCalibrator(object):
         self.delta_o = delta_tilde - self.f(self.g(alpha_tilde))
 
 class KDPCrystalCalibrator(CrystalCalibrator):
+    A = -1063.3514072
+    B = -37.33554476
+    C = -.00087387543
+    J = .00060357878
     
+    
+    ''' old parameters
     A = -504.120788450589
     B = -33.1515246331159
     C = 0.005625477013309
     J = 0
+    '''
     
-    D = 0.02400960384
-    E = 24444.496
         
 
 class BBOCrystalCalibrator(CrystalCalibrator):
     #fit parameters in increasing order (0th to 3rd)
+    A = -4307.18196969
+    B = -140.63613325
+    C = .06216634761159
+    J = .00051704324296
+    
+    
+    
+    ''' old parameters
     A = -44424.4575132
     B = -143.3 #-138.667918180
     C = 0.0 #.0538565295334
     J = 0
-
-    D = 0.02400960384
-    E = 24224.1476
+    '''
+    
    
     ''' old parameters from a fit done 5/15/13
     A = -10335.4222677693
