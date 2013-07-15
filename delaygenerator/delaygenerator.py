@@ -14,6 +14,7 @@ Computer --USB--> arduino --ribbon--> M. Gostein's circuit --coax--> lasers
 '''
 
 import serial
+from time import sleep
 
 CLOCKPERIOD = 50 #in nanoseconds
 AD9501TIMECONST = .2 #in nanoseconds (eg. 200picoseconds)
@@ -25,6 +26,7 @@ class DelayGenerator:
        
     def writeToUSB(self,strToWrite):
         self.ser.write(strToWrite)
+        sleep(.01) #give the arduino 10milliseconds to respond, it is not instantaneous
         echo = self.ser.readline().replace('\r\n','')
         if echo == strToWrite: return True
         if echo != strToWrite: return False

@@ -104,7 +104,8 @@ def SmartScanGUI():
     cpLayout.addRow('configuration', scanTypesCombo)
        
     #add a combobox for the stepper motors
-    smDict = {PDL:'dye laser', KDP:'kdp xtal', BBO:'bbo xtal'}
+    smDict = {PDL:'dye laser (steps)', PDLwave:'dye laser (wavelength)', 
+        KDP:'kdp xtal', BBO:'bbo xtal'}
     smCombo = DictComboBox(smDict)
     cpLayout.addRow('stepper motor',smCombo)
     smCombo.choiceMade.connect(log)
@@ -198,6 +199,7 @@ def SmartScanGUI():
     def onActivationRequested(x,y):
         while x: x.pop()
         while y: y.pop()
+        stepperMotorAgent.setStepperMotor(smCombo.getCurrentKey())
         activeInputWidget = INPUTS[scanInputTabs.currentIndex()]
         if activeInputWidget is INTERVAL:
             scanToggle.setInput(intScanInputWidget.getInput(stepperMotorAgent.setPosition).next)

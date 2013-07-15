@@ -1,4 +1,21 @@
 # SEE LAB NOTEBOOK CR-1-51 for decoding of symbols
+'''
+this, chris, is what we call a block comment, so we don't have to go dig out CR-1-51
+
+alpha := laser counter
+alpha_o := laser counter offset
+beta := dye wavelength dial minus offset <- the offset changes only when server is started
+gamma := crystal angle
+delta := crystal counter
+delta := crystal counter offset <- this changes when you 'set tuned'
+
+d := ratio of dye wavelength dial to laser counter
+
+f: gamma(beta) = A + B*beta + C*beta^2 + J*beta^3
+g: beta(alpha) = d*(alpha - alpha_o)
+h: delta(gamma) = gamma + delta_o
+
+'''
 class CrystalCalibrator(object):
     A = 0.0
     B = 42.0
@@ -28,6 +45,16 @@ class CrystalCalibrator(object):
         
     def h(self,gamma):
         return gamma + self.delta_o
+        
+    def lookupTable(self,beta)
+        try:
+            return self.lookupTable[beta]
+        except KeyError:
+            deltas = []
+            for known in self.lookuptable.keys(): deltas.append(known-beta)
+            
+            lowerBound, upperBound = deltas[0]+beta, deltas[1]+beta
+            
 
     def calibrateDye(self,point):
         alpha_bar, beta_bar_prime = point
