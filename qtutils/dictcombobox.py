@@ -10,10 +10,10 @@ class DictComboBox(QtGui.QComboBox):
         QtGui.QComboBox.__init__(self)
         for item in self.itemsDict.values(): self.addItem(item)
  
-        def madeChoice(index):
-            self.choiceMade.emit(self.itemsDict.keys()[index])
+        def onCurrentIndexChanged(index):
+            self.currentKeyChanged.emit(self.itemsDict.keys()[index])
         
-        self.currentIndexChanged.connect(madeChoice)
+        self.currentIndexChanged.connect(onCurrentIndexChanged)
     
     def updateCombo(self,itemsDict):
         self.clear()
