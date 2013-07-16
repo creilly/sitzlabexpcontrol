@@ -7,15 +7,18 @@ alpha_o := laser counter offset
 beta := dye wavelength dial minus offset <- the offset changes only when server is started
 gamma := crystal angle
 delta := crystal counter
-delta := crystal counter offset <- this changes when you 'set tuned'
+delta_o := crystal counter offset <- this changes when you 'set tuned'
 
 d := ratio of dye wavelength dial to laser counter
 
-f: gamma(beta) = A + B*beta + C*beta^2 + J*beta^3
-g: beta(alpha) = d*(alpha - alpha_o)
-h: delta(gamma) = gamma + delta_o
+f: gamma(beta) = A + B*beta + C*beta^2 + J*beta^3   - given a pdl counter, compute crystal position
+g: beta(alpha) = d*(alpha - alpha_o)    - given a pdl counter, return the dial value
+h: delta(gamma) = gamma + delta_o      - given a crystal counter, return with an offset due to calibration
 
 '''
+
+from config.crystalsknownpositions import CC_LOOKUP_KDP, CC_LOOKUP_BBO
+
 class CrystalCalibrator(object):
     A = 0.0
     B = 42.0
@@ -27,6 +30,7 @@ class CrystalCalibrator(object):
     def __init__(self):        
         self.calibrateDye((0,24222))
         self.calibrateCrystal((0,0))
+        self.lookupTable = CC_LOOKUP_KDP
 
     def getPosition(self,alpha):
         return int(
@@ -38,7 +42,8 @@ class CrystalCalibrator(object):
         )
 
     def f(self,beta):
-        return self.A + self.B * beta + self.C * (beta ** 2) + self.J * (beta ** 3)
+        return self.searchLookupTable(beta)
+        #return self.A + self.B * beta + self.C * (beta ** 2) + self.J * (beta ** 3)
 
     def g(self,alpha):
         return self.D * (alpha - self.alpha_o)
@@ -46,26 +51,48 @@ class CrystalCalibrator(object):
     def h(self,gamma):
         return gamma + self.delta_o
         
-    def lookupTable(self,beta)
+    def searchLookupTable(self,beta):
+        dialValue = beta + self.E
         try:
-            return self.lookupTable[beta]
+            return self.lookupTable[dialValue]
         except KeyError:
-            deltas = []
-            for known in self.lookuptable.keys(): deltas.append(known-beta)
-            
-            lowerBound, upperBound = deltas[0]+beta, deltas[1]+beta
-            
+            lowMatch, highMatch = -99999, 99999
+            #search through lookupTable for closest low and high matched values
+            for key, value in self.lookupTable.items():
+                if key == 'zero': continue
+                diff = key - dialValue
+                if diff < 0 and diff > lowMatch:
+                    lowMatch = diff
+                    lowToUse = {}
+                    lowToUse[key] = value
+                if diff > 0 and diff < highMatch:
+                    highMatch = diff
+                    highToUse = {}
+                    highToUse[key] = value
+            if lowMatch == -99999 or highMatch == 99999:
+                print 'outside bounds of table! using 3rd order poly'
+                return self.f(self.g(dialValue))
+            #calculate the slope between these two closest points and return linearly interpolated result
+            slope = (highToUse.values()[0]-lowToUse.values()[0])/(highToUse.keys()[0]-lowToUse.keys()[0])
+            newPos = slope*(dialValue-self.E)
+            return self.h(newPos) #add crystal offset and return
 
     def calibrateDye(self,point):
+        #steps, dial = point
         alpha_bar, beta_bar_prime = point
+        #dial minus the universal offset E (typically 24200)
         beta_bar = beta_bar_prime - self.E
+        #steps offset defined to be steps minus (dial minus offset) scaled by steps per dial value
         self.alpha_o = alpha_bar - beta_bar / self.D
 
     def calibrateCrystal(self,point):
+        #dye counter, crystal counter = point
         alpha_tilde, delta_tilde = point
         self.delta_o = delta_tilde - self.f(self.g(alpha_tilde))
 
 class KDPCrystalCalibrator(CrystalCalibrator):
+    
+    self.lookupTable = CC_LOOKUP_KDP
     
     A = -504.120788450589
     B = -33.1515246331159
@@ -77,6 +104,9 @@ class KDPCrystalCalibrator(CrystalCalibrator):
         
 
 class BBOCrystalCalibrator(CrystalCalibrator):
+    
+    self.lookupTable = CC_LOOKUP_BBO
+    
     #fit parameters in increasing order (0th to 3rd)
     A = -44424.4575132
     B = -143.3 #-138.667918180
