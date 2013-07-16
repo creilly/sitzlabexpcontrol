@@ -26,12 +26,12 @@ VM_DEBUG_SERVER_CONFIG = {
 
 VM_DEBUG_CONFIG = {
     DEV0:{
-        'physicalChannel':'alpha/ai0',
+        'physicalChannel':'beta/ai0',
         'name':'virtual vm channel 1',
         'minVal':0.0,
         'maxVal':5.0
-        }
     }
+}
 
 VM_CONFIG = {
     DYEPM:{

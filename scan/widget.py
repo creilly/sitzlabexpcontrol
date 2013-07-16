@@ -63,6 +63,8 @@ class ScanToggleObject(ToggleObject):
 class IntervalScanInputWidget(QtGui.QWidget):
     START,STOP,STEP = 0,1,2
     NAME, ATTRIBUTE = 0,1
+    MIN, MAX, PRECISION = 0,1,2
+    PARAMETERS = (MIN,MAX,PRECISION)
     PROPERTIES = {
         START:{
             NAME: 'begin',
@@ -77,13 +79,13 @@ class IntervalScanInputWidget(QtGui.QWidget):
             ATTRIBUTE: 'step'
         }
     }
-    def __init__(self,ranges):
+    def __init__(self):
         QtGui.QWidget.__init__(self)
         layout = QtGui.QFormLayout()
         self.setLayout(layout)
+        self.spins = {}
         for id in self.PROPERTIES:
-            spin = QtGui.QSpinBox()
-            spin.setRange(*ranges[id])
+            spin = QtGui.QDoubleSpinBox()
             spin.valueChanged.connect(
                 partial(
                     setattr,
@@ -96,6 +98,22 @@ class IntervalScanInputWidget(QtGui.QWidget):
                 self.PROPERTIES[id][self.NAME],
                 spin
             )
+            self.spins[id]=spin
+
+    def setParameter(self,spinID,parameter,value):
+        spin = self.spins[spinID]
+        if parameter is self.PRECISION:
+            spin.setSingleStep(10 ** (-1 * value))
+            spin.setDecimals(value)
+        else:
+            getattr(
+                spin,
+                {
+                    self.MIN:'setMinimum',
+                    self.MAX:'setMaximum'
+                }[parameter]
+            )(value)
+                               
     def getInput(self,agent):
         return IntervalScanInput(
             agent,
@@ -105,7 +123,6 @@ class IntervalScanInputWidget(QtGui.QWidget):
                 )
             }
         )
-
 
 class ListScanInputWidget(QtGui.QWidget):
     def __init__(self,positions = None):

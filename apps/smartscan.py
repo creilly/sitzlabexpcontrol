@@ -31,12 +31,6 @@ from config.scantypes import SCAN_TYPES
 
 from steppermotor.steppermotorclient import ChunkedStepperMotorClient
 
-MAX = 99999
-MIN_STEP = 1
-MAX_STEP = 1000
-
-INTERVAL_DEFAULTS = [(-1 * MAX, MAX),(-1 * MAX, MAX),(MIN_STEP,MAX_STEP)]
-
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 
 '''
@@ -49,6 +43,7 @@ ion signal
 '''
 @inlineCallbacks
 def SmartScanGUI():
+    
     vmProtocol = yield getProtocol(
         (VM_DEBUG_SERVER_CONFIG if DEBUG else VM_SERVER_CONFIG)['url']
     )
@@ -74,25 +69,43 @@ def SmartScanGUI():
     cpLayout = QtGui.QFormLayout()
     layout.addLayout(cpLayout)
 
+    #add a combobox for the voltmeters populated by a server request result
+    vmClient = VoltMeterClient(vmProtocol)
+    channels = yield vmClient.getChannels()
+    vmCombo = DictComboBox({channel:channel for channel in channels})
+    cpLayout.addRow('voltmeter',vmCombo)
+
     # create dictionary of agents
     # <BLACK BOX>
-    SET_POSITION, CANCEL = 0,1
-    AGENT_CALLS = (SET_POSITION,CANCEL)
+    A_KDP, A_BBO, A_PDL, A_SURF = 0,1,2,3
+    AGENTS = (A_KDP,A_BBO,A_PDL,A_SURF)
+    SET_POSITION, GET_POSITION, CANCEL, PARAMETERS, NAME = 0,1,2,3,4
+    ISIW = IntervalScanInputWidget
     agents = {
-        tuple(
-            ( 
-                {
-                    SET_POSITION:smClient.setPosition,
-                    CANCEL:smClient.cancel
-                }[agent_call] for agent_call in AGENT_CALLS
-            )
-        ):name        
-        for name, smClient in
+                 {
+                     KDP:A_KDP,
+                     BBO:A_BBO,
+                     PDL:A_PDL
+                 }[smID]:{
+                     SET_POSITION:compose(
+                         smClient.setPosition,
+                         compose(
+                             int,
+                             round
+                         )
+                     ),
+                     GET_POSITION:smClient.getPosition,
+                     CANCEL:smClient.cancel,
+                     PARAMETERS:{
+                         ISIW.MIN:-99999,
+                         ISIW.MAX:99999,
+                         ISIW.PRECISION:0
+                     },
+                     NAME:SM_CONFIG[smID]['name']
+                 }
+        for smID, smClient in
         (
-            (
-                SM_CONFIG[smID]['name'],
-                ChunkedStepperMotorClient(smProtocol,smID)
-            )
+            (smID,ChunkedStepperMotorClient(smProtocol,smID))
             for smID in
             SM_CONFIG.keys()
         )
@@ -104,48 +117,51 @@ def SmartScanGUI():
         returnValue(wavelength)
     agents.update(
         {
-            tuple(
-                (
-                    {
-                        SET_POSITION:wavelengthAgent,
-                        CANCEL:partial(wlProtocol.sendCommand,'cancel-wavelength-set')
-                    }[agent_call] for agent_call in AGENT_CALLS
-                )
-            ):'surf'
+            A_SURF:{ 
+                SET_POSITION:wavelengthAgent,
+                GET_POSITION:partial(
+                    wlProtocol.sendCommand,
+                    'get-wavelength'
+                ),
+                CANCEL:partial(
+                    wlProtocol.sendCommand,
+                    'cancel-wavelength-set'
+                ),
+                PARAMETERS:{
+                    ISIW.MIN:24100.0,
+                    ISIW.MAX:24500.0,
+                    ISIW.PRECISION:2
+                },
+                NAME:'surf'
+            }
         }
     )
-    # </BLACK BOX>
-
-    # create a dict combo box to allow user to select agent
-    agentsCombo = DictComboBox(agents)
-    cpLayout.addRow('input',agentsCombo)
-    
-    #add a combobox for the voltmeters populated by a server request result
-    vmClient = VoltMeterClient(vmProtocol)
-    channels = yield vmClient.getChannels()
-    vmCombo = DictComboBox({channel:channel for channel in channels})
-    cpLayout.addRow('voltmeter',vmCombo)
+    # </BLACK BOX>    
     
     #create a tab widget for list scan & interval scan to go on
-    scanInputTabs = QtGui.QTabWidget()
-    scanInputTabs.setTabPosition(QtGui.QTabWidget.West)
-    cpLayout.addRow('scan range',scanInputTabs)
-    
-    INTERVAL, LIST = 0, 1
-    INPUTS = (INTERVAL,LIST)
-    inputWidgets = {
-        LIST:ListScanInputWidget(),
-        INTERVAL:IntervalScanInputWidget(INTERVAL_DEFAULTS)
-    }
-    for inputWidget in INPUTS:
-        scanInputTabs.addTab(
-            inputWidgets[inputWidget],
-            {
-                INTERVAL:'interval',
-                LIST:'list'
-            }[inputWidget]
-        )
-    
+    agentTabs = QtGui.QTabWidget()
+    agentTabs.setTabPosition(QtGui.QTabWidget.West)
+    cpLayout.addRow('',agentTabs)
+    for agentKey in AGENTS:
+        inputTabs = QtGui.QTabWidget()
+        intervalWidget = IntervalScanInputWidget()
+        for spin in ISIW.PARAMETERS:
+            intervalWidget.setParameter(spin,ISIW.PRECISION,agents[agentKey][PARAMETERS][ISIW.PRECISION])
+            if spin in (ISIW.START,ISIW.STOP):
+                for param in (ISIW.MIN,ISIW.MAX):
+                    intervalWidget.setParameter(spin,param,agents[agentKey][PARAMETERS][param])
+        listWidget = ListScanInputWidget()
+        INTERVAL, LIST = 0, 1
+        INPUTS = (INTERVAL,LIST)
+        for input in INPUTS:
+            inputTabs.addTab(
+                *{
+                    INTERVAL:(intervalWidget,'interval'),
+                    LIST:(listWidget,'list')
+                }[input]
+            )
+        agentTabs.addTab(inputTabs,agents[agentKey][NAME])
+
     #create a scan toggle
     scanToggle = ScanToggleObject()
     
@@ -155,12 +171,12 @@ def SmartScanGUI():
         while x: x.pop()
         while y: y.pop()
         scanToggle.setInput(
-            inputWidgets[
-                INPUTS[
-                    scanInputTabs.currentIndex()
-                ]
-            ].getInput(
-                agentsCombo.getCurrentKey()[AGENT_CALLS.index(SET_POSITION)]
+            agentTabs.currentWidget().currentWidget().getInput(
+                agents[
+                    AGENTS[
+                        agentTabs.currentIndex()
+                    ]
+                ][SET_POSITION]
             ).next
         )
         def output(channel,total):
@@ -180,9 +196,13 @@ def SmartScanGUI():
         
     scanToggle.activationRequested.connect(partial(onActivationRequested,x,y))
     def onDeactivationRequested():
-        agentsCombo.getCurrentKey()[AGENT_CALLS.index(CANCEL)]()
+        agents[
+            AGENTS[
+                agentTabs.currentIndex()
+            ]
+        ][CANCEL]()
     scanToggle.deactivationRequested.connect(onDeactivationRequested)
-    
+
     #create a spinbox for the shots to average parameter
     shotsSpin = QtGui.QSpinBox()
     shotsSpin.setRange(1,10000)
