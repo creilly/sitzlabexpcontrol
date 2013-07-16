@@ -10,10 +10,11 @@ from sitz import VOLTMETER_SERVER, TEST_VOLTMETER_SERVER
 from config.voltmeter import VM_CONFIG, VM_SERVER_CONFIG, VM_DEBUG_SERVER_CONFIG, VM_DEBUG_CONFIG
 
 import sys
-DEBUG = len(sys.argv) > 1
+DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
+print 'debug: %s' % DEBUG
 TRIGGERING = not DEBUG
 
-URL = VM_SERVER_CONFIG['url'] if not DEBUG else VM_DEBUG_SERVER_CONFIG['url']
+URL = (VM_SERVER_CONFIG if not DEBUG else VM_DEBUG_SERVER_CONFIG)['url']
 
 class VoltMeterWAMP(BaseWAMP):
 
@@ -67,13 +68,20 @@ class VoltMeterWAMP(BaseWAMP):
 def getTriggerSourceEdge():
     return succeed((VM_SERVER_CONFIG['trigChannel'],VM_SERVER_CONFIG['trigEdge']))
 
+@inlineCallbacks
 def getVoltMeter():
-    defaultVM = partial(VoltMeter, VM_CONFIG.values() 
-        if not DEBUG else VM_DEBUG_CONFIG.values())
-    vm = defaultVM()
+    defaultVM = partial(
+        VoltMeter,
+        (
+            VM_CONFIG.values() 
+            if not DEBUG else
+            VM_DEBUG_CONFIG.values()
+        )
+    )
+    vm = yield defaultVM()
     vm.setSamplingRate(VM_SERVER_CONFIG['samplingRate'])
     vm.setCallbackRate(VM_SERVER_CONFIG['callbackRate'])
-    return vm
+    returnValue(vm)
     
 if __name__ == '__main__':
     runServer(WAMP=VoltMeterWAMP,debug=False,URL=URL,outputToConsole=True)
