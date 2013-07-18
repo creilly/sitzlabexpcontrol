@@ -16,6 +16,8 @@ from functools import partial
 
 from sitz import compose, STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER, WAVELENGTH_SERVER
 
+from filecreationmethods import saveCSV
+
 from scan import Scan
 
 from scan.widget import ScanToggleObject, IntervalScanInputWidget, ListScanInputWidget
@@ -30,6 +32,9 @@ from config.voltmeter import VM_SERVER_CONFIG, VM_DEBUG_SERVER_CONFIG
 from config.scantypes import SCAN_TYPES
 
 from steppermotor.steppermotorclient import ChunkedStepperMotorClient
+
+from math import pow
+from numpy import asarray
 
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 
@@ -60,7 +65,7 @@ def SmartScanGUI():
     widget.setLayout(layout)
     
     # create a plot and associated widget
-    from pyqtgraph import PlotWidget
+    from pyqtgraph import PlotWidget, ErrorBarItem
     plotWidget = PlotWidget()
     plot = plotWidget.plot()
     layout.addWidget(plotWidget,1)
@@ -167,18 +172,12 @@ def SmartScanGUI():
     scanToggle = ScanToggleObject()
     
     #on start button click, clear data arrays & toggle scan
-    x, y = [], []
+    x, y, yerr = [], [], []
     def onActivationRequested(x,y):
         while x: x.pop()
         while y: y.pop()
-<<<<<<< HEAD
-        stepperMotorAgent.setStepperMotor(smCombo.getCurrentKey())
-        activeInputWidget = INPUTS[scanInputTabs.currentIndex()]
-        if activeInputWidget is INTERVAL:
-            scanToggle.setInput(intScanInputWidget.getInput(stepperMotorAgent.setPosition).next)
-        else:
-            scanToggle.setInput(listScanInput.next)
-=======
+        while yerr: yerr.pop()
+        plotWidget.clear()
         scanToggle.setInput(
             agentTabs.currentWidget().currentWidget().getInput(
                 agents[
@@ -188,17 +187,21 @@ def SmartScanGUI():
                 ][SET_POSITION]
             ).next
         )
->>>>>>> eba4cefd31ff8778293c23fc4d98b4e145148437
+
         def output(channel,total):
             output.count = 0
-            output.average = 0
+            output.sum = 0
+            output.squaresSum = 0
             d = Deferred()
             def onVoltages(voltages):
-                output.average += voltages[channel]
+                output.sum += voltages[channel]
+                output.squaresSum += voltages[channel]**2
                 output.count += 1
                 if output.count is total:
+                    average = output.sum / total
+                    yerr.append(pow(output.squaresSum / total - average**2, .5)) 
                     vmClient.removeListener(onVoltages)
-                    d.callback(output.average / total)
+                    d.callback(average)
             vmClient.addListener(onVoltages)
             return d
         scanToggle.setOutput(partial(output,vmCombo.getCurrentKey(),shotsSpin.value()))
@@ -222,14 +225,30 @@ def SmartScanGUI():
     from qtutils.toggle import ToggleWidget
     cpLayout.addWidget(ToggleWidget(scanToggle))
 
+    
     # plot on step completion
     def onStepped(data):
         input, output = data
         x.append(input)
         y.append(output)
-        plot.setData(x,y)
+        plotWidget.plot(x,y)
+        errorBars = ErrorBarItem(x=asarray(x),y=asarray(y),top=asarray(yerr),bottom=asarray(yerr),beam=.05)
+        plotWidget.addItem(errorBars)
         scanToggle.completeStep()
     scanToggle.stepped.connect(onStepped)
+
+    #dropdown box for measurementType so saveCSV (below) uses correct directory
+    
+
+    #save button for use on plots with errorbars
+    import numpy as np
+    def saveCSVButFunc():
+         dataArray = asarray([x,y,yerr],dtype=np.dtype(np.float32))
+         saveCSV(measure,dataArray.T,DATAPATH)
+    saveCSVButton = QtGui.QPushButton('save (csv)')
+    saveCSVButton.clicked.connect(saveCSVButFunc)
+    cpLayout.addWidget(saveCSVButton)
+    
 
 if __name__ == '__main__':
     from twisted.internet import reactor

@@ -11,7 +11,7 @@ delta_o := crystal counter offset <- this changes when you 'set tuned'
 
 d := ratio of dye wavelength dial to laser counter
 
-f: gamma(beta) = A + B*beta + C*beta^2 + J*beta^3   - given a pdl counter, compute crystal position
+polyPredict: gamma(beta) = A + B*beta + C*beta^2 + J*beta^3   - given a pdl counter, compute crystal position
 g: beta(alpha) = d*(alpha - alpha_o)    - given a pdl counter, return the dial value
 h: delta(gamma) = gamma + delta_o      - given a crystal counter, return with an offset due to calibration
 
@@ -25,70 +25,63 @@ class CrystalCalibrator(object):
     C = 0.0
     J = 0.0
     
-    D = 0.02400960384
-    E = 24200.0
+    lookupTable = CC_LOOKUP_KDP
+    
+    E = 24200.0    #E is the dial value about which you are Taylor expanding for polyPredict
     def __init__(self):        
-        self.calibrateDye((0,24222))
-        self.calibrateCrystal((0,0))
-        self.lookupTable = CC_LOOKUP_KDP
+        self.calibrateCrystal((24200,0))
+        
 
-    def getPosition(self,alpha):
+    def getPosition(self,beta):
         return int(
             self.h(
                 self.f(
-                    self.g(alpha)
+                    beta
                 )
             )
         )
 
     def f(self,beta):
+        print beta
         return self.searchLookupTable(beta)
-        #return self.A + self.B * beta + self.C * (beta ** 2) + self.J * (beta ** 3)
 
-    def g(self,alpha):
-        return self.D * (alpha - self.alpha_o)
-        
+    def polyPredict(self,dialValue):
+        normDial = dialValue - self.E
+        return self.A + self.B * normDial + self.C * (normDial ** 2) + self.J * (normDial ** 3)
+  
+    #add offset to crystal counter representative of 'tuned position', set by calibrateCrystal
     def h(self,gamma):
         return gamma + self.delta_o
         
-    def searchLookupTable(self,beta):
-        dialValue = beta + self.E
-        try:
-            return self.lookupTable[dialValue]
-        except KeyError:
-            lowMatch, highMatch = -99999, 99999
-            #search through lookupTable for closest low and high matched values
-            for key, value in self.lookupTable.items():
-                if key == 'zero': continue
-                diff = key - dialValue
-                if diff < 0 and diff > lowMatch:
-                    lowMatch = diff
-                    lowToUse = {}
-                    lowToUse[key] = value
-                if diff > 0 and diff < highMatch:
-                    highMatch = diff
-                    highToUse = {}
-                    highToUse[key] = value
-            if lowMatch == -99999 or highMatch == 99999:
-                print 'outside bounds of table! using 3rd order poly'
-                return self.f(self.g(dialValue))
-            #calculate the slope between these two closest points and return linearly interpolated result
-            slope = (highToUse.values()[0]-lowToUse.values()[0])/(highToUse.keys()[0]-lowToUse.keys()[0])
-            newPos = slope*(dialValue-self.E)
-            return self.h(newPos) #add crystal offset and return
+    def searchLookupTable(self,dialValue):
+        lowMatch, highMatch = -99999, 99999
+        #search through lookupTable for closest low and high matched values
+        for knownDial, knownCrystal in self.lookupTable:
+            diff = knownDial - dialValue
+            if diff < 0 and diff > lowMatch:
+                lowMatch = diff
+                lowPoint = (knownDial,knownCrystal)
+            if diff > 0 and diff < highMatch:
+                highMatch = diff
+                highPoint = (knownDial,knownCrystal)
+            if diff == 0:
+                return knownCrystal
+        if lowMatch == -99999 or highMatch == 99999:
+            print 'outside bounds of table! reverting to poly'
+            return self.polyPredict(dialValue)
+        #calculate the slope between these two closest points and return linearly interpolated result
+        highDial, highCrystal = highPoint
+        lowDial, lowCrystal = lowPoint
+        slope = (highCrystal-lowCrystal)/(highDial-lowDial)
+        crystalValue = slope*(dialValue-lowDial) + lowCrystal
+        print lowPoint, highPoint
+        return crystalValue 
 
-    def calibrateDye(self,point):
-        #steps, dial = point
-        alpha_bar, beta_bar_prime = point
-        #dial minus the universal offset E (typically 24200)
-        beta_bar = beta_bar_prime - self.E
-        #steps offset defined to be steps minus (dial minus offset) scaled by steps per dial value
-        self.alpha_o = alpha_bar - beta_bar / self.D
-
+   
     def calibrateCrystal(self,point):
-        #dye counter, crystal counter = point
-        alpha_tilde, delta_tilde = point
-        self.delta_o = delta_tilde - self.f(self.g(alpha_tilde))
+        #surf wavelength, crystal counter = point
+        beta_tilde, delta_tilde = point
+        self.delta_o = delta_tilde - self.f(beta_tilde)
 
 class KDPCrystalCalibrator(CrystalCalibrator):
     A = -1063.3514072
@@ -96,7 +89,7 @@ class KDPCrystalCalibrator(CrystalCalibrator):
     C = -.00087387543
     J = .00060357878
     
-    self.lookupTable = CC_LOOKUP_KDP
+    lookupTable = CC_LOOKUP_KDP
     
     
     ''' old parameters
@@ -110,7 +103,7 @@ class KDPCrystalCalibrator(CrystalCalibrator):
 
 class BBOCrystalCalibrator(CrystalCalibrator):
     
-    self.lookupTable = CC_LOOKUP_BBO
+    lookupTable = CC_LOOKUP_BBO
     
     #fit parameters in increasing order (0th to 3rd)
     A = -4307.18196969

@@ -3,7 +3,7 @@ from ab.abclient import getProtocol
 from ab.abbase import getType
 from twisted.internet.defer  import Deferred, inlineCallbacks, returnValue
 from twisted.internet  import reactor
-from sitz import WAVELENGTH_SERVER, STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER 
+from sitz import WAVELENGTH_SERVER, TEST_WAVELENGTH_SERVER, STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER 
 from functools import partial
 from steppermotorclient import StepperMotorClient, ChunkedStepperMotorClient
 from tracking.crystalcalibrator import KDPCrystalCalibrator, BBOCrystalCalibrator
@@ -11,6 +11,8 @@ import sys
 from config.steppermotor import PDL, KDP, BBO
 
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
+URL = TEST_WAVELENGTH_SERVER if DEBUG else WAVELENGTH_SERVER
+
 
 STEPPER_MOTOR_KEYS = (PDL,KDP,BBO)
 
@@ -46,7 +48,7 @@ class WavelengthWAMP(BaseWAMP):
                 (KDP,KDPCrystalCalibrator),
                 (BBO,BBOCrystalCalibrator)
             )
-        }        
+        }       
         self.offsets = {}        
         wavelength = yield getType(float,'enter surf wavelength: ')
         BaseWAMP.initializeWAMP(self)        
@@ -64,9 +66,11 @@ class WavelengthWAMP(BaseWAMP):
     @inlineCallbacks
     def calibrateCrystal(self,id):
         pdlPosition = yield self.stepperMotors[PDL].getPosition()
+        wavelength = self.getWavelength(pdlPosition)
+        print wavelength
         crystalPosition = yield self.stepperMotors[id].getPosition()
-        self.calibrators[id].calibrateCrystal((pdlPosition,crystalPosition))
-
+        self.calibrators[id].calibrateCrystal((wavelength,crystalPosition))
+        
     @command('get-wavelength','get calibrated SURF wavelength')
     def _getWavelength(self):
         return self.stepperMotors[PDL].getPosition().addCallback(self.getWavelength)
@@ -94,7 +98,8 @@ class WavelengthWAMP(BaseWAMP):
         if self.tracking:
             positions.update(
                 {
-                    id:calibrator.getPosition(step)
+                    #id:calibrator.getPosition(step)
+                    id:calibrator.getPosition(wavelength)
                     for id,calibrator in
                     self.calibrators.items()
                 }
@@ -126,7 +131,7 @@ class WavelengthWAMP(BaseWAMP):
         return self.tracking
         
 def main():
-    runServer(WAMP = WavelengthWAMP, URL = WAVELENGTH_SERVER, debug = True)
+    runServer(WAMP = WavelengthWAMP, URL = URL, debug = True)
 if __name__ == '__main__':
     main()
     reactor.run()

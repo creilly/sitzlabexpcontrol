@@ -15,7 +15,7 @@ from qtutils.qled import LEDWidget
 from steppermotorclient import StepperMotorClient
 from twisted.internet.defer import inlineCallbacks
 from functools import partial
-from sitz import WAVELENGTH_SERVER, STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER, compose
+from sitz import WAVELENGTH_SERVER, TEST_WAVELENGTH_SERVER, STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER, compose
 
 CRYSTALS = {
     id: SM_CONFIG[id]['name'] for id in (KDP,BBO)
@@ -143,7 +143,7 @@ def main():
     import sys
     from ab.abclient import getProtocol
     DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
-    wavelengthProtocol = yield getProtocol(WAVELENGTH_SERVER)
+    wavelengthProtocol = yield getProtocol(TEST_WAVELENGTH_SERVER)
     stepperMotorProtocol = yield getProtocol(
         TEST_STEPPER_MOTOR_SERVER if DEBUG else STEPPER_MOTOR_SERVER
     )
