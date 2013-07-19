@@ -15,6 +15,11 @@ from time import clock
 from ab.abbase import selectFromList, sleep
 from functools import partial
 from pyqtgraph import PlotWidget
+import os.path
+from config.filecreation import POOHDATAPATH
+from filecreationmethods import filenameGen, checkPath
+import csv
+import datetime
 
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 URL = (VM_DEBUG_SERVER_CONFIG if DEBUG else VM_SERVER_CONFIG)['url']
@@ -28,6 +33,8 @@ class VoltMeterWidget(QtGui.QWidget):
         plotter = PlotWidget()
         self.plot = plotter.plot()
         self.layout().addWidget(plotter,1)
+        self.filename = None
+        self.fileObj = None
         
         voltages = [0] * MAX
         
@@ -37,18 +44,46 @@ class VoltMeterWidget(QtGui.QWidget):
             voltages.pop(0)
             voltages.append(datum)
             self.plot.setData(range(len(voltages)),voltages)
+            if self.filename is not None:
+                timeStamp = datetime.datetime.now() - self.startTime
+                timeStampStr = str(timeStamp.seconds)+'.'+str(timeStamp.microseconds/1000).zfill(3)
+                csvLine = timeStampStr+','+str(datum)+'\n'
+                self.fileObj.write(csvLine)
+
 
         controlPanel = QtGui.QHBoxLayout()
         controlPanel.addStretch(1)
 
-        combo = QtGui.QComboBox()
-        combo.currentIndexChanged[unicode].connect(
+        vmCombo = QtGui.QComboBox()
+        vmCombo.currentIndexChanged[unicode].connect(
             partial(setattr,self,'channel')
         )
-        combo.setCurrentIndex(0)
-        protocol.sendCommand('get-channels').addCallback(combo.addItems)
+        vmCombo.setCurrentIndex(0)
+        protocol.sendCommand('get-channels').addCallback(vmCombo.addItems)
 
-        controlPanel.addWidget(combo)
+        controlPanel.addWidget(vmCombo)
+
+        def recButFunc():
+            #if filename isn't set, initialize a file and filewriter to write to
+            if self.filename == None:
+                vmName = vmCombo.currentText()
+                subfolder = os.path.join('voltmeterLog',vmName)
+                relPath, self.filename = filenameGen(subfolder)
+                absPath = os.path.join(POOHDATAPATH,relPath)
+                checkPath(absPath)
+                self.filename = os.path.join(absPath,self.filename+'.csv')
+                self.fileObj = open(self.filename, 'wb')
+                self.startTime = datetime.datetime.now()
+                recordButton.setText('logging...')
+            #if there is a filename, close the file and set filename to none
+            else:
+                self.filename = None
+                self.fileObj.close()
+                recordButton.setText('start log')
+                
+        recordButton = QtGui.QPushButton('log')
+        recordButton.clicked.connect(recButFunc)
+        controlPanel.addWidget(recordButton)
 
         lcd = QtGui.QLCDNumber(5)
         lcd.setSegmentStyle(lcd.Flat)

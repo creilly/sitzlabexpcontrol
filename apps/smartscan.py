@@ -30,6 +30,7 @@ from ab.abclient import getProtocol
 from config.steppermotor import SM_CONFIG, KDP, BBO, PDL
 from config.voltmeter import VM_SERVER_CONFIG, VM_DEBUG_SERVER_CONFIG
 from config.scantypes import SCAN_TYPES
+from config.filecreation import POOHDATAPATH
 
 from steppermotor.steppermotorclient import ChunkedStepperMotorClient
 
@@ -177,15 +178,18 @@ def SmartScanGUI():
         while x: x.pop()
         while y: y.pop()
         while yerr: yerr.pop()
-        plotWidget.clear()
+        agent = agentTabs.currentWidget().currentWidget().getInput(
+            agents[
+                AGENTS[
+                    agentTabs.currentIndex()
+                ]
+            ][SET_POSITION]
+        ).next
+        def debugAgent():
+            print 'input'
+            return agent()
         scanToggle.setInput(
-            agentTabs.currentWidget().currentWidget().getInput(
-                agents[
-                    AGENTS[
-                        agentTabs.currentIndex()
-                    ]
-                ][SET_POSITION]
-            ).next
+            debugAgent
         )
 
         def output(channel,total):
@@ -202,11 +206,11 @@ def SmartScanGUI():
                     yerr.append(pow(output.squaresSum / total - average**2, .5)) 
                     vmClient.removeListener(onVoltages)
                     d.callback(average)
+                    print 'output'
             vmClient.addListener(onVoltages)
             return d
         scanToggle.setOutput(partial(output,vmCombo.getCurrentKey(),shotsSpin.value()))
-        scanToggle.toggle()
-        
+        scanToggle.toggle()    
     scanToggle.activationRequested.connect(partial(onActivationRequested,x,y))
     def onDeactivationRequested():
         agents[
@@ -228,9 +232,11 @@ def SmartScanGUI():
     
     # plot on step completion
     def onStepped(data):
+        print 'step'
         input, output = data
         x.append(input)
         y.append(output)
+        plotWidget.clear()
         plotWidget.plot(x,y)
         errorBars = ErrorBarItem(x=asarray(x),y=asarray(y),top=asarray(yerr),bottom=asarray(yerr),beam=.05)
         plotWidget.addItem(errorBars)
@@ -238,13 +244,17 @@ def SmartScanGUI():
     scanToggle.stepped.connect(onStepped)
 
     #dropdown box for measurementType so saveCSV (below) uses correct directory
-    
+    measureList = SCAN_TYPES.keys()
+    measureCombo = QtGui.QComboBox()
+    measureCombo.addItems(measureList)
+    cpLayout.addRow('measurement',measureCombo)
 
     #save button for use on plots with errorbars
     import numpy as np
     def saveCSVButFunc():
-         dataArray = asarray([x,y,yerr],dtype=np.dtype(np.float32))
-         saveCSV(measure,dataArray.T,DATAPATH)
+        measure = measureCombo.currentText()
+        dataArray = asarray([x,y,yerr],dtype=np.dtype(np.float32))
+        saveCSV(measure,dataArray.T,POOHDATAPATH)
     saveCSVButton = QtGui.QPushButton('save (csv)')
     saveCSVButton.clicked.connect(saveCSVButFunc)
     cpLayout.addWidget(saveCSVButton)

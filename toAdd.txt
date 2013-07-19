@@ -11,30 +11,10 @@ put input dropdown onto tabs: 'wavelength', 'delay'
 
 
 
-
-offsets
-kdp - -185
-bbo - -190
-
-
-as per lookup table [corrected for offset] (@250):
-kdp - -2095 
-bbo - -7670
-
-what tracking  gives me (@250):
-kdp - -2075
-bbo - -7509
-
-
-rescan (@250):
-kdp - -1980
-bbo - -7700
+-9240 ->-9384
+2060 ->2027
 
 
 
-heater on at 10:10am
-10:11 - 6.0 THG
-10:14 - 3.5
-10:19 - 0
-
-
+kdp: ????->1937->2137->2350
+bbo: ??? -> -654 -> -72->60
