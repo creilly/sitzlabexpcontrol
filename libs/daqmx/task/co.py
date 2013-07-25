@@ -6,6 +6,7 @@ from functools import partial
 from copy import copy
 
 class COTask(Task):
+    FINITE, CONTINUOUS = 0,1
     def __init__(self,name=None):
         super(COTask,self).__init__(name)
         self.busy = False 
@@ -73,6 +74,20 @@ class COTask(Task):
         )
         return highTime.value, lowTime.value
 
+    def getSampleMode(self):
+        sampleMode = c_int(0)
+        daqmx(
+            dll.DAQmxGetSampQuantSampMode,
+            (
+                self.handle,
+                byref(sampleMode)
+            )
+        )
+        return {
+            constants['DAQmx_Val_FiniteSamps']:self.FINITE,
+            constants['DAQmx_Val_ContSamps']:self.CONTINUOUS
+        }
+
     """
 
     write new pulse shape (time is a float in units of seconds)
@@ -80,10 +95,11 @@ class COTask(Task):
     """
     def configureTiming(self,highTime,lowTime):
         with self.lock:
-            if self.busy:
+            if self.busy and self.getSampleMode() is self.FINITE:
                 self.piggyBack(partial(self.configureTiming,highTime,lowTime))
-                return
-            self._configureTiming(highTime,lowTime)
+            else:
+                self._configureTiming(highTime,lowTime)
+
     def _configureTiming(self,highTime,lowTime):
         daqmx (
             dll.DAQmxSetCOPulseHighTime,
@@ -111,7 +127,7 @@ class COTask(Task):
         callback: callable to execute upon on task completion
     
     """
-    def generatePulses(self,numPulses,callback=lambda:None):
+    def generatePulses(self,numPulses=None,callback=lambda:None):
         if numPulses is 0: 
             callback()
             return
@@ -147,7 +163,7 @@ class COTask(Task):
                 if self.busy:
                     self._hooks.append(callback)
                 else:
-                    callback()                
+                    callback()
             return 0
 
         DAQmxDoneEventCallbackPtr = CFUNCTYPE(c_int, c_void_p, c_int, c_void_p)
@@ -164,23 +180,27 @@ class COTask(Task):
                 None
             )
         )
-        
-        daqmx(
-            dll.DAQmxRegisterDoneEvent,
-            (
-                self.handle,
-                0, #executed in thread
-                self.c_callback,
-                None
+        if numPulses is not None:
+            daqmx(
+                dll.DAQmxRegisterDoneEvent,
+                (
+                    self.handle,
+                    0, #executed in thread
+                    self.c_callback,
+                    None
+                )
             )
-        )
 
         daqmx(
             dll.DAQmxCfgImplicitTiming,
             (
                 self.handle,
-                constants['DAQmx_Val_FiniteSamps'],
-                c_uint64(numPulses)
+                constants[
+                    'DAQmx_Val_ContSamps'
+                    if numPulses is None else
+                    'DAQmx_Val_FiniteSamps'
+                ],
+                c_uint64(0 if numPulses is None else numPulses)
             )
         )
         
@@ -193,23 +213,96 @@ class COTask(Task):
             )
         )
 
+    def stop(self):
+        daqmx(
+            dll.DAQmxStopTask,
+            (
+                self.handle,
+            )
+        )
+
     def piggyBack(self,cb):
         self._hooks.append(cb)
- 
+
+class PulseWidthModulator(COTask):
+    def getFrequency(self):
+        return 1.0 / sum(self.getTimingConfiguration())
+    def getDutyCycle(self):
+        highTime, lowTime = self.getTimingConfiguration()
+        return highTime / (highTime + lowTime)
+    def setFrequency(self,frequency):
+        dutyCycle = self.getDutyCycle()
+        period = 1.0 / frequency
+        self.configureTiming(
+            dutyCycle * period,
+            (1.0 - dutyCycle) * period
+        )
+    def setDutyCycle(self,dutyCycle):
+        period = 1.0 / self.getFrequency()
+        self.configureTiming(
+            dutyCycle * period,
+            (1.0 - dutyCycle) * period
+        )
+
 if __name__ == '__main__':
-    t = COTask()
-    t.createChannel('dev3/ctr0')
-    print 'timing %f, %f' % t.getTimingConfiguration()
-    raw_input('generate 100 pulses then change timing and generate 100 more on callback')
-    def onPulsesGenerated():
-        print 'first callback'
-        def onPulsesGenerated():
-            print 'timing %f, %f' % t.getTimingConfiguration()
-            print 'second callback (all done)'
-        print 'timing %f, %f' % t.getTimingConfiguration()
-        t.generatePulses(100,onPulsesGenerated)
-    t.generatePulses(100,callback = onPulsesGenerated)
-    t.configureTiming(.002,.002)
-    t.generatePulses(100)
-    raw_input('waiting...')
-    
+    from daqmx import getPhysicalChannels, getDevices, CO
+    from ab.abbase import selectFromList, getType, getUserInput
+    from twisted.internet import reactor, defer
+    @defer.inlineCallbacks
+    def main():
+        t = PulseWidthModulator()
+        device = yield selectFromList(
+            getDevices(),
+            'select device'
+        )
+        channel = yield selectFromList(
+            getPhysicalChannels(device)[CO],
+            'select physical channel'
+        )
+        t.createChannel(channel)
+        frequency = yield getType(
+            float,
+            'enter frequency: '
+        )
+        t.setFrequency(frequency)
+        dutyCycle = yield getType(
+            float,
+            'enter duty cycle: '
+        )
+        t.setDutyCycle(dutyCycle)
+        yield getUserInput('press enter to start: ')
+        t.generatePulses()
+        while True:
+            FREQ, DUTY, QUIT = 'frequency', 'duty cycle', 'quit'
+            options = (FREQ,DUTY,QUIT)
+            option = yield selectFromList(
+                options,
+                'select command'
+            )
+            if option is QUIT:
+                break
+            else:
+                value = yield getType(
+                    float,
+                    'set new %s (%.2f): ' %
+                    (
+                        option,
+                        getattr(
+                            t,
+                            {
+                                FREQ:'getFrequency',
+                                DUTY:'getDutyCycle'
+                            }[option]
+                        )()
+                    )
+                )
+                getattr(
+                    t,
+                    {
+                        FREQ:'setFrequency',
+                        DUTY:'setDutyCycle'
+                    }[option]
+                )(value)            
+        t.stop()        
+    main()
+    reactor.run()
