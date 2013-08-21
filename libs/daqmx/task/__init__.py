@@ -6,7 +6,7 @@ abstract class from which tasks inherit
     name: identifier for task
 
 """
-class Task(object):        
+class Task(object):
     def __init__(self,name=None):
         if name is None:
             name = self.generateUniqueTaskName()
@@ -63,7 +63,16 @@ class Task(object):
             )
         )
         print 'cleared task: %s' % self.name
-        self.removeTaskName(self.name)        
+        self.removeTaskName(self.name)
+
+    def commitTask(self):
+        daqmx(
+            dll.DAQmxTaskControl,
+            (
+                self.handle,
+                constants['DAQmx_Val_Task_Commit']
+            )
+        )
 
 if __name__ == '__main__':
     print 'creating task'
