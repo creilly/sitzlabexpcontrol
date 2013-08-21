@@ -50,7 +50,6 @@ class StepperMotorWidget(QtGui.QWidget):
                 @inlineCallbacks
                 def onGotoRequested(sm,payload):
                     position, deferred = payload
-                    print position
                     yield sm.setPosition(int(position))
                     deferred.callback(None)
                 gotoWidget.gotoRequested.connect(partial(onGotoRequested,sm))

@@ -303,6 +303,7 @@ if __name__ == '__main__':
                         DUTY:'setDutyCycle'
                     }[option]
                 )(value)            
-        t.stop()        
+        t.stop()
+        reactor.stop()        
     main()
     reactor.run()

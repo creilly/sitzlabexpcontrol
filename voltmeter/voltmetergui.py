@@ -21,6 +21,7 @@ from filecreationmethods import filenameGen, checkPath
 import csv
 import datetime
 from daqmx.task.ai import VoltMeter as VM
+from math import log10
 
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 URL = (VM_DEBUG_SERVER_CONFIG if DEBUG else VM_SERVER_CONFIG)['url']
@@ -116,11 +117,12 @@ class ChannelEditDialog(QtGui.QDialog):
             )
             for param in (VM.MIN,VM.MAX):
                 spinBox = QtGui.QDoubleSpinBox()
-                spinBox.setDecimals(1)
+                spinBox.setDecimals(2)
+                spinBox.setSingleStep(.01)
                 spinBox.setRange(
                     *{
-                        VM.MIN:(-10.0,-.1),
-                        VM.MAX:(.1,10.0)
+                        VM.MIN:(-10.0,-.01),
+                        VM.MAX:(.01,10.0)
                     }[param]
                 )
                 spinBox.setValue(parameters[param])
@@ -158,6 +160,30 @@ class VoltMeterWidget(QtGui.QWidget):
     def __init__(self,protocol):
         @inlineCallbacks
         def init():
+            @inlineCallbacks
+            def setText(channel):
+                description = yield protocol.sendCommand(
+                    'get-channel-parameter',
+                    channel,
+                    VM.DESCRIPTION
+                )
+                maxVoltage = yield protocol.sendCommand(
+                    'get-channel-parameter',
+                    channel,
+                    VM.MAX
+                )                
+                decimalPlaces = int(-1*log10(maxVoltage)) + 1
+                formatString = '%.' + str(decimalPlaces if decimalPlaces > 0 else 0) + 'f'
+                print formatString
+                items[channel].setText(
+                    '%s\t%s\t%s V' % (
+                        description,
+                        channel,
+                        (
+                            formatString
+                        ) % maxVoltage
+                    )
+                )
             def rightClicked(listWidget,p):
                 item = listWidget.itemAt(p)
                 if item is None: return
@@ -262,14 +288,13 @@ class VoltMeterWidget(QtGui.QWidget):
                 listWidgetItem = QtGui.QListWidgetItem()                
                 listWidgetItem.setData(self.ID_ROLE,channel)
                 listWidgetItem.setBackground(QtGui.QBrush(colors[channel]))
-                listWidgetItem.setText('%s\t(%s)' % (description,channel))
                 listWidget.addItem(listWidgetItem)
                 items[channel] = listWidgetItem
+                setText(channel)
             for index in range(listWidget.count()):
                 listWidget.item(index).setCheckState(QtCore.Qt.CheckState.Unchecked)                                             
             def onChannelParameterChanged(channel,parameter,value):
-                if parameter is VM.DESCRIPTION:
-                    items[channel].setText('%s\t(%s)' % (value,channel))
+                setText(channel)
             protocol.messageSubscribe(
                 'channel-parameter-changed',
                 partial(
