@@ -11,17 +11,15 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from ab.abclient import getProtocol
 from config.voltmeter import VM_SERVER_CONFIG, VM_DEBUG_SERVER_CONFIG
 from sitz import compose
-from time import clock
 from ab.abbase import selectFromList, sleep
 from functools import partial
 import pyqtgraph as pg
-import os.path
+import os
 from config.filecreation import POOHDATAPATH
 from filecreationmethods import filenameGen, checkPath
-import csv
-import datetime
 from daqmx.task.ai import VoltMeter as VM
 from math import log10
+import time
 
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 URL = (VM_DEBUG_SERVER_CONFIG if DEBUG else VM_SERVER_CONFIG)['url']
@@ -153,10 +151,10 @@ class ChannelEditDialog(QtGui.QDialog):
             layout.addRow('color',colorEditButton)
         init()
 
-class VoltMeterWidget(QtGui.QWidget):
-    HUE_ROLE = 998
+class VoltMeterWidget(QtGui.QWidget):    
     ID_ROLE = 999
     HISTORY = 200
+    MEASUREMENT_TYPE = 'voltmeter'
     def __init__(self,protocol):
         @inlineCallbacks
         def init():
@@ -216,8 +214,22 @@ class VoltMeterWidget(QtGui.QWidget):
                         xData,
                         [100.0 * voltage / scale for voltage in yData]
                     )
-                for item in (listWidget.item(row) for row in range(listWidget.count())):
-                    channel = item.data(self.ID_ROLE)
+                if recordToggle.isToggled():
+                    with open(self.fileName,'a') as file:
+                        file.write(
+                            '%s\n' % '\t'.join(
+                                str(datum) for datum in (
+                                    [time.time()] + [
+                                        voltages[channel]
+                                        for channel in
+                                        recording
+                                    ]
+                                )
+                            )
+                        )
+                        
+                for channel in channels:
+                    item = items[channel]
                     if item.checkState() is QtCore.Qt.CheckState.Checked:
                         if channel not in checked:
                             checked.append(channel)
@@ -238,6 +250,9 @@ class VoltMeterWidget(QtGui.QWidget):
             
             plotWidget = pg.PlotWidget()
             self.layout().addWidget(plotWidget,1)
+
+            controlsLayout = QtGui.QVBoxLayout()
+            self.layout().addLayout(controlsLayout)
             
             listWidget = QtGui.QListWidget()
             listWidget.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
@@ -250,7 +265,8 @@ class VoltMeterWidget(QtGui.QWidget):
                     listWidget
                 )
             )
-            self.layout().addWidget(listWidget)            
+            controlsLayout.addWidget(listWidget)
+            controlsLayout.addStretch(1)
             channels = yield protocol.sendCommand('get-channels')
             data = {
                 channel:(
@@ -303,7 +319,49 @@ class VoltMeterWidget(QtGui.QWidget):
                 )                
             )
             checked = []
-            loop()        
+            recording = []            
+            recordToggle = ToggleObject()
+            def onRecordStartRequested():
+                for channel in channels:
+                    item = items[channel]
+                    if item.checkState() is QtCore.Qt.CheckState.Checked:
+                        recording.append(channel)
+                        item.setForeground(
+                            QtGui.QBrush(
+                                QtGui.QColor('red')
+                            )
+                        )
+                relPath, fileName = fileNameGen(MEASUREMENT_TYPE)
+                absPath = os.path.join(POOHDATAPATH,relPath)
+                checkPath(absPath)
+                self.fileName = os.path.join(absPath,fileName)
+                with open(self.fileName,'w') as file:
+                    file.write(
+                        '%s\n' % '\t'.join(
+                            ['time'] + [
+                                items[channel].text()
+                                for channel in
+                                recording
+                            ]
+                        )
+                    )
+                recordToggle.toggle()
+            recordToggle.activationRequested(onRecordStartRequested)
+            def onRecordStopRequested():
+                while recording:
+                    items[recording.pop()].setForeground(
+                        QtGui.QtBrush(
+                            QtGui.QColor('black')
+                        )
+                    )
+                recordToggle.toggle()
+            recordToggle.deactivationRequested(onRecordStopRequested)
+            controlsLayout.addWidget(
+                ToggleWidget(recordToggle),
+                ('record','stop')
+            )
+            loop()
+            
         init()
         
         # plotter = PlotWidget()
