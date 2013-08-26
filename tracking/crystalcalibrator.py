@@ -18,6 +18,7 @@ G: period for oscillation offset (in crystal steps)
 '''
 
 from config.crystalsknownpositions import CC_LOOKUP_KDP, CC_LOOKUP_BBO
+from math import sin
 
 class CrystalCalibrator(object):
     A = 0.0
@@ -32,8 +33,8 @@ class CrystalCalibrator(object):
     G = 0.0
     
     def __init__(self):
-        self.calibrateCrystal((24200,0))
         self.phase = 0
+        self.calibrateCrystal((24200,0))        
 
     def getPosition(self,beta):
         return int(
@@ -101,8 +102,8 @@ class KDPCrystalCalibrator(CrystalCalibrator):
     
     lookupTable = CC_LOOKUP_KDP
     
-    F = 10.0
-    G = 120.0
+    F = 0.0
+    G = 150.0
     ''' old parameters
     A = -504.120788450589
     B = -33.1515246331159

@@ -105,9 +105,11 @@ class TrackingWidget(QtGui.QWidget):
         ###########
 
         phaseSlider = QtGui.QSlider()
+        phaseSlider.setOrientation(QtCore.Qt.Horizontal)
+        phaseSlider.setTickPosition(phaseSlider.TicksBelow)
         phaseSlider.setMinimum(0)
         phaseSlider.setMaximum(360)
-        phaseSlider.setTickInterval(50)
+        phaseSlider.setTickInterval(90)
         def onPhaseSliderValueChanged(phase):
             wavelengthProtocol.sendCommand('set-phase',phaseCombo.getCurrentKey(),float(phase))            
         phaseSlider.valueChanged.connect(onPhaseSliderValueChanged)
