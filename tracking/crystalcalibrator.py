@@ -11,8 +11,6 @@ polyPredict: gamma(beta) = A + B*beta + C*beta^2 + J*beta^3   - given a pdl coun
 
 h: delta(gamma) = gamma + delta_o      - given a crystal counter, return with an offset due to calibration
 
-F: amplitude for oscillation offset (in crystal steps)
-
 G: period for oscillation offset (in crystal steps)
 
 '''
@@ -28,12 +26,11 @@ class CrystalCalibrator(object):
     lookupTable = None
     
     E = 24200.0 #E is the dial value about which you are Taylor expanding for polyPredict    
-    F = 100.0
-    G = 0.0
+    G = 100.0
     
     def __init__(self):
+        self.amplitude, self.phase = 10.0, 0.0
         self.calibrateCrystal((24200,0))
-        self.phase = 0
 
     def getPosition(self,beta):
         return int(
@@ -79,7 +76,7 @@ class CrystalCalibrator(object):
         return crystalValue
 
     def modulate(self,crystalPosition):
-        return crystalPosition + self.F * sin(2.0 * 3.14159 * crystalPosition / self.G + self.phase * 3.14159 / 180.0)
+        return crystalPosition + self.amplitude * sin(2.0 * 3.14159 * crystalPosition / self.G + self.phase * 3.14159 / 180.0)
 
     # phase varies between 0 and 360 degrees
     def setPhase(self,phase):
@@ -87,6 +84,13 @@ class CrystalCalibrator(object):
 
     def getPhase(self):
         return self.phase
+
+    # amplitude varies between 0 and 360 degrees
+    def setAmplitude(self,amplitude):
+        self.amplitude = amplitude
+
+    def getAmplitude(self):
+        return self.amplitude
    
     def calibrateCrystal(self,point):
         #surf wavelength, crystal counter = point
@@ -101,8 +105,7 @@ class KDPCrystalCalibrator(CrystalCalibrator):
     
     lookupTable = CC_LOOKUP_KDP
     
-    F = 10.0
-    G = 120.0
+    G = 150.0
     ''' old parameters
     A = -504.120788450589
     B = -33.1515246331159

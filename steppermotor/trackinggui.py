@@ -100,9 +100,9 @@ class TrackingWidget(QtGui.QWidget):
 
         self.layout().addWidget(LabelWidget('tuning',tuningLayout))
 
-        ###########
-        ## phase ##
-        ###########
+        ##############################
+        ## oscillation compensation ##
+        ##############################
 
         phaseSlider = QtGui.QSlider()
         phaseSlider.setMinimum(0)
@@ -111,21 +111,32 @@ class TrackingWidget(QtGui.QWidget):
         def onPhaseSliderValueChanged(phase):
             wavelengthProtocol.sendCommand('set-phase',phaseCombo.getCurrentKey(),float(phase))            
         phaseSlider.valueChanged.connect(onPhaseSliderValueChanged)
+
+        amplitudeSlider = QtGui.QSlider()
+        amplitudeSlider.setMinimum(0)
+        amplitudeSlider.setMaximum(50)
+        amplitudeSlider.setTickInterval(10)
+        def onAmplitudeSliderValueChanged(amplitude):
+            wavelengthProtocol.sendCommand('set-amplitude',phaseCombo.getCurrentKey(),float(amplitude))            
+        amplitudeSlider.valueChanged.connect(onAmplitudeSliderValueChanged)
         
         phaseCombo = DictComboBox(CRYSTALS)
         @inlineCallbacks
         def onPhaseComboKeyChanged(id):
             phase = yield wavelengthProtocol.sendCommand('get-phase',id)
+            amplitude = yield wavelengthProtocol.sendCommand('get-amplitude',id)
             phaseSlider.setValue(int(round(phase)))
+            amplitudeSlider.setValue(int(round(amplitude)))
         phaseCombo.currentKeyChanged.connect(onPhaseComboKeyChanged)
 
         phaseCombo.currentKeyChanged.emit(phaseCombo.getCurrentKey())
 
         phaseLayout = QtGui.QVBoxLayout()
         phaseLayout.addWidget(phaseCombo)
-        phaseLayout.addWidget(phaseSlider)
+        phaseLayout.addWidget(LabelWidget('phase',phaseSlider))
+        phaseLayout.addWidget(LabelWidget('amplitude',amplitudeSlider))
 
-        self.layout().addWidget(LabelWidget('phase',phaseLayout))
+        self.layout().addWidget(LabelWidget('oscillation compensation',phaseLayout))
 
         #####################
         ## tracking toggle ##
