@@ -20,6 +20,7 @@ from filecreationmethods import filenameGen, checkPath
 from daqmx.task.ai import VoltMeter as VM
 from math import log10
 import time
+from qtutils.toggle import ToggleObject, ToggleWidget
 
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 URL = (VM_DEBUG_SERVER_CONFIG if DEBUG else VM_SERVER_CONFIG)['url']
@@ -172,7 +173,6 @@ class VoltMeterWidget(QtGui.QWidget):
                 )                
                 decimalPlaces = int(-1*log10(maxVoltage)) + 1
                 formatString = '%.' + str(decimalPlaces if decimalPlaces > 0 else 0) + 'f'
-                print formatString
                 items[channel].setText(
                     '%s\t%s\t%s V' % (
                         description,
@@ -331,7 +331,7 @@ class VoltMeterWidget(QtGui.QWidget):
                                 QtGui.QColor('red')
                             )
                         )
-                relPath, fileName = fileNameGen(MEASUREMENT_TYPE)
+                relPath, fileName = filenameGen(self.MEASUREMENT_TYPE)
                 absPath = os.path.join(POOHDATAPATH,relPath)
                 checkPath(absPath)
                 self.fileName = os.path.join(absPath,fileName)
@@ -339,26 +339,28 @@ class VoltMeterWidget(QtGui.QWidget):
                     file.write(
                         '%s\n' % '\t'.join(
                             ['time'] + [
-                                items[channel].text()
+                                items[channel].text().replace('\t','_')
                                 for channel in
                                 recording
                             ]
                         )
                     )
                 recordToggle.toggle()
-            recordToggle.activationRequested(onRecordStartRequested)
+            recordToggle.activationRequested.connect(onRecordStartRequested)
             def onRecordStopRequested():
                 while recording:
                     items[recording.pop()].setForeground(
-                        QtGui.QtBrush(
+                        QtGui.QBrush(
                             QtGui.QColor('black')
                         )
                     )
                 recordToggle.toggle()
-            recordToggle.deactivationRequested(onRecordStopRequested)
+            recordToggle.deactivationRequested.connect(onRecordStopRequested)
             controlsLayout.addWidget(
-                ToggleWidget(recordToggle),
-                ('record','stop')
+                ToggleWidget(
+                    recordToggle,
+                    ('record','stop')
+                )
             )
             loop()
             
