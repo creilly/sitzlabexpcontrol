@@ -100,6 +100,33 @@ class TrackingWidget(QtGui.QWidget):
 
         self.layout().addWidget(LabelWidget('tuning',tuningLayout))
 
+        ###########
+        ## phase ##
+        ###########
+
+        phaseSlider = QtGui.QSlider()
+        phaseSlider.setMinimum(0)
+        phaseSlider.setMaximum(360)
+        phaseSlider.setTickInterval(50)
+        def onPhaseSliderValueChanged(phase):
+            wavelengthProtocol.sendCommand('set-phase',phaseCombo.getCurrentKey(),float(phase))            
+        phaseSlider.valueChanged.connect(onPhaseSliderValueChanged)
+        
+        phaseCombo = DictComboBox(CRYSTALS)
+        @inlineCallbacks
+        def onPhaseComboKeyChanged(id):
+            phase = yield wavelengthProtocol.sendCommand('get-phase',id)
+            phaseSlider.setValue(int(round(phase)))
+        phaseCombo.currentKeyChanged.connect(onPhaseComboKeyChanged)
+
+        phaseCombo.currentKeyChanged.emit(phaseCombo.getCurrentKey())
+
+        phaseLayout = QtGui.QVBoxLayout()
+        phaseLayout.addWidget(phaseCombo)
+        phaseLayout.addWidget(phaseSlider)
+
+        self.layout().addWidget(LabelWidget('phase',phaseLayout))
+
         #####################
         ## tracking toggle ##
         #####################

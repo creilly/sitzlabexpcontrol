@@ -13,7 +13,6 @@ from config.steppermotor import PDL, KDP, BBO
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 URL = TEST_WAVELENGTH_SERVER if DEBUG else WAVELENGTH_SERVER
 
-
 STEPPER_MOTOR_KEYS = (PDL,KDP,BBO)
 
 class WavelengthWAMP(BaseWAMP):
@@ -27,7 +26,8 @@ class WavelengthWAMP(BaseWAMP):
     
     MESSAGES = {
         'calibration-changed':'laser (SURF) calibration has changed',
-        'tracking-changed':'tracking state was toggled'
+        'tracking-changed':'tracking state was toggled',
+        'phase-changed':'oscillation compensation phase changed'
     }
 
     @inlineCallbacks
@@ -60,7 +60,7 @@ class WavelengthWAMP(BaseWAMP):
         step = yield self.stepperMotors[PDL].getPosition()
         self.offsets[self.STEP] = step
         self.offsets[self.WAVELENGTH] = wavelength
-        self.dispatch('calibration-changed',self.isTracking())
+        self.dispatch('calibration-changed',(step,wavelength))
 
     @command('calibrate-crystal','set tuned position for crystal')
     @inlineCallbacks
@@ -70,6 +70,15 @@ class WavelengthWAMP(BaseWAMP):
         print wavelength
         crystalPosition = yield self.stepperMotors[id].getPosition()
         self.calibrators[id].calibrateCrystal((wavelength,crystalPosition))
+
+    @command('get-phase')
+    def getPhase(self,id):
+        return self.calibrators[id].getPhase()
+
+    @command('set-phase','set oscillation compensation phase')
+    def setPhase(self,id,phase):
+        self.calibrators[id].setPhase(phase)
+        self.dispatch('phase-changed',(id,phase))    
         
     @command('get-wavelength','get calibrated SURF wavelength')
     def _getWavelength(self):
