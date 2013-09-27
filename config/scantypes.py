@@ -49,5 +49,9 @@ SCAN_TYPES = {
         'stepper motor':'kdp',
         'voltmeter':'xtals power meter',
         'measurementType':'kdpScan'
-    }
+    },
+    'lineshape-Q0':{},
+    'lineshape-Q1':{},
+    'lineshape-Q2':{},
+    'lineshape-Q3':{}
 }  

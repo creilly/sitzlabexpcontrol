@@ -18,6 +18,7 @@ h: delta(gamma) = gamma + delta_o      - given a crystal counter, return with an
 '''
 
 from config.crystalsknownpositions import CC_LOOKUP_KDP, CC_LOOKUP_BBO
+import numpy
 
 class CrystalCalibrator(object):
     A = 0.0
@@ -74,7 +75,10 @@ class CrystalCalibrator(object):
         lowDial, lowCrystal = lowPoint
         slope = (highCrystal-lowCrystal)/(highDial-lowDial)
         crystalValue = slope*(dialValue-lowDial) + lowCrystal
-        print lowPoint, highPoint
+        #print lowPoint, highPoint
+
+        #modulate the interpolation by a sine wave to handle the gear elasticity
+        sineMod = 30*numpy.sin(((dialValue-24194.)/4.)+sinePhase)
         return crystalValue 
 
    

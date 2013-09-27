@@ -67,7 +67,7 @@ class WavelengthWAMP(BaseWAMP):
     def calibrateCrystal(self,id):
         pdlPosition = yield self.stepperMotors[PDL].getPosition()
         wavelength = self.getWavelength(pdlPosition)
-        print wavelength
+        #print wavelength
         crystalPosition = yield self.stepperMotors[id].getPosition()
         self.calibrators[id].calibrateCrystal((wavelength,crystalPosition))
         
