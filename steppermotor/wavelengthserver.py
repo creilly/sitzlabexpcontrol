@@ -80,12 +80,20 @@ class WavelengthWAMP(BaseWAMP):
         self.calibrators[id].setPhase(phase)
 
     @command('get-amplitude')
-    def getPhase(self,id):
+    def getAmplitude(self,id):
         return self.calibrators[id].getAmplitude()
 
     @command('set-amplitude','set oscillation compensation amplitude')
-    def setPhase(self,id,amplitude):
+    def setAmplitude(self,id,amplitude):
         self.calibrators[id].setAmplitude(amplitude)
+
+    @command('get-period')
+    def getPeriod(self,id):
+        return self.calibrators[id].getPeriod()
+
+    @command('set-period','set oscillation compensation period')
+    def setPeriod(self,id,period):
+        self.calibrators[id].setPeriod(period)
         
     @command('get-wavelength','get calibrated SURF wavelength')
     def _getWavelength(self):
