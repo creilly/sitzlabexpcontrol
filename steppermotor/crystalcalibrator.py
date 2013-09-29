@@ -17,6 +17,7 @@ G: period for oscillation offset (in crystal steps)
 
 from config.crystalsknownpositions import CC_LOOKUP_KDP, CC_LOOKUP_BBO
 from math import sin
+import numpy
 
 class CrystalCalibrator(object):
     A = 0.0
