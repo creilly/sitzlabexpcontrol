@@ -183,7 +183,9 @@ def main():
     import sys
     from ab.abclient import getProtocol
     DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
-    wavelengthProtocol = yield getProtocol(TEST_WAVELENGTH_SERVER)
+    wavelengthProtocol = yield getProtocol(
+        TEST_WAVELENGTH_SERVER if DEBUG else WAVELENGTH_SERVER
+    )
     stepperMotorProtocol = yield getProtocol(
         TEST_STEPPER_MOTOR_SERVER if DEBUG else STEPPER_MOTOR_SERVER
     )
