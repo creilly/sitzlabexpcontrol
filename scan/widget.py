@@ -12,6 +12,8 @@ from scan import Scan
 
 from input import IntervalScanInput, ListScanInput
 
+from copy import copy
+
 DEFAULTS = [(-50000,50000),(-50000,50000),(1,1000)]
 
 
@@ -144,7 +146,7 @@ class ListScanInputWidget(QtGui.QWidget):
         self.setPositions([] if positions is None else positions)
 
     def setPositions(self,positions):
-        self.positions = list
+        self.positions = positions
         for position in positions:
             self.queueWidget.addItem(str(position))
 
@@ -164,7 +166,7 @@ class ListScanInputWidget(QtGui.QWidget):
                 return self.loadPositions()
 
     def getInput(self,agent):
-        return ListScanInput(agent,self.positions)
+        return ListScanInput(agent,copy(self.positions))
             
 def test():
     ## BOILERPLATE ##
