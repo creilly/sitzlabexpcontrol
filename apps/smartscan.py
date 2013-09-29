@@ -185,12 +185,7 @@ def SmartScanGUI():
                 ]
             ][SET_POSITION]
         ).next
-        def debugAgent():
-            print 'input'
-            return agent()
-        scanToggle.setInput(
-            debugAgent
-        )
+        scanToggle.setInput(agent)
 
         def output(channel,total):
             output.count = 0
@@ -203,7 +198,7 @@ def SmartScanGUI():
                 output.count += 1
                 if output.count is total:
                     average = output.sum / total
-                    yerr.append(pow(output.squaresSum / total - average**2, .5)) 
+                    yerr.append(pow(output.squaresSum / total - average**2, .5)/pow(total,.5)) 
                     vmClient.removeListener(onVoltages)
                     d.callback(average)
                     print 'output'
@@ -228,7 +223,6 @@ def SmartScanGUI():
     # create a toggle widget
     from qtutils.toggle import ToggleWidget
     cpLayout.addWidget(ToggleWidget(scanToggle))
-
     
     # plot on step completion
     def onStepped(data):
@@ -241,6 +235,7 @@ def SmartScanGUI():
         errorBars = ErrorBarItem(x=asarray(x),y=asarray(y),top=asarray(yerr),bottom=asarray(yerr),beam=.05)
         plotWidget.addItem(errorBars)
         scanToggle.completeStep()
+        
     scanToggle.stepped.connect(onStepped)
 
     #dropdown box for measurementType so saveCSV (below) uses correct directory

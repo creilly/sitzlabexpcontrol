@@ -30,8 +30,9 @@ class CrystalCalibrator(object):
     G = 100.0
     
     def __init__(self):
-        self.amplitude, self.phase = 10.0, 0.0
+        self.amplitude, self.phase, self.period = 10.0, 0.0, 1.0
         self.calibrateCrystal((24200,0))
+        self.delta_tilde = 0
 
     def getPosition(self,beta):
         return int(
@@ -77,7 +78,7 @@ class CrystalCalibrator(object):
         return crystalValue
 
     def modulate(self,crystalPosition):
-        return crystalPosition + self.amplitude * sin(2.0 * 3.14159 * crystalPosition / self.G + self.phase * 3.14159 / 180.0)
+        return crystalPosition + self.amplitude * sin(2.0 * 3.14159 * (crystalPosition-self.delta_tilde) / self.period + self.phase * 3.14159 / 180.0)
 
     # phase varies between 0 and 360 degrees
     def setPhase(self,phase):
@@ -92,10 +93,18 @@ class CrystalCalibrator(object):
 
     def getAmplitude(self):
         return self.amplitude
+    
+    # period varies between 1 and 10000
+    def setPeriod(self,period):
+        self.period = period
+
+    def getPeriod(self):
+        return self.period
    
     def calibrateCrystal(self,point):
         #surf wavelength, crystal counter = point
         beta_tilde, delta_tilde = point
+        self.delta_tilde = delta_tilde
         self.delta_o = delta_tilde - self.f(beta_tilde)
 
 class KDPCrystalCalibrator(CrystalCalibrator):
@@ -106,7 +115,7 @@ class KDPCrystalCalibrator(CrystalCalibrator):
     
     lookupTable = CC_LOOKUP_KDP
     
-    G = 150.0
+    G = 176.1
     ''' old parameters
     A = -504.120788450589
     B = -33.1515246331159
