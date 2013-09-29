@@ -6,7 +6,7 @@ from twisted.internet  import reactor
 from sitz import WAVELENGTH_SERVER, TEST_WAVELENGTH_SERVER, STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER 
 from functools import partial
 from steppermotorclient import StepperMotorClient, ChunkedStepperMotorClient
-from tracking.crystalcalibrator import KDPCrystalCalibrator, BBOCrystalCalibrator
+from crystalcalibrator import KDPCrystalCalibrator, BBOCrystalCalibrator
 import sys
 from config.steppermotor import PDL, KDP, BBO
 
