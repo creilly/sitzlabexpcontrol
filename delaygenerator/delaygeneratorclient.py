@@ -1,4 +1,11 @@
 from twisted.internet.defer import inlineCallbacks
+from sitz import printDict
+
+
+import sys
+DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
+print 'debug: %s' % DEBUG
+
 
 #instantiate this class to have access to methods that make calls to the server
 #this is how you make all interactions with the server
@@ -23,9 +30,9 @@ class DelayGeneratorClient:
 def main():
     from ab.abclient import getProtocol    
     from ab.abbase import selectFromList, getFloat
-    from config.delaygenerator import GLOBAL_CONFIG
+    from config.delaygenerator import SERVER_CONFIG, DEBUG_SERVER_CONFIG
 
-    serverURL = GLOBAL_CONFIG["url"]
+    serverURL = DEBUG_SERVER_CONFIG["url"] if DEBUG else SERVER_CONFIG["url"]
     protocol = yield getProtocol(serverURL)
     client = DelayGeneratorClient(protocol)
     
