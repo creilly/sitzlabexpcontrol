@@ -6,7 +6,7 @@ from daqmx.task.ci import CITask
 
 from threading import Lock, Thread
 from numpy import linspace
-from time import sleep 
+from time import sleep
 
 class BaseStepperMotor:
 
@@ -22,16 +22,24 @@ class BaseStepperMotor:
                 self.queue.append((position,callback))
             return
         self.busy = True
-        self._setPosition(position,callback)
+        self._setPosition(
+            position,
+            partial(
+                self.onPositionSet,
+                callback,
+            )
+        )
 
     def onPositionSet(self,callback):        
         callback()
         with self.lock:
             if self.queue:
+                position, callback = self.queue.pop(0)
                 self._setPosition(
+                    position,
                     partial(
                         self.onPositionSet,
-                        *self.queue.pop(0)
+                        callback
                     )
                 )
                 return
@@ -55,7 +63,7 @@ class DirectionStepperMotor(BaseStepperMotor):
     BACKWARDS = 1
     def __init__(self,backlash=0,direction=FORWARDS):
         self.backlash = backlash
-        self.setDirection(direction)
+        self._setDirection(direction)
         BaseStepperMotor.__init__(self)
 
     def getPosition(self):
@@ -92,7 +100,7 @@ class DigitalLineDirectionStepperMotor(DirectionStepperMotor):
         DirectionStepperMotor.__init__(self,backlash,direction)
 
     def _setDirection(self,direction):
-        self.doTask.writeState(
+        self.direction_task.writeState(
             {
                 self.FORWARDS:True,
                 self.BACKWARDS:False
@@ -112,7 +120,7 @@ class CounterStepperMotor(DigitalLineDirectionStepperMotor):
             direction=DirectionStepperMotor.FORWARDS    
     ):
         self.counter_task = CITask()
-        self.counter_task.createChannel(counter_channel,initial_count=initial_position)
+        self.counter_task.createChannel(counter_channel)
         self.counter_task.start()
         DigitalLineDirectionStepperMotor.__init__(
             self,
@@ -130,7 +138,7 @@ class PulseGeneratorStepperMotor(CounterStepperMotor):
             step_channel,
             counter_channel,
             direction_channel,
-            step_rate=500.0
+            step_rate=500.0,
             initial_position=0,
             backlash=0,
             direction=DirectionStepperMotor.FORWARDS    
@@ -142,7 +150,7 @@ class PulseGeneratorStepperMotor(CounterStepperMotor):
             self,
             counter_channel,
             direction_channel,
-            inititial_position,
+            initial_position,
             backlash,
             direction
         )
@@ -179,7 +187,7 @@ class DigitalLineStepperMotor(CounterStepperMotor):
             self,
             counter_channel,
             direction_channel,
-            inititial_position,
+            initial_position,
             backlash,
             direction
         )
@@ -187,13 +195,13 @@ class DigitalLineStepperMotor(CounterStepperMotor):
     def _generateSteps(self,steps,callback):
         this = self                    
         class GenerateSteps(Thread):
-            def run(self):                
+            def run(self):
                 for i in range(steps):
                     for state in (True,False):
                         this.step_task.writeState(state)
-                        sleep(.5 / self.step_rate)
+                        sleep(.5 / this.step_rate)
                 callback()
-        GenerateSteps().run()
+        GenerateSteps().start()
 
     def setStepRate(self,step_rate): self.step_rate = step_rate
 
@@ -250,9 +258,70 @@ class BlockingStepperMotor:
         while(self.blockingBusy):continue
 
 if __name__ == '__main__':
-    sm = FakeStepperMotor()
-    sm.setStepRate(200)
-    def onPositionSet(): print 'position set. press enter to exit'
-    sm.setPosition(100,onPositionSet)
-    raw_input('waiting for pulses...\n')
-    print 'position: %d' % sm.getPosition()
+    import sys
+    import daqmx
+    def select_from_list(list,prompt):
+        while True:
+            print prompt
+            print '\n'.join(
+                '\t%d\t%s' % (index,item)
+                for index, item in
+                enumerate(list)
+            )            
+            try:
+                index = int(raw_input('-->: '))
+            except ValueError:
+                print 'input must be number'
+                continue
+            if index not in range(len(list)):
+                print 'input must be between 0 and %d' % len(list)
+                continue
+            else:
+                break
+        return list[index]
+    
+    print '<---- STEPPER MOTOR CONFIGURATION --->'
+    pulse_generator = 'pulse generator'
+    digital_line = 'digital line'
+    step_tasks = {
+        pulse_generator:daqmx.CO,
+        digital_line:daqmx.DO
+    }
+    step_task = step_tasks[
+        select_from_list(
+            step_tasks.keys(),
+            'select step mode'
+        )
+    ]
+    if 'config' in sys.argv:    
+        channels = (
+            select_from_list(
+                daqmx.getPhysicalChannels(
+                    select_from_list(
+                        daqmx.getDevices(),
+                        'select %s device' % role_name
+                    )
+                )[role_task],
+                'select %s channel' % role_name
+            )
+            for role_task, role_name in
+            (
+                (step_task,'step'),
+                (daqmx.CI,'read'),
+                (daqmx.DO,'direction')
+            )
+        )
+    else:
+        exit()
+    sm = {
+        daqmx.DO:DigitalLineStepperMotor,
+        daqmx.CO:PulseGeneratorStepperMotor
+    }[step_task](*channels)
+    print '<--- END CONFIGURATION --->'
+    def log(x): print x
+    while True:
+        goto = int(raw_input('goto (q to quit): \n'))
+        sm.setPosition(goto,lambda:log(sm.getPosition()))
+        
+
+
