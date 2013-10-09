@@ -20,6 +20,7 @@
   "DAQmx_Val_Rising": 10280,
   "DAQmx_Val_SampClk": 10388,
   "DAQmx_Val_Seconds": 10364,
+  "DAQmx_Val_Task_Commit": 3,
   "DAQmx_Val_Volts": 10348,
   "DAQmx_Val_WaitInfinitely": -1.0
 }

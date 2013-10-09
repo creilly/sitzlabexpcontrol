@@ -11,21 +11,19 @@ from config.voltmeter import VM_CONFIG, VM_SERVER_CONFIG, VM_DEBUG_SERVER_CONFIG
 
 import sys
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
-print 'debug: %s' % DEBUG
 TRIGGERING = not DEBUG
-
 URL = (VM_SERVER_CONFIG if not DEBUG else VM_DEBUG_SERVER_CONFIG)['url']
-
-class VoltMeterWAMP(BaseWAMP):
-
+CALLBACK_RATE = 15.0
+class VoltMeterWAMP(BaseWAMP):    
     MESSAGES = {
-        'voltages-acquired':'voltages recently acquired'
+        'voltages-acquired':'voltages recently acquired',
+        'channel-parameter-changed':'user changed channel parameter'
     }
-
     @inlineCallbacks
     def initializeWAMP(self):
         self.voltMeter = vm = yield getVoltMeter()
         vm.setCallback(self.onVoltages)
+        vm.setCallbackRate(CALLBACK_RATE)
         if TRIGGERING:
             getTriggerSourceEdge().addCallback(
                 partial(
@@ -64,24 +62,36 @@ class VoltMeterWAMP(BaseWAMP):
     @command('set-callback-rate')
     def setCallbackRate(self,rate):
         self.voltMeter.setCallbackRate(rate)
+        
+    @command('get-channel-parameter')
+    def getChannelParameter(self,channel,parameter):
+        return self.voltMeter.getChannelParameter(str(channel),parameter)
+        
+    @command('set-channel-parameter')
+    def setChannelParameter(self,channel,parameter,value):
+        self.voltMeter.setChannelParameter(str(channel),parameter,value)
+        self.dispatch('channel-parameter-changed',(channel,parameter,value))
      
 def getTriggerSourceEdge():
-    return succeed((VM_SERVER_CONFIG['trigChannel'],VM_SERVER_CONFIG['trigEdge']))
+    return succeed(
+        (
+            VM_SERVER_CONFIG['trigChannel'],
+            VM_SERVER_CONFIG['trigEdge']
+        )
+    )
 
 @inlineCallbacks
 def getVoltMeter():
-    defaultVM = partial(
-        VoltMeter,
-        (
-            VM_CONFIG.values() 
-            if not DEBUG else
-            VM_DEBUG_CONFIG.values()
+    device = yield selectFromList(daqmx.getDevices(),'select a device')
+    returnValue(
+        VoltMeter(
+            (
+                {VoltMeter.PHYSICAL_CHANNEL:channel}
+                for channel in
+                daqmx.getPhysicalChannels(device)[daqmx.AI]
+            )
         )
     )
-    vm = yield defaultVM()
-    vm.setSamplingRate(VM_SERVER_CONFIG['samplingRate'])
-    vm.setCallbackRate(VM_SERVER_CONFIG['callbackRate'])
-    returnValue(vm)
     
 if __name__ == '__main__':
     runServer(WAMP=VoltMeterWAMP,debug=False,URL=URL,outputToConsole=True)

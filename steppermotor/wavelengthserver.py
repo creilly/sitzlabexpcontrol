@@ -6,13 +6,12 @@ from twisted.internet  import reactor
 from sitz import WAVELENGTH_SERVER, TEST_WAVELENGTH_SERVER, STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER 
 from functools import partial
 from steppermotorclient import StepperMotorClient, ChunkedStepperMotorClient
-from tracking.crystalcalibrator import KDPCrystalCalibrator, BBOCrystalCalibrator
+from crystalcalibrator import KDPCrystalCalibrator, BBOCrystalCalibrator
 import sys
 from config.steppermotor import PDL, KDP, BBO
 
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 URL = TEST_WAVELENGTH_SERVER if DEBUG else WAVELENGTH_SERVER
-
 
 STEPPER_MOTOR_KEYS = (PDL,KDP,BBO)
 
@@ -27,7 +26,8 @@ class WavelengthWAMP(BaseWAMP):
     
     MESSAGES = {
         'calibration-changed':'laser (SURF) calibration has changed',
-        'tracking-changed':'tracking state was toggled'
+        'tracking-changed':'tracking state was toggled',
+        'phase-changed':'oscillation compensation phase changed'
     }
 
     @inlineCallbacks
@@ -60,7 +60,7 @@ class WavelengthWAMP(BaseWAMP):
         step = yield self.stepperMotors[PDL].getPosition()
         self.offsets[self.STEP] = step
         self.offsets[self.WAVELENGTH] = wavelength
-        self.dispatch('calibration-changed',self.isTracking())
+        self.dispatch('calibration-changed',(step,wavelength))
 
     @command('calibrate-crystal','set tuned position for crystal')
     @inlineCallbacks
@@ -70,6 +70,30 @@ class WavelengthWAMP(BaseWAMP):
         #print wavelength
         crystalPosition = yield self.stepperMotors[id].getPosition()
         self.calibrators[id].calibrateCrystal((wavelength,crystalPosition))
+
+    @command('get-phase')
+    def getPhase(self,id):
+        return self.calibrators[id].getPhase()
+
+    @command('set-phase','set oscillation compensation phase')
+    def setPhase(self,id,phase):
+        self.calibrators[id].setPhase(phase)
+
+    @command('get-amplitude')
+    def getAmplitude(self,id):
+        return self.calibrators[id].getAmplitude()
+
+    @command('set-amplitude','set oscillation compensation amplitude')
+    def setAmplitude(self,id,amplitude):
+        self.calibrators[id].setAmplitude(amplitude)
+
+    @command('get-period')
+    def getPeriod(self,id):
+        return self.calibrators[id].getPeriod()
+
+    @command('set-period','set oscillation compensation period')
+    def setPeriod(self,id,period):
+        self.calibrators[id].setPeriod(period)
         
     @command('get-wavelength','get calibrated SURF wavelength')
     def _getWavelength(self):

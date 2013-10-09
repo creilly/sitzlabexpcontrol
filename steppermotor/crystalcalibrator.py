@@ -1,7 +1,5 @@
 # SEE LAB NOTEBOOK CR-1-51 for decoding of symbols
 '''
-this, chris, is what we call a block comment, so we don't have to go dig out CR-1-51
-
 alpha := laser counter
 alpha_o := laser counter offset
 beta := dye wavelength dial minus offset <- the offset changes only when server is started
@@ -9,15 +7,16 @@ gamma := crystal angle
 delta := crystal counter
 delta_o := crystal counter offset <- this changes when you 'set tuned'
 
-d := ratio of dye wavelength dial to laser counter
-
 polyPredict: gamma(beta) = A + B*beta + C*beta^2 + J*beta^3   - given a pdl counter, compute crystal position
-g: beta(alpha) = d*(alpha - alpha_o)    - given a pdl counter, return the dial value
+
 h: delta(gamma) = gamma + delta_o      - given a crystal counter, return with an offset due to calibration
+
+G: period for oscillation offset (in crystal steps)
 
 '''
 
 from config.crystalsknownpositions import CC_LOOKUP_KDP, CC_LOOKUP_BBO
+from math import sin
 import numpy
 
 class CrystalCalibrator(object):
@@ -26,12 +25,15 @@ class CrystalCalibrator(object):
     C = 0.0
     J = 0.0
     
-    lookupTable = CC_LOOKUP_KDP
+    lookupTable = None
     
-    E = 24200.0    #E is the dial value about which you are Taylor expanding for polyPredict
-    def __init__(self):        
+    E = 24200.0 #E is the dial value about which you are Taylor expanding for polyPredict    
+    G = 100.0
+    
+    def __init__(self):
+        self.amplitude, self.phase, self.period = 10.0, 0.0, 1.0
         self.calibrateCrystal((24200,0))
-        
+        self.delta_tilde = 0
 
     def getPosition(self,beta):
         return int(
@@ -43,8 +45,7 @@ class CrystalCalibrator(object):
         )
 
     def f(self,beta):
-        print beta
-        return self.searchLookupTable(beta)
+        return self.modulate(self.searchLookupTable(beta))
 
     def polyPredict(self,dialValue):
         normDial = dialValue - self.E
@@ -75,16 +76,36 @@ class CrystalCalibrator(object):
         lowDial, lowCrystal = lowPoint
         slope = (highCrystal-lowCrystal)/(highDial-lowDial)
         crystalValue = slope*(dialValue-lowDial) + lowCrystal
-        #print lowPoint, highPoint
+        return crystalValue
 
-        #modulate the interpolation by a sine wave to handle the gear elasticity
-        sineMod = 30*numpy.sin(((dialValue-24194.)/4.)+sinePhase)
-        return crystalValue 
+    def modulate(self,crystalPosition):
+        return crystalPosition + self.amplitude * sin(2.0 * 3.14159 * (crystalPosition-self.delta_tilde) / self.period + self.phase * 3.14159 / 180.0)
 
+    # phase varies between 0 and 360 degrees
+    def setPhase(self,phase):
+        self.phase = phase
+
+    def getPhase(self):
+        return self.phase
+
+    # amplitude varies between 0 and 360 degrees
+    def setAmplitude(self,amplitude):
+        self.amplitude = amplitude
+
+    def getAmplitude(self):
+        return self.amplitude
+    
+    # period varies between 1 and 10000
+    def setPeriod(self,period):
+        self.period = period
+
+    def getPeriod(self):
+        return self.period
    
     def calibrateCrystal(self,point):
         #surf wavelength, crystal counter = point
         beta_tilde, delta_tilde = point
+        self.delta_tilde = delta_tilde
         self.delta_o = delta_tilde - self.f(beta_tilde)
 
 class KDPCrystalCalibrator(CrystalCalibrator):
@@ -95,7 +116,7 @@ class KDPCrystalCalibrator(CrystalCalibrator):
     
     lookupTable = CC_LOOKUP_KDP
     
-    
+    G = 176.1
     ''' old parameters
     A = -504.120788450589
     B = -33.1515246331159
@@ -115,7 +136,7 @@ class BBOCrystalCalibrator(CrystalCalibrator):
     C = .06216634761159
     J = .00051704324296
     
-    
+    G = 120.0
     
     ''' old parameters
     A = -44424.4575132

@@ -8,13 +8,14 @@ from scan import Scan
 from input import IntervalScanInput, ListScanInput
 from copy import copy
 
+from copy import copy
+
 DEFAULTS = [(-50000,50000),(-50000,50000),(1,1000)]
 
 '''
 update on 2013/06/24 by stevens4: rectified language of IntervalScanInput \
 such that first and last points are referred to as 'begin' and 'end' to \
 avoid confusion with 'start' and 'stop' actions of a scan.
-
 
 scan starts on emission of activated signal
 
@@ -161,7 +162,6 @@ class ListScanInputWidget(QtGui.QWidget):
 
     def getInput(self,agent):
         return ListScanInput(agent,copy(self.positions))
-
 
 def test():
     ## BOILERPLATE ##
