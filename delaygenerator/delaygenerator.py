@@ -20,9 +20,9 @@ CLOCKPERIOD = 50 #in nanoseconds
 AD9501TIMECONST = .2 #in nanoseconds (eg. 200picoseconds)
 
 class DelayGenerator:
-    def __init__(self,usbChan):
-        self.timeToDelay = 0
-        self.ser = serial.Serial(usbChan,9600,timeout=5)
+    def __init__(self,confDict):
+        self.timeToDelay = confDict['delay']
+        self.ser = serial.Serial(confDict['usb_chan'],9600,timeout=5)
        
     def writeToUSB(self,strToWrite):
         self.ser.write(strToWrite)
@@ -58,9 +58,10 @@ class DelayGenerator:
 
 
 class FakeDelayGenerator(DelayGenerator):
-    def __init__(self,fakeUSBChan):
-        self.timeToDelay = 0
-    
+    def __init__(self,confDict):
+        self.timeToDelay = confDict['delay']
+        self.ser = confDict['usb_chan']
+
     def writeToUSB(self,strToWrite):
         print "This is when I'd write to the USB, but I'm not because I'm a big ol' liar."
         print strToWrite

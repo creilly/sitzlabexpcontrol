@@ -1,5 +1,7 @@
 from sitz import SitzException
 from functools import partial
+
+from daqmx import CO,DO,CI
 from daqmx.task.co import COTask
 from daqmx.task.do import DOTask
 from daqmx.task.ci import CITask
@@ -10,10 +12,17 @@ from time import sleep
 
 class BaseStepperMotor:
 
+    TASK_CLASSES = {
+        CO:COTask,
+        DO:DOTask,
+        CI:CITask
+    }
+
     # MAKE SURE TO CALL THIS IF YOU OVERRIDE    
-    def __init__(self,position=0):
+    def __init__(self,tasks=None):
         self.busy = False
         self.queue = []
+        self._tasks = tasks if tasks else []
         self.lock = Lock()
 
     def setPosition(self,position,callback=lambda:None):
@@ -57,17 +66,26 @@ class BaseStepperMotor:
         pass
 
     def getStepRate(self): return -1
+    
+    def destroy(self): 
+        for task in self._tasks:
+            task.clearTask()
 
 class DirectionStepperMotor(BaseStepperMotor):
     FORWARDS = 0
     BACKWARDS = 1
-    def __init__(self,backlash=0,direction=FORWARDS):
+    def __init__(
+        self,
+        backlash=0,
+        direction=FORWARDS,
+        tasks=None
+    ):
+        BaseStepperMotor.__init__(self,tasks)
         self.backlash = backlash
         self._setDirection(direction)
-        BaseStepperMotor.__init__(self)
 
     def getPosition(self):
-        return self._getPosition() + (1 if self.direction is self.BACKWARDS else 0) * self.backlash
+        return self._getPosition() + (1 if self.getDirection() is self.BACKWARDS else 0) * self.backlash
 
     def _setPosition(self,position,callback):
         delta = position - self.getPosition()
@@ -77,14 +95,14 @@ class DirectionStepperMotor(BaseStepperMotor):
         direction = self.FORWARDS if delta > 0 else self.BACKWARDS
         if direction is not self._getDirection():
             self._setDirection(direction)
-        steps = abs(delta) + (self.backlash if direction is not self.direction else 0)
+        steps = abs(delta) + (self.backlash if direction is not self.getDirection() else 0)
         self._generateSteps(steps,callback)
 
     def getDirection(self): return self._getDirection()
 
     def _getPosition(self): return 0
-    def _setDirection(self,direction): pass
-    def _getDirection(self,direction): return self.FORWARDS
+    def _setDirection(self,direction): self._direction = direction
+    def _getDirection(self): return self._direction
     def _generateSteps(self,steps,callback): callback()
 
 class DigitalLineDirectionStepperMotor(DirectionStepperMotor):
@@ -92,12 +110,18 @@ class DigitalLineDirectionStepperMotor(DirectionStepperMotor):
             self,
             direction_channel,
             backlash=0,
-            direction=DirectionStepperMotor.FORWARDS
+            direction=DirectionStepperMotor.FORWARDS,
+            tasks=None
     ):
         self.direction_task = DOTask()
         self.direction_task.createChannel(direction_channel)
-        self._setDirection(direction)
-        DirectionStepperMotor.__init__(self,backlash,direction)
+        DirectionStepperMotor.__init__(
+            self,
+            backlash,
+            direction,
+            (tasks if tasks is not None else []) + [self.direction_task]
+        )
+        self._setDirection(direction)        
 
     def _setDirection(self,direction):
         self.direction_task.writeState(
@@ -117,17 +141,20 @@ class CounterStepperMotor(DigitalLineDirectionStepperMotor):
             direction_channel,
             initial_position=0,
             backlash=0,
-            direction=DirectionStepperMotor.FORWARDS    
+            direction=DirectionStepperMotor.FORWARDS,
+            tasks=None
     ):
         self.counter_task = CITask()
-        self.counter_task.createChannel(counter_channel)
+        self.counter_task.createChannel(counter_channel,initialCount=initial_position)
         self.counter_task.start()
         DigitalLineDirectionStepperMotor.__init__(
             self,
             direction_channel,
             backlash,
-            direction
+            direction,
+            (tasks if tasks is not None else []) + [self.counter_task]
         )
+        
 
     def _getPosition(self):
         return self.counter_task.readCounts()
@@ -141,7 +168,8 @@ class PulseGeneratorStepperMotor(CounterStepperMotor):
             step_rate=500.0,
             initial_position=0,
             backlash=0,
-            direction=DirectionStepperMotor.FORWARDS    
+            direction=DirectionStepperMotor.FORWARDS,
+            tasks=None
     ):
         self.step_task = COTask()
         self.step_task.createChannel(step_channel)
@@ -152,8 +180,10 @@ class PulseGeneratorStepperMotor(CounterStepperMotor):
             direction_channel,
             initial_position,
             backlash,
-            direction
+            direction,
+            (tasks if tasks is not None else []) + [self.step_task]
         )
+
 
     def _generateSteps(self,steps,callback):
         self.step_task.generatePulses(steps,callback)
@@ -177,19 +207,21 @@ class DigitalLineStepperMotor(CounterStepperMotor):
             step_rate=500.0,
             initial_position=0,
             backlash=0,
-            direction=DirectionStepperMotor.FORWARDS
+            direction=DirectionStepperMotor.FORWARDS,
+            tasks=None
     ):
         self.step_task = DOTask()
         self.step_task.createChannel(step_channel)
-        self.step_task.writeState(False)
         self.setStepRate(step_rate)
+        self.step_task.writeState(False)
         CounterStepperMotor.__init__(
             self,
             counter_channel,
             direction_channel,
             initial_position,
             backlash,
-            direction
+            direction,
+            (tasks if tasks is not None else []) + [self.step_task]
         )
 
     def _generateSteps(self,steps,callback):
@@ -207,35 +239,26 @@ class DigitalLineStepperMotor(CounterStepperMotor):
 
     def getStepRate(self): return self.step_rate
 
-class FakeStepperMotor(BaseStepperMotor):
+class FakeStepperMotor(DirectionStepperMotor):
     INTERVAL = .20 # how often to update during excursion
-    def __init__(self):
-        BaseStepperMotor.__init__(self)
-        self.position = 0
-        self.rate = 500
+    def __init__(self,position=0,rate=500):
+        DirectionStepperMotor.__init__(self)
+        self.position = position
+        self.rate = float(rate)
 
     def getPosition(self):
         return self.position
 
-    def _setPosition(self,position,callback):
+    def _generateSteps(self,steps,callback):
         this = self
         class Gradual(Thread):
             def run(self):
-                steps = int(
-                    float(
-                        abs(
-                            position - this.position
-                        )
-                    ) / this.INTERVAL / this.rate
-                )
-                positions = list(
-                    linspace(
-                        this.position,position,steps if steps > 2 else 2
-                    )
-                )
-                for newPosition in positions:
-                    this.position = int(newPosition)
+                intervalSize = int(this.rate*this.INTERVAL)
+                direction = (1 if this.getDirection() is this.FORWARDS else -1)
+                for i in range(steps/intervalSize):
+                    this.position += direction*intervalSize
                     sleep(this.INTERVAL)
+                this.position += (steps % intervalSize)*direction
                 callback()
         Gradual().start()     
 

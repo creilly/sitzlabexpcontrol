@@ -1,4 +1,5 @@
 from daqmx import *
+
 """
 
 abstract class from which tasks inherit
