@@ -14,14 +14,6 @@ PUMPLAMP = 'pump laser lamps'
 PUMPQSW = 'pump laser q-switch'
 PROBELAMP = 'probe laser lamps'
 PROBEQSW = 'probe laser q-switch'
-
-
-GLOBAL_CONFIG = {
-    'host_machine_ip':'localhost',
-    'serve_on_port':'9002',
-    'url':'ws://localhost:9002'
-    }
-
     
 DG_CONFIG = {
     MGDELAY:{

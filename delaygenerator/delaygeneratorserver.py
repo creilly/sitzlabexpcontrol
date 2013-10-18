@@ -24,12 +24,11 @@ from twisted.internet.task import LoopingCall
 
 import pprint
 
-from config.delaygenerator import GLOBAL_CONFIG, DG_CONFIG
+from config.delaygenerator import DG_CONFIG
 
-from sitz import compose, printDict
+from sitz import compose, printDict, DELAY_GENERATOR_SERVER
 
 dgDict = {}
-
 
 def addDelayGenerator(options):
     return DelayGenerator(options["usb_chan"])
@@ -55,7 +54,6 @@ class DelayGeneratorWAMP(BaseWAMP):
 
 @inlineCallbacks
 def main():
-    url = GLOBAL_CONFIG["url"]
     dgOptions = DG_CONFIG
     printDict(dgOptions)
     
@@ -71,12 +69,8 @@ def main():
         else:
            dgDict[dgToAdd] = DelayGenerator(dgOptions[dgToAdd]["usb_chan"])
         configList.pop(configList.index(dgToAdd))
-        
-
     
-    runServer(WAMP = DelayGeneratorWAMP, URL = url,debug = True, outputToConsole=True)
-
-    
+    runServer(WAMP = DelayGeneratorWAMP, URL = DELAY_GENERATOR_SERVER,debug = True, outputToConsole=True)    
     
 if __name__ == '__main__':
     main()
