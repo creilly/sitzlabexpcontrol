@@ -225,7 +225,7 @@ class DigitalLineStepperMotor(CounterStepperMotor):
         )
 
     def _generateSteps(self,steps,callback):
-        this = self                    
+        this = self
         class GenerateSteps(Thread):
             def run(self):
                 for i in range(steps):
