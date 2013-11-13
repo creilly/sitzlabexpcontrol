@@ -1,0 +1,267 @@
+eSV", null]
+2013-10-03 16:13:32-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "IsOW
+7VcNF2ziIRTo", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:32-0500 [BaseClientProtocol,client] TX WAMP: [3, "IsOW7VcNF2ziI
+RTo", 24274.149299999997]
+2013-10-03 16:13:32-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "-oc5
+gG8KzSeMQZWK", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:32-0500 [BaseClientProtocol,client] TX WAMP: [3, "-oc5gG8KzSeMQ
+ZWK", 24274.149299999997]
+2013-10-03 16:13:33-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "85pG
+fLSmWfoszjs_", "http://localhost/sitzRPC#set-wavelength", 24274.2]
+2013-10-03 16:13:33-0500 [BaseServerProtocol,1,172.17.13.201] {'bbo': -12306, 'p
+dl': 3532, 'kdp': -3035}
+2013-10-03 16:13:33-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "-MXb
+_XYMDuiYc3gl", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:33-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "4LeY
+RUmDblq5T3Vn", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:33-0500 [BaseClientProtocol,client] TX WAMP: [3, "-MXb_XYMDuiYc
+3gl", 24274.17311]
+2013-10-03 16:13:33-0500 [BaseClientProtocol,client] TX WAMP: [3, "4LeYRUmDblq5T
+3Vn", 24274.19692]
+2013-10-03 16:13:33-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "0nnW
+mLvz7c1k0CZM", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:33-0500 [BaseClientProtocol,client] TX WAMP: [3, "0nnWmLvz7c1k0
+CZM", 24274.19692]
+2013-10-03 16:13:33-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "yygO
+CL16nNtyBfhe", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:33-0500 [BaseClientProtocol,client] TX WAMP: [3, "85pGfLSmWfosz
+js_", null]
+2013-10-03 16:13:33-0500 [BaseClientProtocol,client] TX WAMP: [3, "yygOCL16nNtyB
+fhe", 24274.19692]
+2013-10-03 16:13:33-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "A2Ch
+t9e8dN-7kNF4", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:33-0500 [BaseClientProtocol,client] TX WAMP: [3, "A2Cht9e8dN-7k
+NF4", 24274.19692]
+2013-10-03 16:13:33-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "2lgJ
+PzDJ_LeZE3tQ", "http://localhost/sitzRPC#set-wavelength", 24274.25]
+2013-10-03 16:13:33-0500 [BaseServerProtocol,1,172.17.13.201] {'bbo': -12313, 'p
+dl': 3534, 'kdp': -3037}
+2013-10-03 16:13:33-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "DtCO
+cxX-gzkIDqph", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:33-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "Shg8
+NYzWmo7zdVTn", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:33-0500 [BaseClientProtocol,client] TX WAMP: [3, "DtCOcxX-gzkID
+qph", 24274.220729999997]
+2013-10-03 16:13:33-0500 [BaseClientProtocol,client] TX WAMP: [3, "Shg8NYzWmo7zd
+VTn", 24274.24454]
+2013-10-03 16:13:33-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "yiqo
+7F6kaPrlaVht", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:33-0500 [BaseClientProtocol,client] TX WAMP: [3, "yiqo7F6kaPrla
+Vht", 24274.24454]
+2013-10-03 16:13:33-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "_cvk
+3OkvhXuwxtq9", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:33-0500 [BaseClientProtocol,client] TX WAMP: [3, "2lgJPzDJ_LeZE
+3tQ", null]
+2013-10-03 16:13:33-0500 [BaseClientProtocol,client] TX WAMP: [3, "_cvk3OkvhXuwx
+tq9", 24274.24454]
+2013-10-03 16:13:33-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "c3Ma
+RSAKZ0r-N_e4", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:33-0500 [BaseClientProtocol,client] TX WAMP: [3, "c3MaRSAKZ0r-N
+_e4", 24274.24454]
+2013-10-03 16:13:34-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "-ZLr
+av0jXx6lOyzZ", "http://localhost/sitzRPC#set-wavelength", 24274.3]
+2013-10-03 16:13:34-0500 [BaseServerProtocol,1,172.17.13.201] {'bbo': -12319, 'p
+dl': 3536, 'kdp': -3038}
+2013-10-03 16:13:34-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "i5er
+0pwDaPencPRv", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:34-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "DzKL
+or4VwhOOmCdY", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:34-0500 [BaseClientProtocol,client] TX WAMP: [3, "i5er0pwDaPenc
+PRv", 24274.26835]
+2013-10-03 16:13:34-0500 [BaseClientProtocol,client] TX WAMP: [3, "DzKLor4VwhOOm
+CdY", 24274.292159999997]
+2013-10-03 16:13:34-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "_2FM
+oysmEyLEI0xk", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:34-0500 [BaseClientProtocol,client] TX WAMP: [3, "_2FMoysmEyLEI
+0xk", 24274.292159999997]
+2013-10-03 16:13:34-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "rN0i
+jBbKQ_V8Wtma", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:34-0500 [BaseClientProtocol,client] TX WAMP: [3, "-ZLrav0jXx6lO
+yzZ", null]
+2013-10-03 16:13:34-0500 [BaseClientProtocol,client] TX WAMP: [3, "rN0ijBbKQ_V8W
+tma", 24274.292159999997]
+2013-10-03 16:13:34-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "rktP
+GcB-rxSH2YAY", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:34-0500 [BaseClientProtocol,client] TX WAMP: [3, "rktPGcB-rxSH2
+YAY", 24274.292159999997]
+2013-10-03 16:13:35-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "uMir
+Qcs_tU9HhprW", "http://localhost/sitzRPC#set-wavelength", 24274.35]
+2013-10-03 16:13:35-0500 [BaseServerProtocol,1,172.17.13.201] {'bbo': -12326, 'p
+dl': 3538, 'kdp': -3040}
+2013-10-03 16:13:35-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "cPoC
+D_ISvzQCMJS6", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:35-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "RyxE
+eXPvfF7wx3OE", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:35-0500 [BaseClientProtocol,client] TX WAMP: [3, "cPoCD_ISvzQCM
+JS6", 24274.31597]
+2013-10-03 16:13:35-0500 [BaseClientProtocol,client] TX WAMP: [3, "RyxEeXPvfF7wx
+3OE", 24274.33978]
+2013-10-03 16:13:35-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "kgwL
+5BJXozSK5SB3", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:35-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "Uuqs
+Y32odQH8kwN9", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:35-0500 [BaseClientProtocol,client] TX WAMP: [3, "kgwL5BJXozSK5
+SB3", 24274.33978]
+2013-10-03 16:13:35-0500 [BaseClientProtocol,client] TX WAMP: [3, "UuqsY32odQH8k
+wN9", 24274.33978]
+2013-10-03 16:13:35-0500 [BaseClientProtocol,client] TX WAMP: [3, "uMirQcs_tU9Hh
+prW", null]
+2013-10-03 16:13:35-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "p6l7
+tdWfo911j68H", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:35-0500 [BaseClientProtocol,client] TX WAMP: [3, "p6l7tdWfo911j
+68H", 24274.33978]
+2013-10-03 16:13:35-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "2FF5
+bBrvp3FZse5G", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:35-0500 [BaseClientProtocol,client] TX WAMP: [3, "2FF5bBrvp3FZs
+e5G", 24274.33978]
+2013-10-03 16:13:35-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "DxGX
+Qze9o6teYaEg", "http://localhost/sitzRPC#set-wavelength", 24274.4]
+2013-10-03 16:13:35-0500 [BaseServerProtocol,1,172.17.13.201] {'bbo': -12333, 'p
+dl': 3541, 'kdp': -3042}
+2013-10-03 16:13:35-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "3_-O
+tM14XCrTRn7E", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:35-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "RG3d
+xiFWEWKaZkAK", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:35-0500 [BaseClientProtocol,client] TX WAMP: [3, "3_-OtM14XCrTR
+n7E", 24274.363589999997]
+2013-10-03 16:13:35-0500 [BaseClientProtocol,client] TX WAMP: [3, "RG3dxiFWEWKaZ
+kAK", 24274.3874]
+2013-10-03 16:13:35-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "2EoR
+cHDKdOUnpcGG", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:35-0500 [BaseClientProtocol,client] TX WAMP: [3, "2EoRcHDKdOUnp
+cGG", 24274.41121]
+2013-10-03 16:13:35-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "2Au5
+tOwaRnfc5AFy", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:35-0500 [BaseClientProtocol,client] TX WAMP: [3, "DxGXQze9o6teY
+aEg", null]
+2013-10-03 16:13:35-0500 [BaseClientProtocol,client] TX WAMP: [3, "2Au5tOwaRnfc5
+AFy", 24274.41121]
+2013-10-03 16:13:35-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "Ne0l
+Va1pQYWlKSB3", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:35-0500 [BaseClientProtocol,client] TX WAMP: [3, "Ne0lVa1pQYWlK
+SB3", 24274.41121]
+2013-10-03 16:13:36-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "Lz9N
+hjUesEklrm_h", "http://localhost/sitzRPC#set-wavelength", 24274.45]
+2013-10-03 16:13:36-0500 [BaseServerProtocol,1,172.17.13.201] {'bbo': -12340, 'p
+dl': 3543, 'kdp': -3044}
+2013-10-03 16:13:36-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "jYtj
+eV3JHd9BKChA", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:36-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "BWh4
+Mu0kznYeAvji", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:36-0500 [BaseClientProtocol,client] TX WAMP: [3, "jYtjeV3JHd9BK
+ChA", 24274.435019999997]
+2013-10-03 16:13:36-0500 [BaseClientProtocol,client] TX WAMP: [3, "BWh4Mu0kznYeA
+vji", 24274.45883]
+2013-10-03 16:13:36-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "3LDM
+weds1YBrUQBU", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:36-0500 [BaseClientProtocol,client] TX WAMP: [3, "3LDMweds1YBrU
+QBU", 24274.45883]
+2013-10-03 16:13:36-0500 [BaseClientProtocol,client] TX WAMP: [3, "Lz9NhjUesEklr
+m_h", null]
+2013-10-03 16:13:36-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "h78N
+ji07ZVEzwaqr", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:36-0500 [BaseClientProtocol,client] TX WAMP: [3, "h78Nji07ZVEzw
+aqr", 24274.45883]
+2013-10-03 16:13:36-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "bQlS
+IQbeHQA8Q2xS", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:36-0500 [BaseClientProtocol,client] TX WAMP: [3, "bQlSIQbeHQA8Q
+2xS", 24274.45883]
+2013-10-03 16:13:37-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "AEwM
+hmftBLhevy2I", "http://localhost/sitzRPC#set-wavelength", 24274.5]
+2013-10-03 16:13:37-0500 [BaseServerProtocol,1,172.17.13.201] {'bbo': -12347, 'p
+dl': 3545, 'kdp': -3045}
+2013-10-03 16:13:37-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "wQRe
+vfJ-s4THuzyL", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:37-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "9Xk1
+uV_NbTjwWRJl", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:37-0500 [BaseClientProtocol,client] TX WAMP: [3, "wQRevfJ-s4THu
+zyL", 24274.48264]
+2013-10-03 16:13:37-0500 [BaseClientProtocol,client] TX WAMP: [3, "9Xk1uV_NbTjwW
+RJl", 24274.506449999997]
+2013-10-03 16:13:37-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "3-So
+cLWG0ZpxkEWB", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:37-0500 [BaseClientProtocol,client] TX WAMP: [3, "3-SocLWG0Zpxk
+EWB", 24274.506449999997]
+2013-10-03 16:13:37-0500 [BaseClientProtocol,client] TX WAMP: [3, "AEwMhmftBLhev
+y2I", null]
+2013-10-03 16:13:37-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "S6uX
+qXjXVyKH8nCx", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:37-0500 [BaseClientProtocol,client] TX WAMP: [3, "S6uXqXjXVyKH8
+nCx", 24274.506449999997]
+2013-10-03 16:13:37-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "cLXU
+1HSyKJMTaqZU", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:37-0500 [BaseClientProtocol,client] TX WAMP: [3, "cLXU1HSyKJMTa
+qZU", 24274.506449999997]
+2013-10-03 16:13:37-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "lRpv
+P5BnQOb-Ciyv", "http://localhost/sitzRPC#set-wavelength", 24274.55]
+2013-10-03 16:13:37-0500 [BaseServerProtocol,1,172.17.13.201] {'bbo': -12354, 'p
+dl': 3547, 'kdp': -3047}
+2013-10-03 16:13:37-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "5aiZ
+ZPZqOjxSkUQK", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:37-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "mwaK
+5sW0JzHIv_G4", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:37-0500 [BaseClientProtocol,client] TX WAMP: [3, "5aiZZPZqOjxSk
+UQK", 24274.53026]
+2013-10-03 16:13:37-0500 [BaseClientProtocol,client] TX WAMP: [3, "mwaK5sW0JzHIv
+_G4", 24274.55407]
+2013-10-03 16:13:37-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "I7Q4
+ewwToXZtyKkN", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:37-0500 [BaseClientProtocol,client] TX WAMP: [3, "I7Q4ewwToXZty
+KkN", 24274.55407]
+2013-10-03 16:13:37-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "DtRb
+SyzG3pbPYmXO", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:37-0500 [BaseClientProtocol,client] TX WAMP: [3, "lRpvP5BnQOb-C
+iyv", null]
+2013-10-03 16:13:37-0500 [BaseClientProtocol,client] TX WAMP: [3, "DtRbSyzG3pbPY
+mXO", 24274.55407]
+2013-10-03 16:13:37-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "Rky8
+jPcvkKM5Vloe", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:37-0500 [BaseClientProtocol,client] TX WAMP: [3, "Rky8jPcvkKM5Vloe", 24274.55407]
+
+
+
+2013-10-03 16:13:38-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "7Aima3gz5c3zBnX4", "http://localhost/sitzRPC#set-wavelength", 24274.6]
+2013-10-03 16:13:38-0500 [BaseServerProtocol,1,172.17.13.201] {'bbo': -12361, 'pdl': 3549, 'kdp': -3049}
+2013-10-03 16:13:38-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "--deOEn5et7AHJX1", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:38-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "AVG_aDNfAYLsJ2K1", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:38-0500 [BaseClientProtocol,client] TX WAMP: [3, "--deOEn5et7AHJX1", 24274.577879999997]
+2013-10-03 16:13:38-0500 [BaseClientProtocol,client] TX WAMP: [3, "AVG_aDNfAYLsJ2K1", 24274.60169]
+2013-10-03 16:13:38-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "Vv76BCIJi8-oAZtT", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:38-0500 [BaseClientProtocol,client] TX WAMP: [3, "Vv76BCIJi8-oAZtT", 24274.60169]
+2013-10-03 16:13:38-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "WMfz60wyutZTSCEO", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:38-0500 [BaseClientProtocol,client] TX WAMP: [3, "7Aima3gz5c3zBnX4", null]
+2013-10-03 16:13:38-0500 [BaseClientProtocol,client] TX WAMP: [3, "WMfz60wyutZTSCEO", 24274.60169]
+2013-10-03 16:13:38-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "ANCfcFnb1exk8SW-", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:38-0500 [BaseClientProtocol,client] TX WAMP: [3, "ANCfcFnb1exk8SW-", 24274.60169]
+
+
+
+2013-10-03 16:13:38-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "BFMqFAHHmf7rBHah", "http://localhost/sitzRPC#set-wavelength", 24274.65]
+2013-10-03 16:13:38-0500 [BaseServerProtocol,1,172.17.13.201] {'bbo': -12368, 'pdl': 3551, 'kdp': -3051}
+2013-10-03 16:13:38-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "8MEcFiGRezHtGBDr", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:39-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "In8OOIRb1qjN21l7", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:39-0500 [BaseClientProtocol,client] TX WAMP: [3, "8MEcFiGRezHtGBDr", 24274.6255]
+2013-10-03 16:13:39-0500 [BaseClientProtocol,client] TX WAMP: [3, "In8OOIRb1qjN21l7", 24274.649309999997]
+2013-10-03 16:13:39-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "V8tBEFuLTqzsh1LJ", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:39-0500 [BaseClientProtocol,client] TX WAMP: [3, "V8tBEFuLTqzsh1LJ", 24274.649309999997]
+2013-10-03 16:13:39-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "igHxlZDwVc1DO8jG", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:39-0500 [BaseClientProtocol,client] TX WAMP: [3, "BFMqFAHHmf7rBHah", null]
+2013-10-03 16:13:39-0500 [BaseClientProtocol,client] TX WAMP: [3, "igHxlZDwVc1DO8jG", 24274.649309999997]
+2013-10-03 16:13:39-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "J5J5iYsCrGyy2ud5", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:39-0500 [BaseClientProtocol,client] TX WAMP: [3, "J5J5iYsCrGyy2ud5", 24274.649309999997]
+
+
+2013-10-03 16:13:39-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "emaYVI4dPwbsdDwb", "http://localhost/sitzRPC#set-wavelength", 24274.7]
+2013-10-03 16:13:39-0500 [BaseServerProtocol,1,172.17.13.201] {'bbo': -12375, 'pdl': 3553, 'kdp': -3052}
+2013-10-03 16:13:39-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "5xNWovqiRhER3PvE", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:39-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "spftT84SY-lHFfgZ", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:39-0500 [BaseClientProtocol,client] TX WAMP: [3, "5xNWovqiRhER3PvE", 24274.67312]
+2013-10-03 16:13:39-0500 [BaseClientProtocol,client] TX WAMP: [3, "spftT84SY-lHFfgZ", 24274.69693]
+2013-10-03 16:13:39-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "tpx5sbHjJkpHTgeb", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:39-0500 [BaseClientProtocol,client] TX WAMP: [3, "tpx5sbHjJkpHTgeb", 24274.69693]
+2013-10-03 16:13:39-0500 [BaseServerProtocol,0,172.17.13.201] RX WAMP: [2, "ep-cARY2NJaYFr-x", "http://localhost/sitzRPC#get-wavelength"]
+2013-10-03 16:13:39-0500 [BaseClientProtocol,client] TX WAMP: [3, "ep-cARY2NJaYFr-x", 24274.69693]
+2013-10-03 16:14:03-0500 [BaseServerProtocol,1,172.17.13.201] RX WAMP: [2, "mhMlIIranhK8oz7Q", "http://localhost/sitzRPC#cancel-wavelength-set"]
+2013-10-03 16:14:03-0500 [BaseServerProtocol,1,172.17.13.201] TX WAMP: [3, "mhMlIIranhK8oz7Q", null]
+2013-10-03 16:14:17-0500 [BaseServerProtocol,1,172.17.13.201] unsubscribed peer172.17.13.201:1156 from all topics
