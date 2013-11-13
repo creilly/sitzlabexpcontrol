@@ -313,18 +313,17 @@ class VoltMeterOutputWidget(QtGui.QWidget):
                 d = Deferred()
                 def onVoltages(voltages_dict):
                     # push acquired value to list
-                    voltages_list.append(voltages_dict[channel])
-                    
+                    voltages_list.append(voltages_dict[channel])                    
                     # are we done?
                     if len(voltages_list) is shots or self._cancel:
-                        shots = len(voltages_list)
+                        total = len(voltages_list)
                         self._cancel = False
                         this.volt_meter_client.removeListener(onVoltages)
-                        mean = sum(voltages_list) / shots
+                        mean = sum(voltages_list) / total
                         variance = sum(
                             voltage**2 for voltage in voltages_list
-                        )/shots - mean**2
-                        error = pow(variance / shots,.5)
+                        )/total - mean**2
+                        error = pow(variance / total,.5)
                         d.callback((mean,error))
                 # sign up for messages about new acquisitions
                 this.volt_meter_client.addListener(onVoltages)
