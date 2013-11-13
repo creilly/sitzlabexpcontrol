@@ -1,13 +1,3 @@
-from twisted.internet.defer import inlineCallbacks
-
-from sitz import DELAY_GENERATOR_SERVER, DEBUG_DELAY_GENERATOR_SERVER
-
-from sitz import printDict
-
-import sys
-DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
-print 'debug: %s' % DEBUG
-
 #instantiate this class to have access to methods that make calls to the server
 #this is how you make all interactions with the server
 class DelayGeneratorClient:
@@ -16,7 +6,7 @@ class DelayGeneratorClient:
 
     def getDelays(self):
         return self.protocol.sendCommand('get-delays')
-        
+
     def setDelay(self,dgName,delay):
         return self.protocol.sendCommand('set-delay',dgName,delay)
 
@@ -25,11 +15,16 @@ class DelayGeneratorClient:
 
     def removeDelayListener(self,listener = None):
         self.protocol.messageUnsubscribe('delay-changed',listener)
-        
+
+from twisted.internet.defer import inlineCallbacks        
 @inlineCallbacks
 def main():
     from ab.abclient import getProtocol    
     from ab.abbase import selectFromList, getFloat
+    from sitz import DELAY_GENERATOR_SERVER, TEST_DELAY_GENERATOR_SERVER
+    from sitz import printDict
+    import sys
+    DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 
     protocol = yield getProtocol(
         DELAY_GENERATOR_SERVER

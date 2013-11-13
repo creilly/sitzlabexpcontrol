@@ -1,0 +1,2 @@
+fake delay gen 1 10000.0
+fake delay gen 2 75.0

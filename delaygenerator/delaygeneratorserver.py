@@ -26,9 +26,9 @@ from twisted.internet.task import LoopingCall
 
 import pprint
 
-from config.delaygenerator import SERVER_CONFIG, DG_CONFIG, DEBUG_SERVER_CONFIG, DEBUG_DG_CONFIG
+from config.delaygenerator import DG_CONFIG, DEBUG_DG_CONFIG
 
-from sitz import compose, printDict, DELAY_GENERATOR_SERVER, DEBUG_DELAY_GENERATOR_SERVER
+from sitz import compose, printDict, DELAY_GENERATOR_SERVER, TEST_DELAY_GENERATOR_SERVER
 
 dgDict = {}
 
@@ -83,7 +83,7 @@ def createDelayGenerator(name,dgOptions,dgDictionary):
     
 @inlineCallbacks
 def main():
-    url = DELAY_GENERATOR_SERVER if not DEBUG else DEBUG_DELAY_GENERATOR_SERVER
+    url = DELAY_GENERATOR_SERVER if not DEBUG else TEST_DELAY_GENERATOR_SERVER
     dgOptions = DG_CONFIG if not DEBUG else DEBUG_DG_CONFIG
     print '\n\n\n'
 
