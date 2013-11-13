@@ -4,7 +4,9 @@ from PySide import QtGui, QtCore
 #the associated key via the choiceMade signal.
 class DictComboBox(QtGui.QComboBox):
     currentKeyChanged = QtCore.Signal(object)
-    def __init__(self,itemsDict):
+    def __init__(self,itemsDict=None):
+        if itemsDict is None:
+            itemsDict = {}
         #subclass combobox to pick from the values in dictionary and emit key
         self.itemsDict = itemsDict
         QtGui.QComboBox.__init__(self)
