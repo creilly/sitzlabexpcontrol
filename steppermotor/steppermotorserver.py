@@ -30,8 +30,10 @@ class StepperMotorWAMP(BaseWAMP):
                 *(
                     (
                         options['pulse_channel'],
-                        options['direction_channel'],
                         options['counter_channel'],
+                        options['direction_channel'],
+                        options['step_rate'],
+                        int(options['initial_position']),
                         int(options['backlash'])
                     ) if not DEBUG else tuple([])
                 )
