@@ -4,7 +4,6 @@ from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import sys
 DEBUG = len(sys.argv) > 1
 
-
 class VoltMeterClient:
     VOLTAGES = 'voltages-acquired'
     def __init__(self,protocol):        
@@ -33,6 +32,21 @@ class VoltMeterClient:
         
     def removeListener(self,listener=None):
         self.protocol.messageUnsubscribe(self.VOLTAGES,listener)
+
+    def getChannelParameter(self,channel,parameter):
+        return self.protocol.sendCommand(
+            'get-channel-parameter',
+            channel,
+            parameter
+        )
+
+    def setChannalParameter(self,channel,parameter,value):
+        return self.protocol.sendCommand(
+            'set-channel-parameter',
+            channel,
+            parameter,
+            value
+        )
 
 @inlineCallbacks
 def pollVMServer(serverURL):

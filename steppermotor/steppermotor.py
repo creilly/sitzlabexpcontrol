@@ -198,6 +198,8 @@ class PulseGeneratorStepperMotor(CounterStepperMotor):
         rate = 1.0 / period
         return rate
 
+class StepperMotor(PulseGeneratorStepperMotor): pass
+
 class DigitalLineStepperMotor(CounterStepperMotor):
     def __init__(
             self,

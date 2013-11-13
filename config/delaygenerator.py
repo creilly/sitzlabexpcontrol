@@ -16,6 +16,7 @@ re-purpose a delay generator then update all the other parameters and name.
 
 FAKE1 = 'fake delay gen 1'
 FAKE2 = 'fake delay gen 2'
+
 MG_PROBE_QSW = 'm gostein delay gen'
 MAV_PUMP_LAMP = 'pump laser lamps'
 MAV_PUMP_QSW = 'pump laser q-switch'
@@ -23,19 +24,6 @@ MAV_PROBE_LAMP = 'probe laser lamps'
 MAV_PROBE_QSW = 'probe laser q-switch'
 MAV_NOZZLE = 'nozzle'
 
-SERVER_CONFIG = {
-    #'host_machine_ip':'ws://172.17.13.201:9002',
-    'host_machine_ip':'ws://localhost:9002',
-    'serve_on_port':'9002',
-    'url':'ws://localhost:9002',
-    # 'url':'ws://172.17.13.201:9002'
-    }
-
-DEBUG_SERVER_CONFIG = {
-    'host_machine_ip':'ws://localhost:9002',
-    'serve_on_port':'9002',
-    'url':'ws://localhost:9002'
-    }
 
     
 DG_CONFIG = {
@@ -93,7 +81,6 @@ DG_CONFIG = {
         'run_by_default':False,
         'dg_version': 'maverick'
         }
-
 }
 
 DEBUG_DG_CONFIG = {

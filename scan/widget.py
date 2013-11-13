@@ -59,8 +59,8 @@ class ScanToggleObject(ToggleObject):
 class IntervalScanInputWidget(QtGui.QWidget):
     START,STOP,STEP = 0,1,2
     NAME, ATTRIBUTE = 0,1
-    MIN, MAX, PRECISION = 0,1,2
-    PARAMETERS = (MIN,MAX,PRECISION)
+    MIN, MAX, PRECISION, VALUE = 0,1,2,3
+    PARAMETERS = (MIN,MAX,PRECISION,VALUE)
     PROPERTIES = {
         START:{
             NAME: 'begin',
@@ -96,6 +96,20 @@ class IntervalScanInputWidget(QtGui.QWidget):
             )
             self.spins[id]=spin
 
+    def getParameter(self,spinID,parameter):
+        spin = self.spins[spinID]
+        if parameter is self.PRECISION:
+            return spin.decimals()
+        else:
+            return getattr(
+                spin,
+                {
+                    self.MIN:'minimum',
+                    self.MAX:'maximum',
+                    self.VALUE:'value'
+                }[parameter]
+            )()
+            
     def setParameter(self,spinID,parameter,value):
         spin = self.spins[spinID]
         if parameter is self.PRECISION:
@@ -106,10 +120,11 @@ class IntervalScanInputWidget(QtGui.QWidget):
                 spin,
                 {
                     self.MIN:'setMinimum',
-                    self.MAX:'setMaximum'
+                    self.MAX:'setMaximum',
+                    self.VALUE:'setValue'
                 }[parameter]
             )(value)
-                               
+
     def getInput(self,agent):
         return IntervalScanInput(
             agent,
