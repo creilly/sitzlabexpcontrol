@@ -137,6 +137,7 @@ def createDelayGenerator(name,dgOptions,dgDictionary):
         dgDictionary[name] = FakeDelayGenerator(dgOptions)
     else:
         dgDictionary[name] = DelayGenerator(dgOptions)
+    print name
     print 'created: ' + name + ' with a delay of ' + str(dgOptions['delay']) + ' on ' + str(dgDictionary[name].COMPort)
     return dgDictionary
     
@@ -169,6 +170,8 @@ def main():
             print '\n\n\n'
             break
         elif dgToAdd in configList:
+            print dgToAdd
+            print dgOptions[dgToAdd]
             dgDict.update(createDelayGenerator(dgToAdd,dgOptions[dgToAdd],dgDict))
         configList.pop(configList.index(dgToAdd))
 

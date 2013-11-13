@@ -11,9 +11,10 @@ from qtutils.label import LabelWidget
 from qtutils.qled import LEDWidget
 from operator import index
 from sitz import compose
+from sitz import DELAY_GENERATOR_SERVER, TEST_DELAY_GENERATOR_SERVER
 from ab.abclient import getProtocol
 from functools import partial
-from config.delaygenerator import DEBUG_SERVER_CONFIG, SERVER_CONFIG, DEBUG_DG_CONFIG, DG_CONFIG
+from config.delaygenerator import DEBUG_DG_CONFIG, DG_CONFIG
 from delaygeneratorserver import MIN, MAX
 from delaygeneratorclient import DelayGeneratorClient
 
@@ -144,9 +145,9 @@ class DelayGeneratorWidget(QtGui.QWidget):
 @inlineCallbacks
 def main(container):
     protocol = yield getProtocol(
-        DEBUG_SERVER_CONFIG['url']
+        TEST_DELAY_GENERATOR_SERVER
         if DEBUG else
-        SERVER_CONFIG['url']
+        DELAY_GENERATOR_SERVER
     )
     widget = DelayGeneratorWidget(protocol)
     container.append(widget)

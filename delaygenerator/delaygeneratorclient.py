@@ -27,12 +27,13 @@ def main():
     from sitz import DELAY_GENERATOR_SERVER, TEST_DELAY_GENERATOR_SERVER
     from sitz import printDict
     import sys
+    from config.delaygenerator import DG_CONFIG, DEBUG_DG_CONFIG
     DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 
     protocol = yield getProtocol(
+        TEST_DELAY_GENERATOR_SERVER
+        if DEBUG else
         DELAY_GENERATOR_SERVER
-        if not DEBUG else
-        DEBUG_DELAY_GENERATOR_SERVER
     )
 
     client = DelayGeneratorClient(protocol)
@@ -65,7 +66,8 @@ def main():
             else:
                 print 'setting partnered delay'
                 client.setPartnerDelay(dgToMod,delayVal)
-
+        if activeDGs[dgToMod]['partner'] is None:
+            client.setDelay(dgToMod,delayVal)
     print 'shutting down'
     reactor.stop()
 

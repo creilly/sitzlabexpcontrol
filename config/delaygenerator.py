@@ -29,8 +29,8 @@ MAV_NOZZLE = 'nozzle'
 DG_CONFIG = {
     MG_PROBE_QSW:{
         'usb_chan':'COM3',
-        'ard_id': None,
-        'delay':3800000.,
+        'ard_id': '7523733353635150A1A0',
+        'delay':3836550.,
         'partner':None,
         'rel_part_delay': None,
         'run_by_default':False,
