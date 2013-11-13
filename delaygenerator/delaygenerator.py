@@ -19,18 +19,32 @@ from time import sleep
 CLOCKPERIOD = 50 #in nanoseconds
 AD9501TIMECONST = .2 #in nanoseconds (eg. 200picoseconds)
 
+
+
 class DelayGenerator:
     def __init__(self,confDict):
+        self.hardwareVersion = confDict['dg_version']
         self.timeToDelay = confDict['delay']
-        self.ser = serial.Serial(confDict['usb_chan'],9600,timeout=5)
+        idToLookFor = confDict['ard_id']
+        self.COMPort = self.findCOMPort(idToLookFor)
+        self.ser = serial.Serial(self.COMPort,9600,timeout=5)
        
+    def findCOMPort(self,idToFind):
+        import win32com.client
+        wmi = win32com.client.GetObject ("winmgmts:")
+        for usb in wmi.InstancesOf("Win32_SerialPort"):
+            if usb.PNPDeviceID.split("\\")[2] == idToFind:
+                name = usb.Name.split("(")[1]
+                return name.strip(")")
+
     def writeToUSB(self,strToWrite):
         self.ser.write(strToWrite)
         sleep(.01) #give the arduino 10milliseconds to respond, it is not instantaneous
-        echo = self.ser.readline().replace('\r\n','')
-        if echo == strToWrite: return True
-        if echo != strToWrite: return False
+        echo = self.ser.readline().replace('\r\n','') #under both versions of the sketch, the ardy echoes the result
+        if echo == str(strToWrite): return True
+        if echo != str(strToWrite): return False
         
+    #this is specifically for the arduino mega operating MGostein's DG, Mav's DG takes the time in ns directly
     def convertDelay(self,timeToDelay):
         #split requested delay to the clock and the AD9501, convert to binary
         #clean up binary string and pad to specified length (clock = 20bits, AD9501 = 8bits)
@@ -46,9 +60,11 @@ class DelayGenerator:
         #the number of 10ps intervals, convert these to binary, send
         #these strings to channel via usb, fire callback when device replies
         self.timeToDelay = timeToDelay
-        stringToSend = self.convertDelay(self.timeToDelay)
-        if not self.writeToUSB(stringToSend):
-            raise SitzException('write to delay generator %s failed' % self)
+        if self.hardwareVersion == "gostein":
+            stringToSend = self.convertDelay(self.timeToDelay)
+        elif self.hardwareVersion == "maverick":
+            stringToSend = str(self.timeToDelay)
+        return self.writeToUSB(stringToSend)
 
     def getDelay(self):
         return self.timeToDelay
@@ -60,7 +76,6 @@ class DelayGenerator:
 class FakeDelayGenerator(DelayGenerator):
     def __init__(self,confDict):
         self.timeToDelay = confDict['delay']
-        self.ser = confDict['usb_chan']
 
     def writeToUSB(self,strToWrite):
         print "This is when I'd write to the USB, but I'm not because I'm a big ol' liar."

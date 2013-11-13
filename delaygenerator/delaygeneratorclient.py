@@ -1,5 +1,6 @@
 from twisted.internet.defer import inlineCallbacks
 from sitz import printDict
+from config.delaygenerator import DG_CONFIG, DEBUG_DG_CONFIG
 
 
 import sys
@@ -19,11 +20,18 @@ class DelayGeneratorClient:
     def setDelay(self,dgName,delay):
         return self.protocol.sendCommand('set-delay',dgName,delay)
 
+    def setPartnerDelay(self,dgName,delay):
+        return self.protocol.sendCommand('set-partnered-delay',dgName,delay)
+        
     def setDelayListener(self,listener):
         self.protocol.messageSubscribe('delay-changed',listener)
 
     def removeDelayListener(self,listener = None):
         self.protocol.messageUnsubscribe('delay-changed',listener)
+        
+
+    
+       
 
         
 @inlineCallbacks
@@ -38,6 +46,13 @@ def main():
     
     delay = yield client.getDelays()
     dgNameList = delay.keys()
+    activeDGs = {}
+    for dg in dgNameList:
+        if DEBUG: 
+            activeDGs[dg] = DEBUG_DG_CONFIG[dg]
+        else:
+            activeDGs[dg] = DG_CONFIG[dg]
+    dgNameList.insert(0,'Refresh')
     dgNameList.append('Done')
     
     while True:
@@ -47,9 +62,16 @@ def main():
             print '\t %s: %s' % (key,val)
         
         dgToMod = yield selectFromList(dgNameList,"Which delay generator to adjust?")
+        if dgToMod == "Refresh": continue
         if dgToMod == "Done": break
         delayVal = yield getFloat(prompt="Enter a new delay (in ns):")
-        client.setDelay(dgToMod,delayVal)
+        if activeDGs[dgToMod]['partner'] is not None:
+            print 'this delay has a partner. the partner will automatically adjust unless you override.'
+            override = raw_input("override? (y/n)")
+            if override == 'Y' or override == 'y': client.setDelay(dgToMod,delayVal)
+            else:
+                print 'setting partnered delay'
+                client.setPartnerDelay(dgToMod,delayVal)
 
     print 'shutting down'
     reactor.stop()
