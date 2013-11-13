@@ -70,30 +70,6 @@ class WavelengthWAMP(BaseWAMP):
         #print wavelength
         crystalPosition = yield self.stepperMotors[id].getPosition()
         self.calibrators[id].calibrateCrystal((wavelength,crystalPosition))
-
-    @command('get-phase')
-    def getPhase(self,id):
-        return self.calibrators[id].getPhase()
-
-    @command('set-phase','set oscillation compensation phase')
-    def setPhase(self,id,phase):
-        self.calibrators[id].setPhase(phase)
-
-    @command('get-amplitude')
-    def getAmplitude(self,id):
-        return self.calibrators[id].getAmplitude()
-
-    @command('set-amplitude','set oscillation compensation amplitude')
-    def setAmplitude(self,id,amplitude):
-        self.calibrators[id].setAmplitude(amplitude)
-
-    @command('get-period')
-    def getPeriod(self,id):
-        return self.calibrators[id].getPeriod()
-
-    @command('set-period','set oscillation compensation period')
-    def setPeriod(self,id,period):
-        self.calibrators[id].setPeriod(period)
         
     @command('get-wavelength','get calibrated SURF wavelength')
     def _getWavelength(self):
@@ -135,6 +111,8 @@ class WavelengthWAMP(BaseWAMP):
             positions.items()
         ]:
             yield d
+        wavelength = yield self._getWavelength()
+        returnValue(wavelength)
 
     @command('cancel-wavelength-set','abort most recent wavelength set call')
     def cancelWavelengthCall(self):
