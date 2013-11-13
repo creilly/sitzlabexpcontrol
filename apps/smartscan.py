@@ -386,7 +386,8 @@ def SmartScanGUI():
 
     # configure the input widget
     inputWidget = ComboWidget()
-    cpLayout.addWidget(LabelWidget('input',inputWidget))    
+    inputWidget.setTabPosition(inputWidget.West)
+    cpLayout.addWidget(LabelWidget('input',inputWidget),1)    
 
     # algorithm for scan inputs is:
     # 1. create client for server from protocol object
