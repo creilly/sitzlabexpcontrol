@@ -22,7 +22,7 @@ DEBUG_LID_CONFIG = {
 
 LID_CONFIG = {
     'logfile':'lidlog.txt',
-    'relay_channel':'dev3/port0/line3',
+    'relay_channel':'dev1/port0/line0',
     'step_channel':'dev3/port0/line7',
     'counter_channel':'dev3/ctr6',
     'direction_channel':'dev3/port0/line5',

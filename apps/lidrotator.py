@@ -7,7 +7,7 @@ if QtCore.QCoreApplication.instance() is None:
     qt4reactor.install()
 ## BOILERPLATE ##
 from twisted.internet.defer import inlineCallbacks
-from steppermotorclient import ChunkedStepperMotorClient
+from steppermotor.steppermotorclient import ChunkedStepperMotorClient
 from qtutils.label import LabelWidget
 from qtutils.qled import LEDWidget
 from operator import index
@@ -15,12 +15,12 @@ from sitz import compose
 from ab.abclient import getProtocol
 from functools import partial
 
-from steppermotor import DigitalLineStepperMotor, FakeStepperMotor
+from steppermotor.steppermotor import DigitalLineStepperMotor, FakeStepperMotor
 from config.lid import LID_POSITIONS, LID_CONFIG, DEBUG_LID_CONFIG
 from time import sleep
 from config.filecreation import POOHDATAPATH
 from daqmx.task.do import DOTask
-from goto import MIN, MAX, PRECISION, SLIDER, GotoWidget
+from steppermotor.goto import MIN, MAX, PRECISION, SLIDER, GotoWidget
 import os
 from qtutils.toggle import ToggleObject, ToggleWidget
 from datetime import datetime
@@ -62,9 +62,10 @@ class LidRotatorWidget(QtGui.QWidget):
             
             #send new position to stepper motor
             def onGotoRequested(position):
-                
+                debugSteps = 0
                 def loop():
                     currPos = self.sm.getPosition()
+                    #print 'error:\t%d' % debugSteps - currPos
                     lcd.display(currPos)
                     stepsPerChunk = int( self.sm.getStepRate() / UPDATE_RATE )
                     delta = position - currPos
@@ -73,11 +74,17 @@ class LidRotatorWidget(QtGui.QWidget):
                         goToggle.toggle()
                         return
                     if abs(delta) < stepsPerChunk:
+                        debugSteps = position
                         self.sm.setPosition(
                             position,
                             loop
                         )
                     else:
+                        debugSteps = (
+                            currPos + (
+                                1 if delta > 0 else -1
+                            ) * stepsPerChunk
+                        )
                         self.sm.setPosition(
                             currPos + (
                                 1 if delta > 0 else -1
