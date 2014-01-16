@@ -20,9 +20,14 @@ from delaygeneratorclient import DelayGeneratorClient
 
 
 import sys
-DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
+print sys.argv
+DEBUG = len(sys.argv) > 1 and 'debug' in sys.argv
+LOCAL = len(sys.argv) > 1 and 'local' in sys.argv
+print 'debug: %s' % DEBUG
+print 'local: %s' % LOCAL
 
-
+import os
+os.system("delay generator gui")
 
 class DelayGeneratorWidget(QtGui.QWidget):
     def __init__(self,protocol):
@@ -146,12 +151,12 @@ class DelayGeneratorWidget(QtGui.QWidget):
 def main(container):
     protocol = yield getProtocol(
         TEST_DELAY_GENERATOR_SERVER
-        if DEBUG else
+        if LOCAL else
         DELAY_GENERATOR_SERVER
     )
     widget = DelayGeneratorWidget(protocol)
     container.append(widget)
-    widget.setWindowTitle('delay generator client ' + ('debug' if DEBUG else 'real'))
+    widget.setWindowTitle('delay generator client ' + ('debug ' if DEBUG else 'real ') + ('local' if LOCAL else 'sitz lab'))
 
 if __name__ == '__main__':
     from twisted.internet import reactor

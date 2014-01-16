@@ -23,16 +23,22 @@ from twisted.internet.defer import inlineCallbacks
 @inlineCallbacks
 def main():
     from ab.abclient import getProtocol    
-    from ab.abbase import selectFromList, getFloat
-    from sitz import DELAY_GENERATOR_SERVER, TEST_DELAY_GENERATOR_SERVER
+    from ab.abbase import selectFromList, getFloat, getType
+    from types import LongType
+    from config.serverURLs import DELAY_GENERATOR_SERVER, TEST_DELAY_GENERATOR_SERVER
     from sitz import printDict
-    import sys
     from config.delaygenerator import DG_CONFIG, DEBUG_DG_CONFIG
-    DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
-
+    
+    import sys
+    print sys.argv
+    DEBUG = len(sys.argv) > 1 and 'debug' in sys.argv
+    LOCAL = len(sys.argv) > 1 and 'local' in sys.argv
+    print 'debug: %s' % DEBUG
+    print 'local: %s' % LOCAL
+    
     protocol = yield getProtocol(
         TEST_DELAY_GENERATOR_SERVER
-        if DEBUG else
+        if LOCAL else
         DELAY_GENERATOR_SERVER
     )
 
@@ -58,7 +64,7 @@ def main():
         dgToMod = yield selectFromList(dgNameList,"Which delay generator to adjust?")
         if dgToMod == "Refresh": continue
         if dgToMod == "Done": break
-        delayVal = yield getFloat(prompt="Enter a new delay (in ns):")
+        delayVal = yield getType(LongType,prompt="Enter a new delay (in ns):")
         if activeDGs[dgToMod]['partner'] is not None:
             print 'this delay has a partner. the partner will automatically adjust unless you override.'
             override = raw_input("override? (y/n)")

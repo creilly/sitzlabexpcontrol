@@ -442,6 +442,8 @@ def main():
     widget = VoltMeterWidget(protocol)
     container.append(widget)
     widget.show()
+    widget.setWindowTitle('voltmeter client ' + ('debug ' if DEBUG else 'real ')
+
 
 if __name__ == '__main__':
     container = []

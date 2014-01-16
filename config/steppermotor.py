@@ -16,22 +16,22 @@ SM_CONFIG = {
     PDL : {
         'name':'pdl',
         'pulse_channel':'dev1/ctr1',
-        'direction_channel':'dev1/port0/line2',
-        'counter_channel':'dev3/ctr7',
+        'direction_channel':'/dev1/port0/line2',
+        'counter_channel':'dev2/ctr7',
         'backlash':0
     },
     KDP : {
         'name':'kdp',
-        'pulse_channel':'dev3/ctr4',
-        'direction_channel':'dev3/port0/line2',
-        'counter_channel':'dev3/ctr3',
+        'pulse_channel':'dev2/ctr4',
+        'direction_channel':'/dev2/port0/line2',
+        'counter_channel':'dev2/ctr3',
         'backlash':285
     },
     BBO : {
         'name':'bbo',
-        'pulse_channel':'dev3/ctr1',
-        'direction_channel':'dev3/port0/line1',
-        'counter_channel':'dev3/ctr2',
+        'pulse_channel':'dev2/ctr1',
+        'direction_channel':'dev2/port0/line1',
+        'counter_channel':'dev2/ctr2',
         'backlash':195
     }
 }
