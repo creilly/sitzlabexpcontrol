@@ -160,6 +160,22 @@ convenience)
 remaining parameters specify the bounds of the spin boxes and are self explanatory.
 
 '''
+
+class ManualInputWidget(CancelInputWidget):
+    def __init__(self,parent):
+        def scan_input_generator(_):
+            class ManualInput:
+                def next(self):
+                    result, valid = QtGui.QInputDialog.getDouble(
+                        parent, 
+                        'next x value', 
+                        'enter next x value',
+                    )
+                    return result if valid else None
+            return ManualInput()
+        CancelInputWidget.__init__(self,scan_input_generator,lambda:None,lambda:None)
+                    
+                    
 class CenterInputWidget(CancelInputWidget):
     def __init__(
         self,
@@ -389,6 +405,11 @@ def SmartScanGUI():
     inputWidget.setTabPosition(inputWidget.West)
     cpLayout.addWidget(LabelWidget('input',inputWidget),1)    
 
+    inputWidget.addTab(
+        ManualInputWidget(widget),
+        'manual'
+    )
+
     # algorithm for scan inputs is:
     # 1. create client for server from protocol object
     # 2. create combo widget to hold interval and list widgets
@@ -499,14 +520,14 @@ def SmartScanGUI():
                 setter,
                 cancel,
                 getter,
-                0.0,
-                100.0,
-                2,
-                50.0,
-                .1,
-                10.0,
-                2,
-                5.0
+                1,
+                50000000,
+                0,
+                3896550.0,
+                0,
+                10000,
+                1,
+                100
             ),
             'interval'
         )
