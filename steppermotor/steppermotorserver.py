@@ -23,6 +23,24 @@ class StepperMotorWAMP(BaseWAMP):
     def initializeWAMP(self):
         config = self.config = SM_CONFIG
         ## construct a dictionary of steppermotor objects
+        self.sms = {}
+        for id, options in config.items():
+            if DEBUG:
+                self.sms[id] = FakeStepperMotor( 
+                    options['pulse_channel'],
+                    options['direction_channel'],
+                    options['counter_channel'],
+                    int(options['backlash'])
+                )
+            else:
+                print id
+                self.sms[id] = StepperMotor(
+                    options['pulse_channel'],
+                    options['direction_channel'],
+                    options['counter_channel'],
+                    int(options['backlash'])
+                )
+        '''
         self.sms = {
             id:(
                 StepperMotor if not DEBUG else FakeStepperMotor
@@ -39,6 +57,7 @@ class StepperMotorWAMP(BaseWAMP):
                 )
             ) for id, options in config.items()
         }
+        '''
         ## complete initialization
         BaseWAMP.initializeWAMP(self)
 

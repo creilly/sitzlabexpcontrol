@@ -1,4 +1,1 @@
-pump laser q-switch 3234950
-nozzle 2842450.0
-pump laser lamps 3007400
-probe laser lamps 3004150
+m gostein delay gen 3820000.0

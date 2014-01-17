@@ -1,7 +1,2 @@
-<<<<<<< HEAD
-fake delay gen 1 1000000
-fake delay gen 2 1220000.0
-=======
-fake delay gen 1 10000.0
-fake delay gen 2 75.0
->>>>>>> da9b43c76930c122e19c8954d75bb8bcee8a0d5c
+fake delay gen 1 20000
+fake delay gen 2 240000

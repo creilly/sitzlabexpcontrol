@@ -27,55 +27,41 @@ MAV_NOZZLE = 'nozzle'
 
     
 DG_CONFIG = {
-    MG_PROBE_QSW:{
-        'usb_chan':'COM3',
-        'ard_id': None,
-        'delay':3800000.,
-        'partner':None,
-        'rel_part_delay': None,
-        'run_by_default':False,
-        'dg_version': 'gostein'
-        },
     MAV_NOZZLE:{
-        'usb_chan':'COM6',
         'ard_id':'55330343731351906041',
-        'delay':2842450.,
+        'delay':2842450,
         'partner':None,
         'rel_part_delay':None,
         'run_by_default':True,
         'dg_version': 'maverick'
         },
     MAV_PUMP_LAMP:{
-        'usb_chan':'COM3',
         'ard_id':'5533834353935150E1D1',
-        'delay':3607400.,
+        'delay':3607400,
         'partner':MAV_PUMP_QSW,
         'rel_part_delay':227550.,
         'run_by_default':True,
         'dg_version': 'maverick'
         },
     MAV_PUMP_QSW:{
-        'usb_chan':'COM7',
         'ard_id': '5533834353935120E1D0',
-        'delay':3834950.,
+        'delay':3834950,
         'partner':MAV_PUMP_LAMP,
         'rel_part_delay':-227550.,
         'run_by_default':True,
         'dg_version': 'maverick'
         },
     MAV_PROBE_LAMP:{
-        'usb_chan':'COM5',
         'ard_id': '55330343731351C0A1B1',
-        'delay':3604150.,
+        'delay':3604150,
         'partner':MAV_PROBE_QSW,
         'rel_part_delay':232400.,
         'run_by_default':True,
         'dg_version': 'maverick'
         },
     MAV_PROBE_QSW:{
-        'usb_chan':'COM4',
         'ard_id': '55338343539351109290',
-        'delay':3836550.,
+        'delay':3836550,
         'partner':MAV_PROBE_LAMP,
         'rel_part_delay':-232400.,
         'run_by_default':False,
@@ -86,7 +72,7 @@ DG_CONFIG = {
 DEBUG_DG_CONFIG = {
     FAKE1:{
         'ard_id':None,
-        'delay':10000.,
+        'delay':10000,
         'partner':FAKE2,
         'rel_part_delay':220000.,
         'run_by_default':True,
@@ -94,10 +80,27 @@ DEBUG_DG_CONFIG = {
         },
     FAKE2:{
         'ard_id':None,
-        'delay':230000.,
+        'delay':230000,
         'partner':FAKE1,
         'rel_part_delay':-220000.,
         'run_by_default':True,
         'dg_version': 'maverick'
         }
 }
+
+
+
+
+'''
+to find the ard_id parameter for a new delay generator:
+
+start an ipython session on the host computer with the arduino attached (after you have installed the arduino driver).
+execute this:
+
+import win32com.client
+wmi = win32com.client.GetObject ("winmgmts:")
+for usb in wmi.InstancesOf("Win32_SerialPort"):
+    print usb.PNPDeviceID.split("\\")[2]
+	
+look through those listed IDs and find the new one. copy paste it as the ard_id value
+'''

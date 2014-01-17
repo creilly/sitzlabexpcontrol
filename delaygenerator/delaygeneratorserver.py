@@ -27,8 +27,12 @@ from twisted.internet.task import LoopingCall
 import pprint
 
 from config.delaygenerator import DG_CONFIG, DEBUG_DG_CONFIG
+from config.serverURLs import DELAY_GENERATOR_SERVER, TEST_DELAY_GENERATOR_SERVER
 
-from sitz import compose, printDict, DELAY_GENERATOR_SERVER, TEST_DELAY_GENERATOR_SERVER
+from sitz import compose, printDict #, DELAY_GENERATOR_SERVER, TEST_DELAY_GENERATOR_SERVER
+
+import os.path
+
 
 dgDict = {}
 
@@ -36,8 +40,11 @@ import sys
 print sys.argv
 DEBUG = len(sys.argv) > 1 and 'debug' in sys.argv
 AUTORUN = len(sys.argv) > 1 and 'auto' in sys.argv
+LOCAL = len(sys.argv) > 1 and 'local' in sys.argv
 print 'debug: %s' % DEBUG
 print 'autorun: %s' % AUTORUN
+print 'local: %s' % LOCAL
+
 
 
 MIN = 0
@@ -123,7 +130,7 @@ class DelayGeneratorWAMP(BaseWAMP):
         
     def updateConfig(self):
         #writes all delay generators' delays to a file in config/ for reference
-        lastConfName='../config/lastDelayConfigDEBUG.txt' if DEBUG else '../config/lastDelayConfig.txt'
+        lastConfName=os.path.abspath('../config/lastDelayConfigDEBUG.txt') if DEBUG else os.path.abspath('../config/lastDelayConfig.txt')
         confFile = open(lastConfName,'w')
         for name, dg in self.dgDict.items():
             confFile.write(name+' '+str(dg.getDelay())+'\n')
@@ -135,14 +142,16 @@ def createDelayGenerator(name,dgOptions,dgDictionary):
     #   return dgDictionary
     if DEBUG:
         dgDictionary[name] = FakeDelayGenerator(dgOptions)
+        print 'created: ' + name + ' with a delay of ' + str(dgOptions['delay']) + ' on fake com port'
     else:
         dgDictionary[name] = DelayGenerator(dgOptions)
-    print 'created: ' + name + ' with a delay of ' + str(dgOptions['delay']) + ' on ' + str(dgDictionary[name].COMPort)
+        print 'created: ' + name + ' with a delay of ' + str(dgOptions['delay']) + ' on ' + str(dgDictionary[name].COMPort)
+    print name
     return dgDictionary
     
 @inlineCallbacks
 def main():
-    url = DELAY_GENERATOR_SERVER if not DEBUG else TEST_DELAY_GENERATOR_SERVER
+    url = DELAY_GENERATOR_SERVER if not LOCAL else TEST_DELAY_GENERATOR_SERVER
     dgOptions = DG_CONFIG if not DEBUG else DEBUG_DG_CONFIG
     print '\n\n\n'
 
@@ -169,6 +178,8 @@ def main():
             print '\n\n\n'
             break
         elif dgToAdd in configList:
+            print dgToAdd
+            print dgOptions[dgToAdd]
             dgDict.update(createDelayGenerator(dgToAdd,dgOptions[dgToAdd],dgDict))
         configList.pop(configList.index(dgToAdd))
 

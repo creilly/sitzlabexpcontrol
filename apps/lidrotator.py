@@ -31,8 +31,8 @@ DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 
 
 PARAMS = {
-    MIN:-99999,
-    MAX:99999,
+    MIN:-999999,
+    MAX:999999,
     PRECISION:0,
     SLIDER:200
 }

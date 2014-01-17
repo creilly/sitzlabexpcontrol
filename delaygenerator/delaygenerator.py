@@ -16,9 +16,8 @@ Computer --USB--> arduino --ribbon--> M. Gostein's circuit --coax--> lasers
 import serial
 from time import sleep
 
-CLOCKPERIOD = 50 #in nanoseconds
+CLOCKPERIOD = 50. #in nanoseconds
 AD9501TIMECONST = .2 #in nanoseconds (eg. 200picoseconds)
-
 
 
 class DelayGenerator:
@@ -27,12 +26,17 @@ class DelayGenerator:
         self.timeToDelay = confDict['delay']
         idToLookFor = confDict['ard_id']
         self.COMPort = self.findCOMPort(idToLookFor)
+        if self.COMPort is None: 
+			print "WARNING!!! DIDN'T FIND ARDUINO!!"
         self.ser = serial.Serial(self.COMPort,9600,timeout=5)
+        sleep(1) #wait 1s for com port to actually open and be ready to accept input/output, this might be an arduino thing
+        if not self.setDelay(float(self.timeToDelay)): print 'warning: did not initialize'
        
     def findCOMPort(self,idToFind):
         import win32com.client
         wmi = win32com.client.GetObject ("winmgmts:")
         for usb in wmi.InstancesOf("Win32_SerialPort"):
+            #print usb.PNPDeviceID.split("\\")[2]
             if usb.PNPDeviceID.split("\\")[2] == idToFind:
                 name = usb.Name.split("(")[1]
                 return name.strip(")")
@@ -75,8 +79,9 @@ class DelayGenerator:
 
 class FakeDelayGenerator(DelayGenerator):
     def __init__(self,confDict):
+        self.hardwareVersion = confDict['dg_version']
         self.timeToDelay = confDict['delay']
-
+        
     def writeToUSB(self,strToWrite):
         print "This is when I'd write to the USB, but I'm not because I'm a big ol' liar."
         print strToWrite
