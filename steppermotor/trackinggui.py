@@ -100,61 +100,6 @@ class TrackingWidget(QtGui.QWidget):
 
         self.layout().addWidget(LabelWidget('tuning',tuningLayout))
 
-        ##############################
-        ## oscillation compensation ##
-        ##############################
-
-        phaseSlider = QtGui.QSlider()
-        phaseSlider.setOrientation(QtCore.Qt.Horizontal)
-        phaseSlider.setTickPosition(phaseSlider.TicksBelow)
-        phaseSlider.setMinimum(0)
-        phaseSlider.setMaximum(360)
-        phaseSlider.setTickInterval(90)
-        def onPhaseSliderValueChanged(phase):
-            wavelengthProtocol.sendCommand('set-phase',phaseCombo.getCurrentKey(),float(phase))            
-        phaseSlider.valueChanged.connect(onPhaseSliderValueChanged)
-
-        amplitudeSlider = QtGui.QSlider()
-        amplitudeSlider.setOrientation(QtCore.Qt.Horizontal)
-        amplitudeSlider.setTickPosition(amplitudeSlider.TicksBelow)
-        amplitudeSlider.setMinimum(0)
-        amplitudeSlider.setMaximum(150)
-        amplitudeSlider.setTickInterval(25)
-        def onAmplitudeSliderValueChanged(amplitude):
-            wavelengthProtocol.sendCommand('set-amplitude',phaseCombo.getCurrentKey(),float(amplitude))            
-        amplitudeSlider.valueChanged.connect(onAmplitudeSliderValueChanged)
-
-        periodSlider = QtGui.QSlider()
-        periodSlider.setOrientation(QtCore.Qt.Horizontal)
-        periodSlider.setTickPosition(periodSlider.TicksBelow)
-        periodSlider.setMinimum(50)
-        periodSlider.setMaximum(300)
-        periodSlider.setTickInterval(50)
-        def onperiodSliderValueChanged(period):
-            wavelengthProtocol.sendCommand('set-period',phaseCombo.getCurrentKey(),float(period))            
-        periodSlider.valueChanged.connect(onperiodSliderValueChanged)
-        
-        phaseCombo = DictComboBox(CRYSTALS)
-        @inlineCallbacks
-        def onPhaseComboKeyChanged(id):
-            phase = yield wavelengthProtocol.sendCommand('get-phase',id)
-            amplitude = yield wavelengthProtocol.sendCommand('get-amplitude',id)
-            period = yield wavelengthProtocol.sendCommand('get-period',id)
-            phaseSlider.setValue(int(round(phase)))
-            amplitudeSlider.setValue(int(round(amplitude)))
-            periodSlider.setValue(int(round(period)))
-        phaseCombo.currentKeyChanged.connect(onPhaseComboKeyChanged)
-
-        phaseCombo.currentKeyChanged.emit(phaseCombo.getCurrentKey())
-
-        phaseLayout = QtGui.QVBoxLayout()
-        phaseLayout.addWidget(phaseCombo)
-        phaseLayout.addWidget(LabelWidget('phase (0-360)',phaseSlider))
-        phaseLayout.addWidget(LabelWidget('amplitude (0-150)',amplitudeSlider))
-        phaseLayout.addWidget(LabelWidget('period (50-300)',periodSlider))
-
-        self.layout().addWidget(LabelWidget('oscillation compensation',phaseLayout))
-
         #####################
         ## tracking toggle ##
         #####################
