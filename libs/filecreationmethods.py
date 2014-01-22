@@ -34,8 +34,8 @@ def checkPath(path):
 
 #given a measurementType (string), dataArray (numpyArray), and parentPath (path)
 #save a CSV file according to our data structure (see above)
-def saveCSV(measurementType,dataArray,parentPath):
+def saveCSV(measurementType,dataArray,parentPath,description=None):
     path, filename = filenameGen(measurementType)
     path = os.path.join(parentPath,path)
     checkPath(path)
-    np.savetxt(os.path.join(path,filename+".csv"), dataArray, delimiter=",")
+    np.savetxt(os.path.join(path,filename+(('_%s' % description) if description is not None else '')+".csv"), dataArray, delimiter=",")
