@@ -6,7 +6,7 @@ import numpy
 
 dll = windll.LoadLibrary("nicaiu.dll")
 
-BUF_SIZE = 10000
+BUF_SIZE = 100000
 
 TIMEOUT = 5.0
 
