@@ -18,7 +18,7 @@ SM_CONFIG = {
         'pulse_channel':'dev1/ctr1',
         'direction_channel':'/dev1/port0/line2',
         'counter_channel':'dev2/ctr7',
-        'backlash':0
+        'backlash':0,
         'step_rate':200.0,
         'initial_position':0,
     },

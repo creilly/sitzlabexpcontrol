@@ -54,6 +54,6 @@ SCAN_TYPES = {
     'lineshape-Q1':{},
     'lineshape-Q2':{},
     'lineshape-Q3':{},
-    'ProbeQSwDelay',
-    'BeamProfile'
+    'ProbeQSwDelay':{},
+    'BeamProfile':{}
 }  
