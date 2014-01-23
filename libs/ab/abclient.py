@@ -4,9 +4,22 @@ from autobahn.websocket import connectWS
 from abbase import uriFromCommand, uriFromMessage
         
 class BaseClientProtocol(WampClientProtocol):
+    """
+    base class for client connections
+    """
     def sendCommand(self,command,*args):
+        """
+        send command of type I{command} with args        
+        """
         return self.call(uriFromCommand(command), *args)
     def messageSubscribe(self,message,handler):
+        """
+        @param message: message type to subscribe to
+        @type message: string
+
+        @param handler: callable f(*args) to which message
+            payload is delivered
+        """
         message = uriFromMessage(message)
         if message not in self._messages:
             d = self.subscribe(message,self._onMessage)
@@ -41,6 +54,15 @@ class BaseClientFactory(WampClientFactory):
         self._get_prot.errback(Exception('connection failed'))
         return WampClientFactory.connectionFailed(self)
 def getProtocol(url):
+    """
+    get a client connection to the specified server
+
+    @param url: server IP address
+    @type url: string
+
+    @returns: Deferred instance that, upon
+        success, returns client connection instance
+    """
     return BaseClientFactory(url).getProtocol()
     
 
