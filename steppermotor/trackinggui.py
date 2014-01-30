@@ -34,7 +34,7 @@ class TrackingWidget(QtGui.QWidget):
         gotoWidget = GotoWidget(
             {
                 MIN:24100,
-                MAX:24500,
+                MAX:24800,
                 PRECISION:2,
                 SLIDER:2.0
             }

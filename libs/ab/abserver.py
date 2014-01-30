@@ -18,11 +18,21 @@ PROPERTIES = 'PROPERTIES'
 
 _command, wampmetaclass = tagger('commands')
 def command(name,description='no description'):
+    """
+    decorator to expose decorated function as
+    server command
+
+    @param name: command identifier
+    @param str: string    
+    """
     def foo(bar):
         return exportRpc(name)(_command(name,description)(bar))
     return foo
     
 class BaseWAMP(object):
+    """
+    base class for WAMP classes
+    """
     __metaclass__ = wampmetaclass
     __wampname__ = 'wamp server'
     
@@ -31,24 +41,46 @@ class BaseWAMP(object):
     }
     
     def __init__(self,factory,*args,**kwargs):
+        """
+        args and kwargs are passed to intializeWAMP()
+        @type factory: BaseServerFactory
+        """
         self.factory = factory
         self.onReady = Deferred()
         self.initializeWAMP(*args,**kwargs)
        
     @command('commands','query server for available rpc calls')
     def getCommands(self):
+        """
+        get list of availabled commands
+        """
         return {
             command[tagger.NAME]: command[tagger.DESCRIPTION] for command in self.commands
         }
 
-    @command('messages','query server for available messages')
+    @command('messages','query server for available message types')    
     def getMessages(self):
+        """
+        get list of available message types
+        """
         return self.MESSAGES
 
     def initializeWAMP(self):
+        """
+        override this function to perform any setup,
+        making sure to call this function afterwards
+        """
         self.onReady.callback(None)
         
     def dispatch(self,name,*data):
+        """
+        send message to those subscribed
+
+        @param name: message type
+        @type name: string
+
+        @param data: message payload
+        """
         self.factory.dispatch(uriFromMessage(name),*data)
  
 class BaseServerProtocol(WampServerProtocol):
@@ -70,6 +102,19 @@ def runServer(
         args = [],
         kwargs = {}
 ):
+    """
+    start up a WAMP server
+
+    @type WAMP: BaseWAMP
+
+    @param URL: IP addres to host from
+    @type URL: string
+
+    @param debug: if True, prints all messages,
+        including WAMP transmissions, to console.
+        if False WAMP transmission aren't logged    
+    @type debug: boolean
+    """
     import sys
     import os
     os.system('title %s' % WAMP.__wampname__)

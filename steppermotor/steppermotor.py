@@ -93,9 +93,9 @@ class DirectionStepperMotor(BaseStepperMotor):
             self.onPositionSet(callback)
             return
         direction = self.FORWARDS if delta > 0 else self.BACKWARDS
+        steps = abs(delta) + (self.backlash if direction is not self.getDirection() else 0)
         if direction is not self._getDirection():
             self._setDirection(direction)
-        steps = abs(delta) + (self.backlash if direction is not self.getDirection() else 0)
         self._generateSteps(steps,callback)
 
     def getDirection(self): return self._getDirection()

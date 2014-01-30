@@ -40,7 +40,7 @@ class VoltMeterClient:
             parameter
         )
 
-    def setChannalParameter(self,channel,parameter,value):
+    def setChannelParameter(self,channel,parameter,value):
         return self.protocol.sendCommand(
             'set-channel-parameter',
             channel,

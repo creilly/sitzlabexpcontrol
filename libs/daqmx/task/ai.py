@@ -20,6 +20,9 @@ def schedule(f):
     return g
 
 class AITask(Task):
+    """
+    class for analog input tasks
+    """
     PHYSICAL_CHANNEL,NAME,TERMINAL_CONFIG,MIN,MAX,DESCRIPTION=0,1,2,3,4,5
     PARAMETERS = (
         (DESCRIPTION,'description'),
@@ -56,8 +59,21 @@ class AITask(Task):
             'pseudodifferential'
         )        
     )
-    def __init__(self,channelDicts):
+    RISING, FALLING = 0, 1
+    EDGE_TYPES = (RISING, FALLING)
+    def __init__(self,channelDicts=None):
+        """
+        create an analog input task
+        
+        @param channelDicts: tuple of dictionaries
+            that can be unpacked into the        
+            L{createChannel} method (e.g.
+            C{({AITask.PHYSICAL_CHANNEL:'dev0/ai1',...},...)})
+        """
         Task.__init__(self)
+
+        if channelDicts is None:
+            channelDicts = tuple([])
 
         self.callback = None
         self.acquiring = False
@@ -116,6 +132,18 @@ class AITask(Task):
         )
         
     def createChannel(self,channelDict):
+        """
+        create new DAQmx virtual channel
+
+        @param channelDict: keys should be those
+            members of L{AITask.PARAMETERS} and
+            only AITask.PHYSICAL_CHANNEL is
+            required. consult DAQmx C
+            documentation for further
+            information.
+        
+        @type channelDict: dictionary
+        """
         daqmx(
             dll.DAQmxCreateAIVoltageChan,
             (
@@ -144,6 +172,9 @@ class AITask(Task):
         
     @schedule    
     def setSamplingRate(self,samplingRate):
+        """
+        set sampling rate in Hz
+        """
         daqmx(
             dll.DAQmxSetSampClkRate,
             (
@@ -154,6 +185,9 @@ class AITask(Task):
         self._setSamplesPerChannel()
             
     def getSamplingRate(self):
+        """
+        get sampling rate in Hz        
+        """
         samplingRate = c_double(0)
         daqmx(
             dll.DAQmxGetSampClkRate,
@@ -166,6 +200,17 @@ class AITask(Task):
     
     @schedule
     def setCallbackRate(self,callbackRate):
+        """
+        set callback rate in Hz
+
+        when internally triggered, callback rate is
+        the rate at which the callback is invoked
+        with new data.
+
+        when externally triggered, the inverse of the
+        callback rate is the sampling duration per
+        trigger
+        """
         samplesPerChannel = int(self.getSamplingRate() / callbackRate)
         self._setSamplesPerChannel(samplesPerChannel)
 
@@ -182,8 +227,11 @@ class AITask(Task):
                 )
             )
         )
-
     def getSamplesPerChannel(self):
+        """
+        Get the number of samples per channel delivered
+        to the callback
+        """
         samplesPerChannel = c_uint64(0)
         daqmx(
             dll.DAQmxGetSampQuantSampPerChan,
@@ -195,10 +243,20 @@ class AITask(Task):
         return samplesPerChannel.value
             
     @schedule
-    def configureExternalTrigger(self, trigSrc, trigEdge='rising'):
+    def configureExternalTrigger(self, trigSrc, trigEdge=RISING):
+        """
+        configure task to begin acquisition on
+        external trigger
+
+        @param trigSrc: physical channel of trigger source
+        @type trigSrc: string
+
+        @param trigEdge: waveform edge to trigger on
+        @type trigEdge: AITask.RISING, AITask.FALLING
+        """
         trigEdgeTypes = {
-            'rising': constants['DAQmx_Val_Rising'], # look up the DAQmx constant code for the rising edge.  see daqmx\daqmxconstants*
-            'falling': constants['DAQmx_Val_Falling'], # look up the DAQmx constant code for the fall edge.  
+            self.RISING: constants['DAQmx_Val_Rising'], # look up the DAQmx constant code for the rising edge.  see daqmx\daqmxconstants*
+            self.FALLING: constants['DAQmx_Val_Falling'], # look up the DAQmx constant code for the fall edge.  
         }
         daqmx(
             dll.DAQmxCfgDigEdgeStartTrig,
@@ -210,11 +268,30 @@ class AITask(Task):
         )
         
     @schedule
-    def setCallback(self,callback): 
+    def setCallback(self,callback):
+        """
+        set a new callback function
+
+        a callback function is called
+        every time the requested number of
+        samples have been acquired.
+
+        the callback is invoked from a thread
+        running parallel to the thread from
+        which is was set, so care must be
+        taken to avoid associated conflicts.
+
+        @param callback: a function I{f(v)} that takes
+        a dictionary containing sampled voltages
+        indexed by channel identifier.
+        @type callback: callable
+        """
         self.callback = callback
            
     def startSampling(self):
-
+        """
+        start a new acquisition
+        """
         if self.acquiring: raise SitzException('startSampling requested with task already acquiring')
         
         self.acquiring = True
@@ -227,7 +304,12 @@ class AITask(Task):
         )
 
     def stopSampling(self):
+        """
+        halt sample acquisition if task is running.
 
+        @raise SitzException: stop requested when
+            task already stopped
+        """
         if not self.acquiring: raise SitzException('stopSampling requested when task was not sampling')
 
         daqmx(
@@ -415,6 +497,11 @@ class AITask(Task):
 
 class VoltMeter(AITask):
     def __init__(self,channelDicts):
+        """
+        a specialization of the AITask where
+        samples are averaged before being
+        passed to callback
+        """
         AITask.__init__(self,channelDicts)
         self.voltMeterCallback = lambda _: None
         AITask.setCallback(self,self.onSamples)

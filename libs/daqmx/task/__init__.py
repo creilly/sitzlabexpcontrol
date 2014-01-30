@@ -1,14 +1,20 @@
 from daqmx import *
 
-"""
 
-abstract class from which tasks inherit
-
-    name: identifier for task
-
-"""
 class Task(object):
+    """
+    base class from which useful daqmx task
+    classes inherit.
+    """
     def __init__(self,name=None):
+        """
+        create a daqmx task object
+
+        @param name: task identifier.
+            must be unique. If omitted a
+            unique id will be generated.
+        @type name: string        
+        """
         if name is None:
             name = self.generateUniqueTaskName()
         self._task_names.append(name)
@@ -37,14 +43,12 @@ class Task(object):
     def removeTaskName(cls,name):
         cls._task_names.remove(name)
 
-    """
-
-    get list of channels belonging to this task
-
-    returns: list of virtual channel identifiers
-
-    """
     def getChannels(self):
+        """
+        get list of channels belonging to this task
+
+        @returns: list of virtual channel identifiers
+        """        
         channels = create_string_buffer(BUF_SIZE)
         daqmx(
             dll.DAQmxGetTaskChannels,
@@ -63,7 +67,6 @@ class Task(object):
                 self.handle,
             )
         )
-        print 'cleared task: %s' % self.name
         self.removeTaskName(self.name)
 
     def commitTask(self):

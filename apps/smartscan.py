@@ -52,6 +52,25 @@ import numpy as np
 from pyqtgraph import PlotWidget, ErrorBarItem
 
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
+SM_BOOL, WL_BOOL, DDG_BOOL, MAN_BOOL = 0,1,2,3
+INPUTS = (SM_BOOL,WL_BOOL,DDG_BOOL,MAN_BOOL)
+INPUTS_TOGGLE = {input:False for input in INPUTS}
+INPUTS_KEYS = {
+    's':SM_BOOL,
+    'w':WL_BOOL,
+    'd':DDG_BOOL,
+    'm':MAN_BOOL
+}
+if len(sys.argv) > 1 and all(
+        any(
+            key==char for key in INPUTS_KEYS
+        ) for char in sys.argv[1]
+):
+    for char in sys.argv[1]:
+        INPUTS_TOGGLE[INPUTS_KEYS[char]] = True
+else:
+    for input in INPUTS_TOGGLE:
+        INPUTS_TOGGLE[input] = True
 
 '''
 any widget added to the input widget tab will be expected to \
@@ -160,6 +179,21 @@ convenience)
 remaining parameters specify the bounds of the spin boxes and are self explanatory.
 
 '''
+
+class ManualInputWidget(CancelInputWidget):
+    def __init__(self,parent):
+        def scan_input_generator(_):
+            class ManualInput:
+                def next(self):
+                    result, valid = QtGui.QInputDialog.getDouble(
+                        parent, 
+                        'next x value', 
+                        'enter next x value',
+                    )
+                    return result if valid else None
+            return ManualInput()
+        CancelInputWidget.__init__(self,scan_input_generator,lambda:None,lambda:None)
+                    
 class CenterInputWidget(CancelInputWidget):
     def __init__(
         self,
@@ -389,138 +423,145 @@ def SmartScanGUI():
     inputWidget.setTabPosition(inputWidget.West)
     cpLayout.addWidget(LabelWidget('input',inputWidget),1)    
 
+    inputWidget.addTab(
+        ManualInputWidget(widget),
+        'manual'
+    )
+
     # algorithm for scan inputs is:
+    # 0. check to see if input is disabled
     # 1. create client for server from protocol object
     # 2. create combo widget to hold interval and list widgets
     # 3. create interval widget using client object, add to combo
     # 4. same for list widget
     # 5. add combo widget to base combo widget (resulting in 2-D tab widget)
     
-    # add stepper motors to scan input
-    smProtocol = yield getProtocol(
-        TEST_STEPPER_MOTOR_SERVER if DEBUG else STEPPER_MOTOR_SERVER 
-    )
+    if INPUTS_TOGGLE[SM_BOOL]:
+        # add stepper motors to scan input
+        smProtocol = yield getProtocol(
+            TEST_STEPPER_MOTOR_SERVER if DEBUG else STEPPER_MOTOR_SERVER 
+        )    
+        smClients = {
+            smID:ChunkedStepperMotorClient(smProtocol,smID)
+            for smID in (KDP,BBO,PDL)
+        }
+
+        for smID,smClient in smClients.items():
+            combo_input_widget = ComboWidget()
+            
+            combo_input_widget.addTab(
+                CenterInputWidget(
+                    smClient.setPosition,
+                    smClient.cancel,
+                    smClient.getPosition,
+                    -99999,
+                    99999,
+                    0,
+                    0,
+                    0,
+                    1000,
+                    0,
+                    10
+                ),
+                'interval'
+            )
+        
+            combo_input_widget.addTab(
+                ListInputWidget(
+                    smClient.setPosition,
+                    smClient.cancel
+                ),
+                'list'
+            )
+        
+            inputWidget.addTab(
+                combo_input_widget,
+                {
+                    KDP:'kdp',
+                    BBO:'bbo',
+                    PDL:'pdl'
+                }[smID]
+            )
     
-    smClients = {
-        smID:ChunkedStepperMotorClient(smProtocol,smID)
-        for smID in (KDP,BBO,PDL)
-    }
-
-    for smID,smClient in smClients.items():
-        combo_input_widget = ComboWidget()
-        
-        combo_input_widget.addTab(
+    if INPUTS_TOGGLE[WL_BOOL]:
+        # add wavelength client to scan input
+        wlProtocol = yield getProtocol(
+            TEST_WAVELENGTH_SERVER if DEBUG else WAVELENGTH_SERVER
+        )
+        wlClient = WavelengthClient(wlProtocol)
+        wlInputWidget = ComboWidget()
+        wlInputWidget.addTab(
             CenterInputWidget(
-                smClient.setPosition,
-                smClient.cancel,
-                smClient.getPosition,
-                -99999,
-                99999,
-                0,
-                0,
-                0,
-                1000,
-                0,
-                10
-            ),
-            'interval'
-        )
-        
-        combo_input_widget.addTab(
-            ListInputWidget(
-                smClient.setPosition,
-                smClient.cancel
-            ),
-            'list'
-        )
-        
-        inputWidget.addTab(
-            combo_input_widget,
-            {
-                KDP:'kdp',
-                BBO:'bbo',
-                PDL:'pdl'
-            }[smID]
-        )
-
-    # add wavelength client to scan input
-    wlProtocol = yield getProtocol(
-        TEST_WAVELENGTH_SERVER if DEBUG else WAVELENGTH_SERVER
-    )
-    wlClient = WavelengthClient(wlProtocol)
-    wlInputWidget = ComboWidget()
-    wlInputWidget.addTab(
-        CenterInputWidget(
-            wlClient.setWavelength,
-            wlClient.cancelWavelengthSet,
-            wlClient.getWavelength,
-            24100.0,            
-            24400.0,
-            2,
-            24200.0,
-            0.01,
-            100.0,
-            2,
-            .2
-        ),
-        'interval'
-    )
-    wlInputWidget.addTab(
-        ListInputWidget(
-            wlClient.setWavelength,
-            wlClient.cancelWavelengthSet
-        ),
-        'list'
-    )
-    inputWidget.addTab(
-        wlInputWidget,
-        'surf'
-    )
-
-    # add delay generator to scan input
-    dgProtocol = yield getProtocol(
-        TEST_DELAY_GENERATOR_SERVER if DEBUG else DELAY_GENERATOR_SERVER
-    )
-    dgClient = DelayGeneratorClient(dgProtocol)
-    delays = yield dgClient.getDelays()
-    for dgID in delays.keys():
-        @inlineCallbacks
-        def setter(delay):
-            yield dgClient.setDelay(dgID,delay)
-            returnValue(delay)
-        @inlineCallbacks
-        def getter():
-            delays = yield dgClient.getDelays()
-            returnValue(delays[dgID])
-        def cancel(): pass
-        dgCombo = ComboWidget()
-        dgCombo.addTab(
-            CenterInputWidget(
-                setter,
-                cancel,
-                getter,
-                0.0,
+                wlClient.setWavelength,
+                wlClient.cancelWavelengthSet,
+                wlClient.getWavelength,
+                24100.0,            
+                24400.0,
+                2,
+                24200.0,
+                0.01,
                 100.0,
                 2,
-                50.0,
-                .1,
-                10.0,
-                2,
-                5.0
+                .2
             ),
             'interval'
         )
-        dgCombo.addTab(
+        wlInputWidget.addTab(
             ListInputWidget(
-                setter,
-                cancel
+                wlClient.setWavelength,
+                wlClient.cancelWavelengthSet
             ),
             'list'
         )
         inputWidget.addTab(
-            dgCombo,
-            dgID
+            wlInputWidget,
+            'surf'
         )
+    if INPUTS_TOGGLE[DDG_BOOL]:
+        # add delay generator to scan input
+        dgProtocol = yield getProtocol(
+            TEST_DELAY_GENERATOR_SERVER if DEBUG else DELAY_GENERATOR_SERVER
+        )
+        dgClient = DelayGeneratorClient(dgProtocol)
+        delays = yield dgClient.getDelays()
+        for dgID in delays.keys():
+            @inlineCallbacks
+            def setter(delay):
+                yield dgClient.setDelay(dgID,delay)
+                returnValue(delay)
+            @inlineCallbacks
+            def getter():
+                delays = yield dgClient.getDelays()
+                returnValue(delays[dgID])
+            def cancel(): pass
+            dgCombo = ComboWidget()
+            dgCombo.addTab(
+                CenterInputWidget(
+                    setter,
+                    cancel,
+                    getter,
+                    1,
+                    50000000,
+                    0,
+                    3896550.0,
+                    0,
+                    10000,
+                    1,
+                    100
+                ),
+                'interval'
+            )
+            dgCombo.addTab(
+                ListInputWidget(
+                    setter,
+                    cancel
+                ),
+                'list'
+            )
+            inputWidget.addTab(
+                dgCombo,
+                dgID
+            )
 
     #create a scan toggle
     scanToggle = SmartScanToggleObject()
@@ -619,3 +660,4 @@ if __name__ == '__main__':
     container = []
     SmartScanGUI()
     reactor.run()
+ 
