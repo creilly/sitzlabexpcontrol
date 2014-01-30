@@ -50,10 +50,10 @@ print 'local: %s' % LOCAL
 MIN = 0
 MAX = 52428800 #(2^20)*50ns
 
-
+'''
 def addDelayGenerator(options):
     return DelayGenerator(options["usb_chan"])
-    
+    '''
 
 
 class DelayGeneratorWAMP(BaseWAMP):
@@ -104,7 +104,7 @@ class DelayGeneratorWAMP(BaseWAMP):
             
         #if setting the delay STILL failed, throw fail message
         if not success: 
-            failError = "device didn't echo"
+            failError = "arduino didn't echo"
             self.dispatch('delay-change-failed',(dgName,failError))
         
         return success
@@ -142,11 +142,13 @@ def createDelayGenerator(name,dgOptions,dgDictionary):
     #   return dgDictionary
     if DEBUG:
         dgDictionary[name] = FakeDelayGenerator(dgOptions)
-        print 'created: ' + name + ' with a delay of ' + str(dgOptions['delay']) + ' on fake com port'
+        print 'created: ' + name + ' with a delay of ' + str(dgOptions['delay']) + ' on fake com port\n\n'
     else:
-        dgDictionary[name] = DelayGenerator(dgOptions)
-        print 'created: ' + name + ' with a delay of ' + str(dgOptions['delay']) + ' on ' + str(dgDictionary[name].COMPort)
-    print name
+        try:
+            dgDictionary[name] = DelayGenerator(dgOptions)
+            print 'created: ' + name + ' with a delay of ' + str(dgOptions['delay']) + ' on ' + str(dgDictionary[name].COMPort) +'\n\n'
+        except:
+            print 'failed to create ' + name
     return dgDictionary
     
 @inlineCallbacks
@@ -164,24 +166,27 @@ def main():
 
     while True:
         print '\n\n\n'
-        if len(configList) <= 2: break
         if AUTORUN:
             dgToAdd = "Run All"
         else:
             dgToAdd = yield selectFromList(configList,"Which delay generator to add?")
-        if dgToAdd == "Done" or configList == ["Run All","Done"]: break
+        
+        if dgToAdd == "Done" or len(configList) <= 0: break
         if dgToAdd == "Run All":
-            for thisDG in dgOptions.keys():
-                if not dgOptions[thisDG]['run_by_default']: continue
-                dgDict.update(createDelayGenerator(thisDG,dgOptions[thisDG],dgDict))
-                configList.pop(configList.index(thisDG))
-            print '\n\n\n'
+            configList.remove("Done")
+            configList.remove("Run All")
+            for thisDG in configList:
+                try:
+                    if dgOptions[thisDG]['run_by_default']: 
+                        dgDict.update(createDelayGenerator(thisDG,dgOptions[thisDG],dgDict))
+                except:
+                    print 'failed to create ' + thisDG
             break
         elif dgToAdd in configList:
             print dgToAdd
             print dgOptions[dgToAdd]
             dgDict.update(createDelayGenerator(dgToAdd,dgOptions[dgToAdd],dgDict))
-        configList.pop(configList.index(dgToAdd))
+            configList.remove(dgToAdd)
 
     #confirm config doesn't have a conflict in the partnered delays. safety concern for lasers!
     for dg in dgDict.keys():
@@ -194,7 +199,7 @@ def main():
             print str(partnerDefault) + '   ' + str(partnerRelative)
             print 'get yo shit together \n\n\n'
             sys.exit()
-
+    
     runServer(
         WAMP = DelayGeneratorWAMP,
         URL = url,

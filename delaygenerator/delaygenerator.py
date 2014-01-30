@@ -22,15 +22,22 @@ AD9501TIMECONST = .2 #in nanoseconds (eg. 200picoseconds)
 
 class DelayGenerator:
     def __init__(self,confDict):
-        self.hardwareVersion = confDict['dg_version']
+        self.confDict = confDict
+        self.configured = False
         self.timeToDelay = confDict['delay']
         idToLookFor = confDict['ard_id']
         self.COMPort = self.findCOMPort(idToLookFor)
         if self.COMPort is None: 
-			print "WARNING!!! DIDN'T FIND ARDUINO!!"
-        self.ser = serial.Serial(self.COMPort,9600,timeout=5)
-        sleep(1) #wait 1s for com port to actually open and be ready to accept input/output, this might be an arduino thing
-        if not self.setDelay(float(self.timeToDelay)): print 'warning: did not initialize'
+			print "\n\nWARNING!!! DIDN'T FIND ARDUINO!!"
+        else:
+            self.ser = serial.Serial(self.COMPort,9600,timeout=5)
+            while not self.configured:
+                sleep(1) #wait 1s for com port to actually open and be ready to accept input/output, this might be an arduino thing
+                if self.ser.readline().replace('\r\n','') == "waiting to configure":
+                    print "sending configuration parameters to DDG: "
+                    self.configured = self.configureDDG()
+        if not self.configured: raise Exception()
+        self.setDelay(self.timeToDelay)
        
     def findCOMPort(self,idToFind):
         import win32com.client
@@ -41,35 +48,34 @@ class DelayGenerator:
                 name = usb.Name.split("(")[1]
                 return name.strip(")")
 
-    def writeToUSB(self,strToWrite):
-        self.ser.write(strToWrite)
-        sleep(.01) #give the arduino 10milliseconds to respond, it is not instantaneous
-        echo = self.ser.readline().replace('\r\n','') #under both versions of the sketch, the ardy echoes the result
-        if echo == str(strToWrite): return True
-        if echo != str(strToWrite): return False
-        
-    #this is specifically for the arduino mega operating MGostein's DG, Mav's DG takes the time in ns directly
-    def convertDelay(self,timeToDelay):
-        #split requested delay to the clock and the AD9501, convert to binary
-        #clean up binary string and pad to specified length (clock = 20bits, AD9501 = 8bits)
-        clockCycles = int(timeToDelay/CLOCKPERIOD)
-        clockCyclesBinary = bin(clockCycles).rpartition('b')[2].rjust(20,'0')
-        AD9501Intervals = int((timeToDelay % CLOCKPERIOD) / AD9501TIMECONST)
-        AD9501IntervalsBinary =  bin(AD9501Intervals).rpartition('b')[2].rjust(8,'0')
-        stringToSend = clockCyclesBinary+AD9501IntervalsBinary
-        return stringToSend
+    def configureDDG(self):
+        offset = self.confDict['offset']
+        minVoltage = self.confDict['minVoltage']
+        maxVoltage = self.confDict['maxVoltage']
+        confString = str(offset)+" "+str(minVoltage)+" "+str(maxVoltage)
+        print confString
+        success = self.writeToUSB(confString)
+        return True
 
     def setDelay(self,timeToDelay):
         #get a timeToDelay, calculate # of 50ns clock cycles and 
         #the number of 10ps intervals, convert these to binary, send
         #these strings to channel via usb, fire callback when device replies
         self.timeToDelay = timeToDelay
-        if self.hardwareVersion == "gostein":
-            stringToSend = self.convertDelay(self.timeToDelay)
-        elif self.hardwareVersion == "maverick":
-            stringToSend = str(self.timeToDelay)
+        stringToSend = str(self.timeToDelay)
         return self.writeToUSB(stringToSend)
 
+    def writeToUSB(self,strToWrite):
+        if self.COMPort is None:
+            print 'could not find arduino!'
+            return False
+        else:
+            self.ser.write(strToWrite)
+            echo = self.ser.readline().replace('\r\n','') #the ardy echoes the result
+            #print "\n\n\n"+echo
+            if echo == str(strToWrite): return True
+            if echo != str(strToWrite): return False
+            
     def getDelay(self):
         return self.timeToDelay
         
@@ -79,7 +85,6 @@ class DelayGenerator:
 
 class FakeDelayGenerator(DelayGenerator):
     def __init__(self,confDict):
-        self.hardwareVersion = confDict['dg_version']
         self.timeToDelay = confDict['delay']
         
     def writeToUSB(self,strToWrite):
@@ -91,4 +96,21 @@ class FakeDelayGenerator(DelayGenerator):
     
     def close(self):
         print "What are you thinking? There is no USB device to close!"
-        
+  
+
+
+'''
+depreciated code:
+
+#this is specifically for the arduino mega operating MGostein's DG, Mav's DG takes the time in ns directly
+def convertDelay(self,timeToDelay):
+    #split requested delay to the clock and the AD9501, convert to binary
+    #clean up binary string and pad to specified length (clock = 20bits, AD9501 = 8bits)
+    clockCycles = int(timeToDelay/CLOCKPERIOD)
+    clockCyclesBinary = bin(clockCycles).rpartition('b')[2].rjust(20,'0')
+    AD9501Intervals = int((timeToDelay % CLOCKPERIOD) / AD9501TIMECONST)
+    AD9501IntervalsBinary =  bin(AD9501Intervals).rpartition('b')[2].rjust(8,'0')
+    stringToSend = clockCyclesBinary+AD9501IntervalsBinary
+    return stringToSend
+'''
+  
