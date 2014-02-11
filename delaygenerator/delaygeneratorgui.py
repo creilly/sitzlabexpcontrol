@@ -114,6 +114,7 @@ class DelayGeneratorWidget(QtGui.QWidget):
                 self.spinboxes[dgName] = thisSpinbox
                 gotoLayout.addWidget(thisSpinbox)
                 
+                '''
                 def writeDelay():
                     for dg, button in self.commitButtons.items():
                         if button.isChecked():
@@ -128,8 +129,14 @@ class DelayGeneratorWidget(QtGui.QWidget):
                     else: 
                         self.dgClient.setPartnerDelay(dgToWrite,valueToWrite)
                     self.commitButtons[dgToWrite].setChecked(False)
-                    
-                
+                '''
+                def writeDelay():
+                    for dg, button in self.commitButtons.items():
+                        if button.isChecked():
+                            dgToWrite = dg
+                    valueToWrite = int(self.spinboxes[dgToWrite].cleanText())
+                    self.dgClient.setPartnerDelay(dgToWrite,valueToWrite)
+                    self.commitButtons[dgToWrite].setChecked(False)
                 
                 #create a commit button
                 thisCommitButton = QtGui.QPushButton('write delay')
@@ -139,8 +146,16 @@ class DelayGeneratorWidget(QtGui.QWidget):
                 thisCommitButton.clicked.connect(writeDelay)
                 gotoLayout.addWidget(thisCommitButton)
                 
+                def toggleOverride():
+                    for dgName, override in self.overrideBoxes.items():
+                        if override.isChecked():
+                            self.dgClient.enablePartner(dgName,False)
+                        elif not override.isChecked():
+                            self.dgClient.enablePartner(dgName,True)
+                
                 #create partner override checkbox but lock it out if there isn't a partner
                 thisOverride = QtGui.QCheckBox("override partner")
+                thisOverride.stateChanged.connect(toggleOverride)
                 self.overrideBoxes[dgName] = thisOverride
                 gotoLayout.addWidget(thisOverride)
                 if partnerName == None:
@@ -165,10 +180,6 @@ class DelayGeneratorWidget(QtGui.QWidget):
         self.dgClient.removeDelayListener()
         if reactor.running: reactor.stop()
         event.accept()
-        
- 
-        
-
         
 @inlineCallbacks
 def main(container):

@@ -48,7 +48,7 @@ print 'local: %s' % LOCAL
 
 
 MIN = 0
-MAX = 52428800 #(2^20)*50ns
+MAX = 104857600 #(2^20)*100ns
 
 '''
 def addDelayGenerator(options):
@@ -104,27 +104,34 @@ class DelayGeneratorWAMP(BaseWAMP):
             
         #if setting the delay STILL failed, throw fail message
         if not success: 
-            failError = "arduino didn't echo"
+            failError = "could not set delay: unknown error"
             self.dispatch('delay-change-failed',(dgName,failError))
         
         return success
         
-        
+    @command('enable-partner','set whether or not to partner delays')
+    def enablePartner(self,dgName,isEnabled):
+        self.dgDict[dgName].partneringEnabled = isEnabled
+        # partnerName = self.dgOptions[dgName]['partner']
+        # if partnerName is not None:
+            # self.dgDict[partnerName].partneringEnabled = isEnabled
 
     @command('set-partnered-delay','set delay of a channel AND its partner')
     def setPartnerDelay(self,dgName,delay):
-        if self.dgOptions[dgName]['partner'] is not None:
-            succeed = self.setDelay(dgName,delay)
-            if not succeed: return
-            #if didn't fail on first delay, try setting partner
-            partnerDGName = self.dgOptions[dgName]['partner']
-            relativeDelay = self.dgOptions[dgName]['rel_part_delay']
-            delayForPartner = delay + relativeDelay
-            succeed = self.setDelay(partnerDGName,int(delayForPartner))
+        if self.dgOptions[dgName]['partner'] is not None  \
+            and self.dgDict[dgName].partneringEnabled is True:
+                succeed = self.setDelay(dgName,delay)
+                if not succeed: return
+                #if didn't fail on first delay, try setting partner
+                partnerName = self.dgOptions[dgName]['partner']
+                relativeDelay = self.dgOptions[dgName]['rel_part_delay']
+                delayForPartner = delay + relativeDelay
+                succeed = self.setDelay(partnerName,int(delayForPartner))
 
-        if self.dgOptions[dgName]['partner'] is None:
-            print 'no partner exists for this channel! setting only requested delay'
-            succeed = self.setDelay(dgName,delay)
+        if self.dgOptions[dgName]['partner'] is None  \
+            or  self.dgDict[dgName].partneringEnabled is False:
+                print 'no partner exists for this channel! setting only requested delay'
+                succeed = self.setDelay(dgName,delay)
         
         return succeed
         
@@ -144,11 +151,8 @@ def createDelayGenerator(name,dgOptions,dgDictionary):
         dgDictionary[name] = FakeDelayGenerator(dgOptions)
         print 'created: ' + name + ' with a delay of ' + str(dgOptions['delay']) + ' on fake com port\n\n'
     else:
-        try:
-            dgDictionary[name] = DelayGenerator(dgOptions)
-            print 'created: ' + name + ' with a delay of ' + str(dgOptions['delay']) + ' on ' + str(dgDictionary[name].COMPort) +'\n\n'
-        except:
-            print 'failed to create ' + name
+        dgDictionary[name] = DelayGenerator(dgOptions)
+        print 'created: ' + name + ' with a delay of ' + str(dgOptions['delay']) + ' on ' + str(dgDictionary[name].COMPort) +'\n\n'
     return dgDictionary
     
 @inlineCallbacks

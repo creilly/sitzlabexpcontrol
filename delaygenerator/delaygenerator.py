@@ -37,6 +37,7 @@ class DelayGenerator:
                     print "sending configuration parameters to DDG: "
                     self.configured = self.configureDDG()
         if not self.configured: raise Exception()
+        self.partneringEnabled = True
         self.setDelay(self.timeToDelay)
        
     def findCOMPort(self,idToFind):
@@ -61,7 +62,8 @@ class DelayGenerator:
         #get a timeToDelay, calculate # of 50ns clock cycles and 
         #the number of 10ps intervals, convert these to binary, send
         #these strings to channel via usb, fire callback when device replies
-        self.timeToDelay = timeToDelay
+        self.timeToDelay = long(timeToDelay)
+        #print '\n\n\n'+'after round '+str(self.timeToDelay)
         stringToSend = str(self.timeToDelay)
         return self.writeToUSB(stringToSend)
 
@@ -72,7 +74,8 @@ class DelayGenerator:
         else:
             self.ser.write(strToWrite)
             echo = self.ser.readline().replace('\r\n','') #the ardy echoes the result
-            #print "\n\n\n"+echo
+            #print 'sent '+strToWrite
+            #print 'received '+echo+'\n\n\n'
             if echo == str(strToWrite): return True
             if echo != str(strToWrite): return False
             

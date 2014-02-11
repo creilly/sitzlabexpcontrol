@@ -12,7 +12,10 @@ class DelayGeneratorClient:
 
     def setPartnerDelay(self,dgName,delay):
         return self.protocol.sendCommand('set-partnered-delay',dgName,delay)
-        
+    
+    def enablePartner(self,dgName,isEnabled):
+        return self.protocol.sendCommand('enable-partner',dgName,isEnabled)
+    
     def setDelayListener(self,listener):
         self.protocol.messageSubscribe('delay-changed',listener)
         
