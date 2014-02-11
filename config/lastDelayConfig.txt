@@ -1,5 +1,5 @@
-pump laser q-switch 3830000
-nozzle 2842650
-probe laser lamps 3598100
-pump laser lamps 3602450
-probe laser q-switch 3830500
+pump laser q-switch 3827800
+nozzle 2842450
+probe laser lamps 3604150
+pump laser lamps 3600250
+probe laser q-switch 3836550

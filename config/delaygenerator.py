@@ -43,8 +43,8 @@ DG_CONFIG = {
         'rel_part_delay':None,
         'run_by_default':True,
         'offset':1745,
-        'minVoltage':3.50,
-        'maxVoltage':4.70,
+        'minVoltage':'3.50',
+        'maxVoltage':'4.70',
         'guiOrder':1
         },
     MAV_PUMP_LAMP:{
@@ -54,8 +54,8 @@ DG_CONFIG = {
         'rel_part_delay':227550.,
         'run_by_default':True,
         'offset':1630,
-        'minVoltage':2.0,
-        'maxVoltage':3.20,
+        'minVoltage':'2.00',
+        'maxVoltage':'3.20',
         'guiOrder':2
         },
     MAV_PUMP_QSW:{
@@ -64,9 +64,9 @@ DG_CONFIG = {
         'partner':MAV_PUMP_LAMP,
         'rel_part_delay':-227550.,
         'run_by_default':True,
-        'offset':990,
-        'minVoltage':3.50,
-        'maxVoltage':4.14,
+        'offset':1000,
+        'minVoltage':'3.50',
+        'maxVoltage':'4.14',
         'guiOrder':3
         },
     MAV_PROBE_LAMP:{
@@ -76,8 +76,8 @@ DG_CONFIG = {
         'rel_part_delay':232400.,
         'run_by_default':True,
         'offset':968,
-        'minVoltage':3.30,
-        'maxVoltage':3.88,
+        'minVoltage':'3.30',
+        'maxVoltage':'3.88',
         'guiOrder':4
         },
     MAV_PROBE_QSW:{
@@ -87,8 +87,8 @@ DG_CONFIG = {
         'rel_part_delay':-232400.,
         'run_by_default':True,
         'offset':635,
-        'minVoltage':2.6,
-        'maxVoltage':3.82,
+        'minVoltage':'2.60',
+        'maxVoltage':'3.8078',
         'guiOrder':5
         }
 }
