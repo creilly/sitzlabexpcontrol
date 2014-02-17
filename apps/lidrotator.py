@@ -62,10 +62,8 @@ class LidRotatorWidget(QtGui.QWidget):
             
             #send new position to stepper motor
             def onGotoRequested(position):
-                debugSteps = 0
                 def loop():
                     currPos = self.sm.getPosition()
-                    #print 'error:\t%d' % debugSteps - currPos
                     lcd.display(currPos)
                     stepsPerChunk = int( self.sm.getStepRate() / UPDATE_RATE )
                     delta = position - currPos
@@ -74,17 +72,11 @@ class LidRotatorWidget(QtGui.QWidget):
                         goToggle.toggle()
                         return
                     if abs(delta) < stepsPerChunk:
-                        debugSteps = position
                         self.sm.setPosition(
                             position,
                             loop
                         )
                     else:
-                        debugSteps = (
-                            currPos + (
-                                1 if delta > 0 else -1
-                            ) * stepsPerChunk
-                        )
                         self.sm.setPosition(
                             currPos + (
                                 1 if delta > 0 else -1
@@ -254,7 +246,7 @@ class LidRotatorWidget(QtGui.QWidget):
             def goCancel():
                 print 'aborting!'
                 self.abort = True
-                goToggle.toggle()
+                #goToggle.toggle()
            
             goToggle = ToggleObject()
             goToggle.activationRequested.connect(start)

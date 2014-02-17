@@ -29,6 +29,7 @@ print 'local: %s' % LOCAL
 import os
 os.system("delay generator gui")
 
+
 class DelayGeneratorWidget(QtGui.QWidget):
     def __init__(self,protocol):
         QtGui.QWidget.__init__(self)
@@ -38,6 +39,7 @@ class DelayGeneratorWidget(QtGui.QWidget):
         self.spinboxes = {}
         self.commitButtons = {}
         self.overrideBoxes = {}
+        self.errPop = None
 
         '''
         def onConnectionLost(reason):
@@ -53,38 +55,55 @@ class DelayGeneratorWidget(QtGui.QWidget):
             lcdUpdate = self.lcdPositions[dgName]
             lcdUpdate(newValue)
         
+        def errorPop(payload):
+            dgName, error = payload
+            lcdUpdate = self.lcdPositions[dgName]
+            lcdUpdate("Err")
+            msgBox = QtGui.QMessageBox()
+            msgBox.setText(dgName+' '+error)
+            msgBox.exec_()
+        
         @inlineCallbacks
         def onInit():
             #query the delay generator server for active delay gens
             self.dgClient = DelayGeneratorClient(protocol)
             self.dgClient.setDelayListener(updateLCD)
+            self.dgClient.setErrorListener(errorPop)
             config = yield self.dgClient.getDelays()
-            
             self.show()
+
             
-            print config
+            #sort the list of dgNames based on guiOrder key in config
+            sorted_dgs = list()
+            for dgName in config.keys():
+                if DEBUG:
+                    sorted_dgs.append((dgName,DEBUG_DG_CONFIG[dgName]['guiOrder'],config[dgName]))
+                else:
+                    sorted_dgs.append((dgName,DG_CONFIG[dgName]['guiOrder'],config[dgName]))
+            sorted_dgs = sorted(sorted_dgs, key=lambda x:x[1])
             
-            #sort dictionary of dgs & delays for creating the GUI
-            import operator
-            sorted_dgs = sorted(config.iteritems(), key=operator.itemgetter(1))
+
             
-            for dg, delay in sorted_dgs:
+            for dgName, guiOrder, delay in sorted_dgs:
                 thisLayout = QtGui.QHBoxLayout()
                 controlsLayout = QtGui.QVBoxLayout()
                 
                 #create a label
                 if DEBUG:
-                    partnerName = DEBUG_DG_CONFIG[dg]['partner']
-                    partnerDelay = DEBUG_DG_CONFIG[dg]['rel_part_delay']
+                    partnerName = DEBUG_DG_CONFIG[dgName]['partner']
+                    partnerDelay = DEBUG_DG_CONFIG[dgName]['rel_part_delay']
                 else:
-                    partnerName = DG_CONFIG[dg]['partner']
-                    partnerDelay = DG_CONFIG[dg]['rel_part_delay']
+                    partnerName = DG_CONFIG[dgName]['partner']
+                    partnerDelay = DG_CONFIG[dgName]['rel_part_delay']
                 
-                
-                thisLabel = QtGui.QLabel(dg+':\n    partner: '+str(partnerName)+' @ '+str(partnerDelay))
+                if partnerName == None:
+                    thisLabel = QtGui.QLabel(dgName)
+                else:                
+                    thisLabel = QtGui.QLabel(dgName+':\n    partner: '+str(partnerName)+' @ '+str(partnerDelay))
                 controlsLayout.addWidget(thisLabel)
                 
                 gotoLayout = QtGui.QHBoxLayout()
+
                 
                 #create a spinbox
                 thisSpinbox = QtGui.QSpinBox()
@@ -92,37 +111,56 @@ class DelayGeneratorWidget(QtGui.QWidget):
                 thisSpinbox.setMaximum(MAX)
                 thisSpinbox.setSingleStep(10 ** (-1 * 0))
                 thisSpinbox.setValue(delay)
-                self.spinboxes[dg] = thisSpinbox
+                self.spinboxes[dgName] = thisSpinbox
                 gotoLayout.addWidget(thisSpinbox)
                 
+                '''
                 def writeDelay():
                     for dg, button in self.commitButtons.items():
                         if button.isChecked():
                             dgToWrite = dg
                     valueToWrite = int(self.spinboxes[dgToWrite].cleanText())
-                    override = self.overrideBoxes[dgToWrite].checkState()
+                    try:
+                        override = self.overrideBoxes[dgToWrite].checkState()
+                    except KeyError():
+                        override = True
                     if override: 
-                        print self.dgClient.setDelay(dgToWrite,valueToWrite)
                         self.dgClient.setDelay(dgToWrite,valueToWrite)
                     else: 
                         self.dgClient.setPartnerDelay(dgToWrite,valueToWrite)
                     self.commitButtons[dgToWrite].setChecked(False)
-                    
-                
+                '''
+                def writeDelay():
+                    for dg, button in self.commitButtons.items():
+                        if button.isChecked():
+                            dgToWrite = dg
+                    valueToWrite = int(self.spinboxes[dgToWrite].cleanText())
+                    self.dgClient.setPartnerDelay(dgToWrite,valueToWrite)
+                    self.commitButtons[dgToWrite].setChecked(False)
                 
                 #create a commit button
                 thisCommitButton = QtGui.QPushButton('write delay')
                 thisCommitButton.setCheckable(True)
-                #self.commitButtonsGroup.addButton(thisCommitButton,self.dgIDs[dg])
-                self.commitButtons[dg] = thisCommitButton
+                #self.commitButtonsGroup.addButton(thisCommitButton,self.dgIDs[dgName])
+                self.commitButtons[dgName] = thisCommitButton
                 thisCommitButton.clicked.connect(writeDelay)
                 gotoLayout.addWidget(thisCommitButton)
                 
-                #create partner override checkbox
-                thisOverride = QtGui.QCheckBox("override partner")
-                self.overrideBoxes[dg] = thisOverride
-                gotoLayout.addWidget(thisOverride)
+                def toggleOverride():
+                    for dgName, override in self.overrideBoxes.items():
+                        if override.isChecked():
+                            self.dgClient.enablePartner(dgName,False)
+                        elif not override.isChecked():
+                            self.dgClient.enablePartner(dgName,True)
                 
+                #create partner override checkbox but lock it out if there isn't a partner
+                thisOverride = QtGui.QCheckBox("override partner")
+                thisOverride.stateChanged.connect(toggleOverride)
+                self.overrideBoxes[dgName] = thisOverride
+                gotoLayout.addWidget(thisOverride)
+                if partnerName == None:
+                    self.overrideBoxes[dgName].setCheckState(QtCore.Qt.Checked)
+                    self.overrideBoxes[dgName].setVisible(False)
                 controlsLayout.addLayout(gotoLayout)
                 thisLayout.addLayout(controlsLayout)
                 
@@ -130,8 +168,8 @@ class DelayGeneratorWidget(QtGui.QWidget):
                 lcd = thisLCD = QtGui.QLCDNumber(10)
                 thisLCD.setSmallDecimalPoint(True)
                 thisLCD.setSegmentStyle(lcd.Flat)
-                self.lcdPositions[dg] = thisLCD.display
-                updateLCD((dg,delay))
+                self.lcdPositions[dgName] = thisLCD.display
+                updateLCD((dgName,delay))
                 thisLayout.addWidget(thisLCD)
 
                 self.layout().addLayout(thisLayout)
@@ -142,10 +180,6 @@ class DelayGeneratorWidget(QtGui.QWidget):
         self.dgClient.removeDelayListener()
         if reactor.running: reactor.stop()
         event.accept()
-        
- 
-        
-
         
 @inlineCallbacks
 def main(container):
