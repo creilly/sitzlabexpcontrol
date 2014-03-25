@@ -6,3 +6,4 @@ import os.path
 
 
 POOHDATAPATH = os.path.abspath('Z:\data\pooh')
+SMLOGSPATH = os.path.abspath('Z:\data\pooh\logs\steppermotors')
