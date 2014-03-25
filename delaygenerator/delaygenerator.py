@@ -16,8 +16,9 @@ Computer --USB--> arduino --ribbon--> M. Gostein's circuit --coax--> lasers
 import serial
 from time import sleep
 
-CLOCKPERIOD = 50. #in nanoseconds
-AD9501TIMECONST = .2 #in nanoseconds (eg. 200picoseconds)
+#CLOCKPERIOD = 50. #in nanoseconds
+#AD9501TIMECONST = .2 #in nanoseconds (eg. 200picoseconds)
+BAUDRATE = 115200
 
 
 class DelayGenerator:
@@ -30,7 +31,7 @@ class DelayGenerator:
         if self.COMPort is None: 
 			print "\n\nWARNING!!! DIDN'T FIND ARDUINO!!"
         else:
-            self.ser = serial.Serial(self.COMPort,9600,timeout=5)
+            self.ser = serial.Serial(self.COMPort,BAUDRATE,timeout=5)
             while not self.configured:
                 sleep(1) #wait 1s for com port to actually open and be ready to accept input/output, this might be an arduino thing
                 if self.ser.readline().replace('\r\n','') == "waiting to configure":
