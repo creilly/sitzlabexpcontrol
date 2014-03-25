@@ -6,9 +6,13 @@ from daqmx.task.co import COTask
 from daqmx.task.do import DOTask
 from daqmx.task.ci import CITask
 
+from libs.filecreationmethods import LogFile
+
 from threading import Lock, Thread
 from numpy import linspace
 from time import sleep
+
+from config.filecreation import SMLOGSPATH
 
 class BaseStepperMotor:
 
@@ -71,57 +75,132 @@ class BaseStepperMotor:
         for task in self._tasks:
             task.clearTask()
 
-class DirectionStepperMotor(BaseStepperMotor):
+            
+class EnabledStepperMotor(BaseStepperMotor):
+    ENABLED = 1
+    DISABLED = 0
+    def __init__(
+        self,
+        enable_channel=None,
+        tasks=None
+    ):
+        self.enable_channel = enable_channel
+        self.enabled = self.DISABLED 
+        if enable_channel is not None:
+            self.enable_task = DOTask()
+            self.enable_task.createChannel(enable_channel)
+        elif enable_channel is None:
+            self.enable()
+        tasks = (tasks if tasks is not None else []) + ([self.enable_task] if self.enable_channel is not None else [])
+        BaseStepperMotor.__init__(
+            self,
+            tasks=tasks
+        )
+    
+    
+    def getEnableStatus(self):
+        enb_str = {self.ENABLED:'enabled',self.DISABLED:'disabled'}[self._getEnableStatus()]
+        return enb_str
+
+    def enable(self):
+        self._setEnableStatus(self.ENABLED)
+    
+    def disable(self):
+        self._setEnableStatus(self.DISABLED)
+        
+    def toggleStatus(self):
+        if self._getEnableStatus() == self.ENABLED: self.disable()
+        elif self._getEnableStatus() == self.DISABLED: self.enable()
+        
+    def _getEnableStatus(self):
+        return self.enabled
+    
+    def _setEnableStatus(self,state):
+        if self.enable_channel is None:
+            self.enabled = True
+            return
+        elif self.enable_channel is not None:
+            self.enable_task.writeState(
+                {
+                    self.ENABLED:True,
+                    self.DISABLED:False
+                }[state]
+            )
+            self.enabled = state
+    
+    def _setPosition(self,position,callback):
+        if self._getEnableStatus() == self.ENABLED:
+            BaseStepperMotor._setPosition(self,position,callback)
+        else:
+            print 'not enabled!'
+    
+    def destroy(self):
+        self.disable()
+        BaseStepperMotor.destroy(self)
+            
+class DirectionStepperMotor(EnabledStepperMotor):
     FORWARDS = 0
     BACKWARDS = 1
     def __init__(
         self,
+        enable_channel=None,
         backlash=0,
         direction=FORWARDS,
         tasks=None
     ):
-        BaseStepperMotor.__init__(self,tasks)
+        EnabledStepperMotor.__init__(
+            self,
+            enable_channel=enable_channel,
+            tasks=tasks
+        )
         self.backlash = backlash
         self._setDirection(direction)
 
     def getPosition(self):
-        return self._getPosition() + (1 if self.getDirection() is self.BACKWARDS else 0) * self.backlash
+        return self._getPosition() + (1 if self._getDirection() is self.BACKWARDS else 0) * self.backlash
+    
+    def getDirection(self): 
+        dir_str = {DigitalLineStepperMotor.FORWARDS:'FORWARDS',DigitalLineStepperMotor.BACKWARDS:'BACKWARDS'}[self._getDirection()]
+        return dir_str
 
     def _setPosition(self,position,callback):
+        if self._getEnableStatus() != self.ENABLED: 
+            print 'not enabled!'
+            return
         delta = position - self.getPosition()
         if delta is 0:
             self.onPositionSet(callback)
             return
         direction = self.FORWARDS if delta > 0 else self.BACKWARDS
-        steps = abs(delta) + (self.backlash if direction is not self.getDirection() else 0)
+        steps = abs(delta) + (self.backlash if direction is not self._getDirection() else 0)
         if direction is not self._getDirection():
             self._setDirection(direction)
         self._generateSteps(steps,callback)
-
-    def getDirection(self): return self._getDirection()
 
     def _getPosition(self): return 0
     def _setDirection(self,direction): self._direction = direction
     def _getDirection(self): return self._direction
     def _generateSteps(self,steps,callback): callback()
 
+    
 class DigitalLineDirectionStepperMotor(DirectionStepperMotor):
     def __init__(
-            self,
-            direction_channel,
-            backlash=0,
-            direction=DirectionStepperMotor.FORWARDS,
-            tasks=None
+        self,
+        direction_channel,
+        enable_channel=None,
+        backlash=0,
+        direction=DirectionStepperMotor.FORWARDS,
+        tasks=None
     ):
         self.direction_task = DOTask()
         self.direction_task.createChannel(direction_channel)
         DirectionStepperMotor.__init__(
             self,
-            backlash,
-            direction,
-            (tasks if tasks is not None else []) + [self.direction_task]
-        )
-        self._setDirection(direction)        
+            enable_channel=enable_channel,
+            backlash=backlash,
+            direction=direction,
+            tasks = ((tasks if tasks is not None else []) + [self.direction_task])
+        )     
 
     def _setDirection(self,direction):
         self.direction_task.writeState(
@@ -136,52 +215,117 @@ class DigitalLineDirectionStepperMotor(DirectionStepperMotor):
 
 class CounterStepperMotor(DigitalLineDirectionStepperMotor):
     def __init__(
-            self,
-            counter_channel,
-            direction_channel,
-            initial_position=0,
-            backlash=0,
-            direction=DirectionStepperMotor.FORWARDS,
-            tasks=None
+        self,
+        counter_channel,
+        direction_channel,
+        enable_channel=None,
+        initial_position=0,
+        backlash=0,
+        direction=DirectionStepperMotor.FORWARDS,
+        tasks=None
     ):
         self.counter_task = CITask()
-        self.counter_task.createChannel(counter_channel,initialCount=initial_position)
+        #subtract out the backlash from the logged position to maintain consistency with DirectionStepperMotor.getPosition()
+        if direction == DirectionStepperMotor.BACKWARDS: 
+            initialCount = initial_position - backlash
+        else:
+            initialCount = initial_position
+        self.counter_task.createChannel(counter_channel,initialCount=initialCount)
         self.counter_task.start()
+        tasks = (tasks if tasks is not None else []) + [self.counter_task]
         DigitalLineDirectionStepperMotor.__init__(
             self,
             direction_channel,
-            backlash,
-            direction,
-            (tasks if tasks is not None else []) + [self.counter_task]
+            enable_channel=enable_channel,
+            backlash=backlash,
+            direction=direction,
+            tasks=tasks
         )
         
 
     def _getPosition(self):
-        return self.counter_task.readCounts()
+        counts = self.counter_task.readCounts()
+        return counts
 
-class PulseGeneratorStepperMotor(CounterStepperMotor):
+        
+class LoggedStepperMotor(CounterStepperMotor):
+    def __init__(
+        self,
+        counter_channel,
+        direction_channel,
+        log_file=None,
+        enable_channel=None,
+        backlash=0,
+        tasks=None
+    ):
+        import os.path
+        if log_file is None:
+            logName = str(counter_channel).replace('/','-')+'.txt'
+        else:
+            logName = log_file
+        log_file = os.path.join(SMLOGSPATH,logName)
+        self.log_file = LogFile(log_file)
+        try:
+            last_date, last_position, last_direction = self._getLastPosition()
+        except TypeError:
+            print 'error with log file! reverting to 0 & forwards'
+            last_date, last_position, last_direction = ('never',0,'FORWARDS')
+        last_direction = {'FORWARDS':DigitalLineStepperMotor.FORWARDS,'BACKWARDS':DigitalLineStepperMotor.BACKWARDS}[last_direction]
+        
+        CounterStepperMotor.__init__(
+            self,
+            counter_channel,
+            direction_channel,
+            enable_channel=enable_channel,
+            initial_position=int(last_position),
+            backlash=backlash,
+            direction=last_direction,
+            tasks=tasks
+        )
+    
+    def _getLastPosition(self):
+        return self.log_file.readLastLine()
+    
+    def setPosition(self,position,callback):
+        CounterStepperMotor._setPosition(
+            self,
+            position,
+            self.loggedCallback(callback)
+        )
+
+    def loggedCallback(self,callback):
+        def cb():
+            self.log_file.update((self.getPosition(),self.getDirection()))
+            callback()
+        return cb
+        
+    def destroy(self):
+        self.log_file.close()
+        EnabledStepperMotor.destroy(self)
+
+class PulseGeneratorStepperMotor(LoggedStepperMotor):
     def __init__(
             self,
             step_channel,
             counter_channel,
             direction_channel,
+            log_file=None,
+            enable_channel=None,
             step_rate=500.0,
-            initial_position=0,
             backlash=0,
-            direction=DirectionStepperMotor.FORWARDS,
             tasks=None
     ):
         self.step_task = COTask()
         self.step_task.createChannel(step_channel)
         self.setStepRate(step_rate)
-        CounterStepperMotor.__init__(
+        LoggedStepperMotor.__init__(
             self,
             counter_channel,
             direction_channel,
-            initial_position,
-            backlash,
-            direction,
-            (tasks if tasks is not None else []) + [self.step_task]
+            log_file,
+            enable_channel=enable_channel,
+            backlash=0,
+            tasks=((tasks if tasks is not None else []) + [self.step_task])
         )
 
 
@@ -198,32 +342,31 @@ class PulseGeneratorStepperMotor(CounterStepperMotor):
         rate = 1.0 / period
         return rate
 
-class StepperMotor(PulseGeneratorStepperMotor): pass
-
-class DigitalLineStepperMotor(CounterStepperMotor):
+class DigitalLineStepperMotor(LoggedStepperMotor):
     def __init__(
             self,
             step_channel,
             counter_channel,
             direction_channel,
+            log_file=None,
+            enable_channel=None,
             step_rate=500.0,
-            initial_position=0,
             backlash=0,
-            direction=DirectionStepperMotor.FORWARDS,
             tasks=None
     ):
         self.step_task = DOTask()
         self.step_task.createChannel(step_channel)
         self.setStepRate(step_rate)
         self.step_task.writeState(False)
-        CounterStepperMotor.__init__(
+        tasks=(tasks if tasks is not None else []) + [self.step_task]
+        LoggedStepperMotor.__init__(
             self,
             counter_channel,
             direction_channel,
-            initial_position,
+            log_file,
+            enable_channel,
             backlash,
-            direction,
-            (tasks if tasks is not None else []) + [self.step_task]
+            tasks
         )
 
     def _generateSteps(self,steps,callback):
@@ -240,7 +383,11 @@ class DigitalLineStepperMotor(CounterStepperMotor):
     def setStepRate(self,step_rate): self.step_rate = step_rate
 
     def getStepRate(self): return self.step_rate
+    
+class StepperMotor(PulseGeneratorStepperMotor): pass
 
+
+    
 class FakeStepperMotor(DirectionStepperMotor):
     INTERVAL = .20 # how often to update during excursion
     def __init__(self,position=0,rate=500):
