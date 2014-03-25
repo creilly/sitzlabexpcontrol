@@ -10,11 +10,14 @@ if QtCore.QCoreApplication.instance() is None:
 # for server calls
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 from ab.abclient import getProtocol
-# URLs (need to find better URL structure)
+
+from config.serverURLs import *
+'''# URLs (need to find better URL structure)
 from sitz import STEPPER_MOTOR_SERVER, \
     TEST_STEPPER_MOTOR_SERVER, WAVELENGTH_SERVER, \
     TEST_WAVELENGTH_SERVER, DELAY_GENERATOR_SERVER, \
     TEST_DELAY_GENERATOR_SERVER 
+'''
 from config.voltmeter import VM_SERVER_CONFIG, VM_DEBUG_SERVER_CONFIG
 
 # some utility widgets
@@ -51,6 +54,13 @@ from math import pow
 import numpy as np
 from pyqtgraph import PlotWidget, ErrorBarItem
 
+
+'''optional parameters interpretation code
+has debug mode as well as optional input modes for
+steppermotor, wavelengthserver, ddg, & manual modes
+to enable just pass the associated letter (see inputs_keys)
+like this: python smartscan.py swdm
+'''
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 SM_BOOL, WL_BOOL, DDG_BOOL, MAN_BOOL = 0,1,2,3
 INPUTS = (SM_BOOL,WL_BOOL,DDG_BOOL,MAN_BOOL)
@@ -72,6 +82,8 @@ else:
     for input in INPUTS_TOGGLE:
         INPUTS_TOGGLE[input] = True
 
+print INPUTS_TOGGLE        
+        
 '''
 any widget added to the input widget tab will be expected to \
 implement a getInput() method that returns an object with two \
@@ -496,7 +508,7 @@ def SmartScanGUI():
                 wlClient.cancelWavelengthSet,
                 wlClient.getWavelength,
                 24100.0,            
-                24400.0,
+                25000.0,
                 2,
                 24200.0,
                 0.01,
@@ -525,27 +537,33 @@ def SmartScanGUI():
         dgClient = DelayGeneratorClient(dgProtocol)
         delays = yield dgClient.getDelays()
         for dgID in delays.keys():
-            @inlineCallbacks
-            def setter(delay):
-                yield dgClient.setDelay(dgID,delay)
-                returnValue(delay)
-            @inlineCallbacks
-            def getter():
-                delays = yield dgClient.getDelays()
-                returnValue(delays[dgID])
-            def cancel(): pass
+            def setter(dgID):
+                @inlineCallbacks
+                def _setter(delay):
+                    yield dgClient.setPartnerDelay(dgID,delay)
+                    returnValue(delay)
+                return _setter
+            def getter(dgID):
+                @inlineCallbacks
+                def _getter():
+                    delays = yield dgClient.getDelays()
+                    returnValue(delays[dgID])
+                return _getter
+            def cancel(dgID):
+                def _cancel(): pass
+                return _cancel
             dgCombo = ComboWidget()
             dgCombo.addTab(
                 CenterInputWidget(
-                    setter,
-                    cancel,
-                    getter,
+                    setter(dgID),
+                    cancel(dgID),
+                    getter(dgID),
                     1,
                     50000000,
                     0,
                     3896550.0,
                     0,
-                    10000,
+                    1000000,
                     1,
                     100
                 ),
@@ -553,8 +571,8 @@ def SmartScanGUI():
             )
             dgCombo.addTab(
                 ListInputWidget(
-                    setter,
-                    cancel
+                    setter(dgID),
+                    cancel(dgID)
                 ),
                 'list'
             )
