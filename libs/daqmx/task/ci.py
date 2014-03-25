@@ -2,7 +2,7 @@ from daqmx import *
 from daqmx.task import Task
 
 class CITask(Task):
-
+    
     """
 
     configures a channel for counting
@@ -19,9 +19,30 @@ class CITask(Task):
     edge:
     'rising': trigger on rising edge
     'falling': trigger on falling edge
+    
 
     """
+    deviceName = None
+    offset = 0
+    
     def createChannel(self, physicalChannel, name=None, initialCount=0, polarity='external', edge='rising'):
+        deviceName = physicalChannel.split('/')[0]
+        if not deviceName: deviceName = physicalChannel.split('/')[1] #avoid leading slash if user included it
+        
+        size = c_uint32(0)
+        daqmx(
+            dll.DAQmxGetDevCIMaxSize,
+            (
+                deviceName, 
+                byref(size)
+            )
+        )
+        self.size = size.value
+        
+        if self.size != 32: 
+            self.offset = initialCount
+            initialCount = 0
+        
         polarities = {
             'up':constants['DAQmx_Val_CountUp'],
             'down':constants['DAQmx_Val_CountDown'],
@@ -68,7 +89,15 @@ pp
                 self.handle,
             )
         )
-
+    """
+    
+    reads the counter size of the first virtual channel in bits
+    
+    returns the counter size
+    
+    """
+    def getSize(self):
+        return self.size
     """
 
     reads current count
@@ -76,8 +105,16 @@ pp
     returns: current count    
 
     """
+    
+    @staticmethod
+    def twos_comp(val, bits):
+        """compute the 2's compliment of int value val"""
+        if( (val&(1<<(bits-1))) != 0 ):
+            val = val - (1<<bits)
+        return val
+        
     def readCounts(self):
-        counts = c_uint32(0);
+        counts = c_int32(0);
         daqmx(
             dll.DAQmxReadCounterScalarU32,
             (
@@ -87,7 +124,10 @@ pp
                 None
             )
         )
-        return c_int32(counts.value).value
+        if self.getSize() == 32: return c_int32(counts.value).value 
+        else: 
+            adjustedVal = self.twos_comp(counts.value,self.getSize()) + self.offset
+            return adjustedVal
 
 if __name__ == '__main__':
     t = CITask()
