@@ -77,13 +77,13 @@ class GotoWidget(QtGui.QWidget):
 
         toggle = ToggleObject(False)
 
-        spin = QtGui.QDoubleSpinBox()
-        spin.setMinimum(params[MIN])
-        spin.setMaximum(params[MAX])
-        spin.setSingleStep(10 ** (-1 * params[PRECISION]))
-        spin.setDecimals(params[PRECISION])
+        self.spin = QtGui.QDoubleSpinBox()
+        self.spin.setMinimum(params[MIN])
+        self.spin.setMaximum(params[MAX])
+        self.spin.setSingleStep(10 ** (-1 * params[PRECISION]))
+        self.spin.setDecimals(params[PRECISION])
 
-        gotoLayout.addWidget(spin)
+        gotoLayout.addWidget(self.spin)
 
         gotoToggleWidget = ToggleWidget(toggle,('goto','stop'))
         gotoLayout.addWidget(gotoToggleWidget)
@@ -92,7 +92,7 @@ class GotoWidget(QtGui.QWidget):
         @inlineCallbacks
         def onActivated():
             d = Deferred()
-            self.gotoRequested.emit((spin.value(),d))
+            self.gotoRequested.emit((self.spin.value(),d))
             yield d
             toggle.toggle()
         toggle.activated.connect(onActivated)
