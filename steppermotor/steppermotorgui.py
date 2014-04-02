@@ -23,8 +23,8 @@ PARAMS = {
     SLIDER:200
 }
 
-RATE_MIN = 50.0
-RATE_MAX = 1000.0
+RATE_MIN = 1
+RATE_MAX = 1000
 
 class StepperMotorWidget(QtGui.QWidget):
     def __init__(self,protocol):
@@ -41,18 +41,29 @@ class StepperMotorWidget(QtGui.QWidget):
         def onInit():
             config = yield protocol.sendCommand('get-configuration')
             self.show()
-            for id in config.keys():
-                layout = QtGui.QVBoxLayout()
-
+            
+            #sort the list of dgNames based on guiOrder key in config
+            sorted_sms = list()
+            for smName in config.keys():
+                sorted_sms.append((smName,config[smName]['guiOrder'],config[smName]))
+            sorted_sms = sorted(sorted_sms, key=lambda x:x[1])
+            
+            #create a vertical layout for each sm (thisLayout), when done add to the full horizontal layout (self.layout())
+            for id, guiOrder, config in sorted_sms:
+                thisLayout = QtGui.QVBoxLayout()
+                
+                sm = ChunkedStepperMotorClient(protocol,id)
+                
+                #create a goto widget for this steppermotor
                 gotoWidget = GotoWidget(PARAMS)
-                layout.addWidget(gotoWidget)
-                sm = ChunkedStepperMotorClient(protocol,id)                
+                thisLayout.addWidget(gotoWidget)
                 @inlineCallbacks
                 def onGotoRequested(sm,payload):
                     position, deferred = payload
                     yield sm.setPosition(int(position))
                     deferred.callback(None)
                 gotoWidget.gotoRequested.connect(partial(onGotoRequested,sm))
+                #gotoWidget.spin.editingFinished.connect(partial(onGotoRequested,sm))
                 sm.addListener(sm.POSITION,gotoWidget.setPosition)
                 def onUpdateRequested(stepperMotor,gw):
                     stepperMotor.getPosition().addCallback(gw.setPosition)
@@ -61,28 +72,50 @@ class StepperMotorWidget(QtGui.QWidget):
                 position = yield sm.getPosition()
                 gotoWidget.setPosition(position)
 
+                #create an enable toggle button for this sm
+                enableButton = QtGui.QPushButton('enable', self)
+                enableButton.clicked.connect(sm.toggleStatus)
+                def adjustText(status):
+                    if status == 'enabled': 
+                        enableButton.setText('disable')
+                        gotoWidget.setEnabled(True)
+                    elif status == 'disabled': 
+                        enableButton.setText('enable')
+                        gotoWidget.setEnabled(False)
+                sm.addListener(sm.ENABLE,adjustText)
+                if config['enable_channel'] == None: enableButton.setEnabled(False)
+                else: gotoWidget.setEnabled(False)
+                thisLayout.addWidget(enableButton)
+                
+                #create a spinbox to control the step rate for this sm
                 rate = yield sm.getStepRate()
-                rateSpin = QtGui.QDoubleSpinBox()
-                layout.addWidget(LabelWidget('rate',rateSpin))
+                rateSpin = QtGui.QSpinBox()
+                thisLayout.addWidget(LabelWidget('rate',rateSpin))
                 rateSpin.editingFinished.connect(
                     compose(
                         sm.setStepRate,
                         rateSpin.value
                     )
                 )
-                rateSpin.setValue(rate)
                 rateSpin.setRange(
                     RATE_MIN if rate > RATE_MIN else rate,
                     RATE_MAX if rate < RATE_MAX else rate
                 )
+                rateSpin.setValue(rate)
                 sm.addListener(sm.RATE,rateSpin.setValue)
+                
+                #add this steppermotor panel to the gui
                 self.layout().addWidget(
                     LabelWidget(
-                        config[id]['name'],
-                        layout
+                        config['name'],
+                        thisLayout
                     )
                 )
         onInit()
+        
+    def closeEvent(self, event):
+        event.accept()
+        quit()
         
         
 @inlineCallbacks

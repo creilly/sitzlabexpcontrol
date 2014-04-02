@@ -41,15 +41,6 @@ class DelayGeneratorWidget(QtGui.QWidget):
         self.overrideBoxes = {}
         self.errPop = None
 
-        '''
-        def onConnectionLost(reason):
-            if reactor.running: 
-                QtGui.QMessageBox.information(self,'connection lost','connect to server terminated. program quitting.')
-                self.close()
-                reactor.stop()
-                protocol.__class__.connectionLost(protocol,reason)
-        protocol.connectionLost = onConnectionLost
-        '''
         def updateLCD(payload):
             dgName, newValue = payload
             lcdUpdate = self.lcdPositions[dgName]
@@ -72,7 +63,6 @@ class DelayGeneratorWidget(QtGui.QWidget):
             config = yield self.dgClient.getDelays()
             self.show()
 
-            
             #sort the list of dgNames based on guiOrder key in config
             sorted_dgs = list()
             for dgName in config.keys():
@@ -81,9 +71,8 @@ class DelayGeneratorWidget(QtGui.QWidget):
                 else:
                     sorted_dgs.append((dgName,DG_CONFIG[dgName]['guiOrder'],config[dgName]))
             sorted_dgs = sorted(sorted_dgs, key=lambda x:x[1])
-            
 
-            
+            #create a horizontal layout for each dg (thisLayout), when done add them to the full layout (self.layout())
             for dgName, guiOrder, delay in sorted_dgs:
                 thisLayout = QtGui.QHBoxLayout()
                 controlsLayout = QtGui.QVBoxLayout()
@@ -113,23 +102,7 @@ class DelayGeneratorWidget(QtGui.QWidget):
                 thisSpinbox.setValue(delay)
                 self.spinboxes[dgName] = thisSpinbox
                 gotoLayout.addWidget(thisSpinbox)
-                
-                '''
-                def writeDelay():
-                    for dg, button in self.commitButtons.items():
-                        if button.isChecked():
-                            dgToWrite = dg
-                    valueToWrite = int(self.spinboxes[dgToWrite].cleanText())
-                    try:
-                        override = self.overrideBoxes[dgToWrite].checkState()
-                    except KeyError():
-                        override = True
-                    if override: 
-                        self.dgClient.setDelay(dgToWrite,valueToWrite)
-                    else: 
-                        self.dgClient.setPartnerDelay(dgToWrite,valueToWrite)
-                    self.commitButtons[dgToWrite].setChecked(False)
-                '''
+
                 def writeDelay():
                     for dg, button in self.commitButtons.items():
                         if button.isChecked():
@@ -141,7 +114,6 @@ class DelayGeneratorWidget(QtGui.QWidget):
                 #create a commit button
                 thisCommitButton = QtGui.QPushButton('write delay')
                 thisCommitButton.setCheckable(True)
-                #self.commitButtonsGroup.addButton(thisCommitButton,self.dgIDs[dgName])
                 self.commitButtons[dgName] = thisCommitButton
                 thisCommitButton.clicked.connect(writeDelay)
                 gotoLayout.addWidget(thisCommitButton)

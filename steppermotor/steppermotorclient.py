@@ -7,7 +7,8 @@ from sitz import compose
 class StepperMotorClient:
     POSITION = 0
     RATE = 1
-    MESSAGES = {POSITION:'position-changed',RATE:'step-rate-changed'}
+    ENABLE = 2
+    MESSAGES = {POSITION:'position-changed',RATE:'step-rate-changed',ENABLE:'enable-status-changed'}
     def __init__(self,protocol,id):        
         self.protocol = protocol
         self.id = id
@@ -15,7 +16,16 @@ class StepperMotorClient:
 
     def _sendCommand(self,command,*args):
         return self.protocol.sendCommand(command,self.id,*args)
+    
+    def getEnableStatus(self):
+        return self._sendCommand('get-enable-status')
+    
+    def setEnableStatus(self,status):
+        return self._sendCommand('set-enable-status',status)
         
+    def toggleStatus(self):
+        return self._sendCommand('toggle-status')
+
     def getPosition(self):
         return self._sendCommand('get-position')
         
@@ -39,12 +49,13 @@ class StepperMotorClient:
     
     StepperMotorClient.POSITION -> updates on position changes
     StepperMotorClient.RATE -> updates on stepping rate changes
+    StepperMotorClient.ENABLE -> updates on enable toggle
 
     listener should be of the form:
     
     foo(data)
 
-    where data is either the new position of stepping rate, depending on the message type
+    where data is either the new position or stepping rate, depending on the message type
     """
     def addListener(self,message,listener):
         filter = partial(self._listenerFilter,listener)

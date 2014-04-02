@@ -1,5 +1,8 @@
-'''by stevens4, mod: 2013-06-13
-last update: switched over to using full os method functionality so these
+'''by stevens4, mod: stevens4
+2014-03-04: added the logFile class with methods for reading, writing,
+creating logFiles for other objects like the LoggedStepperMotor.
+
+2013-06-13: switched over to using full os method functionality so these
 methods should be OS independent
 
 some simple functions to help with creation of files on our network drive
@@ -39,3 +42,39 @@ def saveCSV(measurementType,dataArray,parentPath,description=None):
     path = os.path.join(parentPath,path)
     checkPath(path)
     np.savetxt(os.path.join(path,filename+(('_%s' % description) if description is not None else '')+".csv"), dataArray, delimiter=",")
+
+    
+class LogFile:
+    def __init__(
+        self,
+        logFileName
+    ):
+        self.logFileName = logFileName
+        try:
+            self.logFile = open(self.logFileName, 'r+')
+        except IOError:
+            print 'specified log did not exist. creating...'
+            self.logFile = open(self.logFileName, 'w+')
+    
+    def readLastLine(self):
+        last_line = ''
+        for line in self.logFile: 
+            last_line = line
+        if not last_line: return None
+        lastLineTuple = tuple(last_line.strip().split('\t'))
+        return lastLineTuple
+        
+    def update(self,tupleToWrite):
+        timestamp = str(datetime.datetime.now())
+        logElements = []
+        logElements.append(timestamp)
+        for element in tupleToWrite:
+           logElements.append(str(element))
+        logEntry = '\t'.join(logElements)
+        self.logFile.write(logEntry+'\n')
+        print 'wrote to logfile: '+logEntry
+    
+    def close(self):
+        self.logFile.close()
+        print 'closing file: '+self.logFileName
+    

@@ -11,25 +11,29 @@ actual values are based on finding the scattering position using the probe laser
 sheng's positions but inverting the direction
 '''
 
+import os.path
+from config.filecreation import SMLOGSPATH
 
 LID_POSITIONS = {
     'scatter':-27650, #193600,
     'sputter':65950, #100000,
     'LEED':112950, #53000,
-    'LIPD':160950 #5000
+    'LIPD':160950, #5000,
+    'maximum':200000,
+    'minimum':-100000
 }
  
 DEBUG_LID_CONFIG = {
-    'logfile':'debuglidlog.txt',
+    'logfile':os.path.join(SMLOGSPATH,'debuglidlog.txt'),
     'relay_channel':'alpha/port0/line3'
 }
 
 LID_CONFIG = {
-    'logfile':'lidlog.txt',
+    'logfile':os.path.join(SMLOGSPATH,'lid_log.txt'),
     'relay_channel':'dev1/port0/line0',
     'step_channel':'dev2/port0/line7',
-    'counter_channel':'dev2/ctr6',
     'direction_channel':'dev2/port0/line5',
+    'counter_channel':'dev2/ctr6',
     'step_rate':500.0,
     'backlash':1525
 }

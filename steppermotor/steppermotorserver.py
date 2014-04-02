@@ -1,4 +1,4 @@
-from steppermotor import StepperMotor, FakeStepperMotor
+from steppermotor import PulseGeneratorStepperMotor, DigitalLineStepperMotor, FakeStepperMotor
 from ab.abserver import BaseWAMP, command, runServer
 from twisted.internet.defer  import Deferred, inlineCallbacks, returnValue
 from twisted.internet  import reactor
@@ -17,7 +17,8 @@ class StepperMotorWAMP(BaseWAMP):
     __wampname__ = 'stepper motor server'
     MESSAGES = {
         'position-changed':'notify when position changes',
-        'step-rate-changed':'notify when stepping rate changes'
+        'step-rate-changed':'notify when stepping rate changes',
+        'enable-status-changed':'notify when enabled or disabled'
     }
 
     def initializeWAMP(self):
@@ -27,18 +28,48 @@ class StepperMotorWAMP(BaseWAMP):
         for id, options in config.items():
             if DEBUG:
                 self.sms[id] = FakeStepperMotor()
-            else:
-                print id
-                self.sms[id] = StepperMotor(
+            elif options['pulse_channel'].find('ctr') is -1:
+                print 'adding '+str(id)+' as a digital output sm'
+                self.sms[id] = DigitalLineStepperMotor(
                     options['pulse_channel'],
                     options['counter_channel'],
                     options['direction_channel'],
-                    options['step_rate'],
-                    options['initial_position'],
-                    options['backlash']
+                    step_rate = options['step_rate'],
+                    backlash = options['backlash'],
+                    log_file = options['log_file'],
+                    enable_channel = options['enable_channel']
                 )
+            else:
+                print 'adding '+str(id)+' as a counter output sm'
+                self.sms[id] = PulseGeneratorStepperMotor(
+                    options['pulse_channel'],
+                    options['counter_channel'],
+                    options['direction_channel'],
+                    step_rate = options['step_rate'],
+                    backlash = options['backlash'],
+                    log_file = options['log_file'],
+                    enable_channel = options['enable_channel']
+                )
+            
+               
         ## complete initialization
         BaseWAMP.initializeWAMP(self)
+
+    @command('get-enable-status','query enable status of stepper motor')
+    def getEnableState(self,sm):
+        return self.sms[sm].getEnableStatus()
+    
+    @command('set-enable-status','set enable status of stepper motor')
+    def setEnableState(self,sm,status):
+        self.sms[sm].setEnableStatus(status)
+        newState = self.sms[sm].getEnableStatus()
+        self.dispatch('enable-status-changed', (sm,newState))
+    
+    @command('toggle-status','flip the enabled status of stepper motor')
+    def toggleStatus(self,sm):
+        self.sms[sm].toggleStatus()
+        newState = self.sms[sm].getEnableStatus()
+        self.dispatch('enable-status-changed', (sm,newState))
 
     @command('get-position','query position of stepper motor')
     def getPosition(self,sm):

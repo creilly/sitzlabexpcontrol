@@ -6,18 +6,10 @@ if QtCore.QCoreApplication.instance() is None:
     import qt4reactor
     qt4reactor.install()
 ## BOILERPLATE ##
-from twisted.internet.defer import inlineCallbacks
-from steppermotor.steppermotorclient import ChunkedStepperMotorClient
-from qtutils.label import LabelWidget
-from qtutils.qled import LEDWidget
-from operator import index
-from sitz import compose
-from ab.abclient import getProtocol
-from functools import partial
-
 from steppermotor.steppermotor import DigitalLineStepperMotor, FakeStepperMotor
 from config.lid import LID_POSITIONS, LID_CONFIG, DEBUG_LID_CONFIG
 from time import sleep
+
 from config.filecreation import POOHDATAPATH
 from daqmx.task.do import DOTask
 from steppermotor.goto import MIN, MAX, PRECISION, SLIDER, GotoWidget
@@ -30,15 +22,8 @@ import sys
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 
 
-PARAMS = {
-    MIN:-999999,
-    MAX:999999,
-    PRECISION:0,
-    SLIDER:200
-}
-
-RATE_MIN = 50.0
-RATE_MAX = 1000.0
+RATE_MIN = 1
+RATE_MAX = 10000
 UPDATE_RATE = 10.0 # position updates per second
 
 class LidRotatorWidget(QtGui.QWidget):
@@ -46,45 +31,45 @@ class LidRotatorWidget(QtGui.QWidget):
         QtGui.QWidget.__init__(self)
         self.setLayout(QtGui.QVBoxLayout())
         self.resize(250, 275)
-        self.enabled = False
-
-        #@inlineCallbacks
+        
         def onInit():
             
-            #log position
-            def logPosition(position,direction):
-                if self.logfile is None: return
-                timestamp = str(datetime.now())
-                dirStr = {DigitalLineStepperMotor.FORWARDS:'FORWARDS',DigitalLineStepperMotor.BACKWARDS:'BACKWARDS'}[direction]
-                logEntry = timestamp+'\t'+str(position)+'\t'+str(dirStr)+'\n'
-                self.logfile.write(logEntry)
-                print 'wrote to logfile: '+logEntry
+            # create stepper motor instance
+            if DEBUG:
+                self.sm = FakeStepperMotor(rate=1000)
+            if not DEBUG:
+                self.sm = DigitalLineStepperMotor(
+                    LID_CONFIG['step_channel'],
+                    LID_CONFIG['counter_channel'],
+                    LID_CONFIG['direction_channel'],
+                    log_file=LID_CONFIG['logfile'],
+                    enable_channel=LID_CONFIG['relay_channel'],
+                    step_rate=LID_CONFIG['step_rate'],
+                    backlash=LID_CONFIG['backlash']
+                    )
             
-            #send new position to stepper motor
+            #send new position to stepper motor, this is a chunking method so the user can cancel mid-trip
             def onGotoRequested(position):
-                def loop():
+                enableButton.setEnabled(False)
+                stepsPerChunk = int( self.sm.getStepRate() / UPDATE_RATE )
+                def testDone():
                     currPos = self.sm.getPosition()
                     lcd.display(currPos)
-                    stepsPerChunk = int( self.sm.getStepRate() / UPDATE_RATE )
                     delta = position - currPos
-                    if self.abort or delta == 0: 
-                        logPosition(currPos,self.sm.getDirection())
+                    if delta == 0 or self.abort: 
                         goToggle.toggle()
+                        enableButton.setEnabled(True)
                         return
-                    if abs(delta) < stepsPerChunk:
-                        self.sm.setPosition(
-                            position,
-                            loop
-                        )
-                    else:
-                        self.sm.setPosition(
-                            currPos + (
-                                1 if delta > 0 else -1
-                            ) * stepsPerChunk,
-                            loop
-                        )                                    
-                loop()
-            
+                    elif abs(delta) < stepsPerChunk:
+                        self.sm.setPosition(position,testDone)
+                    else: 
+                        goto = currPos + stepsPerChunk*(1 if delta > 0 else -1)
+                        chunking(goto) #this looks sloppy but is necessary to not overload the threading that occurs
+                    
+                def chunking(goto):
+                    self.sm.setPosition(goto,testDone)                                
+                testDone()
+
             self.show()
             
             #create an lcd & put at top
@@ -94,6 +79,10 @@ class LidRotatorWidget(QtGui.QWidget):
             self.lcdSetPosition = lcd.display
             self.layout().addWidget(lcd)
             
+            #show the first position on the lcd
+            pos = self.sm.getPosition()
+            lcd.display(pos)
+            
             def allSetEnabled(state):
                 sputterRadioButton.setEnabled(state)
                 scatterRadioButton.setEnabled(state)
@@ -102,91 +91,23 @@ class LidRotatorWidget(QtGui.QWidget):
                 customRadioButton.setEnabled(state)
                 customSpinbox.setEnabled(state)
                 goButton.setEnabled(state)
+                self.sm._setEnableStatus(state)
         
             # create enable/disable button
             def enableButtonFunc():
-                if self.enabled:
-                    # if already enabled, disable when clicked
-                    print 'disabling...'
-                    
-                    # destroy stepper motor instance
-                    self.sm.destroy()
-                    
-                    #close log
-                    self.logfile.close()
-                    
-                    # turn relay off
-                    self.relayTask.writeState(False)
-                    
-                    # disable all other gui items
+                if self.sm.getEnableStatus() == 'enabled':
                     allSetEnabled(False)
                     enableButton.setText('enable')
-                    self.enabled = False
-                    print 'disabled'
-                    
                     return
                     
-                if not self.enabled:
-                    print 'starting...'
-                    enableButton.setText('starting...')
-                    
-                    # write logic high to relay & wait for physical motor to start
-                    relayChannel = LID_CONFIG['relay_channel'] if not DEBUG else DEBUG_LID_CONFIG['relay_channel']
-
-                    self.relayTask = DOTask()
-                    self.relayTask.createChannel(relayChannel)
-                    self.relayTask.writeState(True)
-                    
-                    sleep(1)
-                    print 'relay powered'
-                    
-                    #open logfile and read last values
-                    logfilename = LID_CONFIG['logfile'] if not DEBUG else DEBUG_LID_CONFIG['logfile']
-                    path = os.path.join(POOHDATAPATH,logfilename)
-                    print path
-                    self.logfile = open(path,'r+')
-                    last_line = ''
-                    for line in self.logfile: 
-                        last_line = line
-                    if not last_line: raise Exception('empty log file')
-                    lastTime, lastPos, lastDir = last_line.strip().split('\t')
-                    print 'loaded settings from ' + lastTime
-                    lastPos = int(lastPos)
-                    lastDir = {'FORWARDS':DigitalLineStepperMotor.FORWARDS,'BACKWARDS':DigitalLineStepperMotor.BACKWARDS}[lastDir]
-                    lcd.display(lastPos)
-
-                    # create stepper motor instance
-                    if DEBUG:
-                        self.sm = FakeStepperMotor(position=lastPos,rate=1000)
-                    if not DEBUG:
-                        self.sm = DigitalLineStepperMotor(
-                            LID_CONFIG['step_channel'],
-                            LID_CONFIG['counter_channel'],
-                            LID_CONFIG['direction_channel'],
-                            step_rate=LID_CONFIG['step_rate'],
-                            initial_position=int(lastPos),
-                            backlash=LID_CONFIG['backlash'],
-                            direction=lastDir
-                        )                        
-
-                    #add to callback to disable cancel button & write to logfile
-                    
-
-
-                    
-                    # enable all other gui items
+                elif self.sm.getEnableStatus() == 'disabled':
                     allSetEnabled(True)
                     enableButton.setText('disable')
-                    self.enabled = True
-                    print 'enabled'
                     return
 
             enableButton = QtGui.QPushButton('enable', self)
             enableButton.clicked.connect(enableButtonFunc)
             self.layout().addWidget(enableButton)
-            
-            # create radio buttons for predefined positions
-            radioButtonsGroup = QtGui.QButtonGroup()
             
             def findActiveButton():
                 #determine selected button & look up position from definedPositions
@@ -202,11 +123,10 @@ class LidRotatorWidget(QtGui.QWidget):
                 else: return
                 
                 #go to that position
-                print 'going to ' +str(requestedPosition)
-                
                 onGotoRequested(requestedPosition)
                 
-                
+            # create radio buttons for predefined positions
+            radioButtonsGroup = QtGui.QButtonGroup()
             SPUTTER_ID, SCATTER_ID, LEED_ID, LIPD_ID, CUSTOM_ID = range(5)
             
             sputterRadioButton = QtGui.QRadioButton('sputter ('+str(LID_POSITIONS['sputter'])+')')
@@ -232,9 +152,9 @@ class LidRotatorWidget(QtGui.QWidget):
             customButtonLayout.addWidget(customRadioButton)
             
             customSpinbox = QtGui.QSpinBox()
-            customSpinbox.setMinimum(PARAMS[MIN])
-            customSpinbox.setMaximum(PARAMS[MAX])
-            customSpinbox.setSingleStep(10 ** (-1 * PARAMS[PRECISION]))
+            customSpinbox.setMinimum(LID_POSITIONS['minimum'])
+            customSpinbox.setMaximum(LID_POSITIONS['maximum'])
+            customSpinbox.setSingleStep(1)
             customButtonLayout.addWidget(customSpinbox)
             
             self.layout().addLayout(customButtonLayout)
@@ -246,7 +166,6 @@ class LidRotatorWidget(QtGui.QWidget):
             def goCancel():
                 print 'aborting!'
                 self.abort = True
-                #goToggle.toggle()
            
             goToggle = ToggleObject()
             goToggle.activationRequested.connect(start)
@@ -262,19 +181,17 @@ class LidRotatorWidget(QtGui.QWidget):
         onInit()
         
     def closeEvent(self, event):
-        if self.enabled:
+        if self.sm.getEnableStatus() == 'enabled':
             msgBox = QtGui.QMessageBox()
             msgBox.setText("You must disable the motor first!")
             msgBox.exec_()
             event.ignore()
-        if not self.enabled:
+        else:
             event.accept()
+            self.sm.destroy()
+            quit()
         
 
-
-        
-        
-#@inlineCallbacks
 def main(container):
     widget = LidRotatorWidget()
     container.append(widget)    
