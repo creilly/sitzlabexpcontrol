@@ -18,8 +18,16 @@ from twisted.internet import reactor, protocol
 from functools import partial
 from os import path, environ
 
+
+if len(sys.argv) > 1:
+    if 'c' in sys.argv[1]:
+        DEFAULT_DIR='z:/creilly/sitzlabexpcontrol'
+    elif 'b' in sys.argv[1]:
+        DEFAULT_DIR='z:/stevens4/gitHub/sitzlabexpcontrol'
+else:
+    DEFAULT_DIR='z:/creilly/sitzlabexpcontrol'   
+
 PYTHON_FILE='c:/python27/python.exe'
-DEFAULT_DIR='z:/creilly/sitzlabexpcontrol'
 PROGRAM_ROLE = 32
 ENV_VARS = {
     'PYTHONPATH':environ['PYTHONPATH']
@@ -320,10 +328,10 @@ def main(container):
 
     for name, callback in (
             ('add',on_add),
-#            ('remove',on_remove),
+            ('remove',on_remove),
             ('run',on_run),
             ('kill',on_kill),
-            ('restart',on_restart)
+#            ('restart',on_restart)
     ):
         button = QtGui.QPushButton(name)
         button.clicked.connect(callback)
