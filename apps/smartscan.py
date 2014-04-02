@@ -496,7 +496,7 @@ def SmartScanGUI():
                 wlClient.cancelWavelengthSet,
                 wlClient.getWavelength,
                 24100.0,            
-                24400.0,
+                25000.0,
                 2,
                 24200.0,
                 0.01,
@@ -527,7 +527,7 @@ def SmartScanGUI():
         for dgID in delays.keys():
             @inlineCallbacks
             def setter(delay):
-                yield dgClient.setDelay(dgID,delay)
+                yield dgClient.setPartnerDelay(dgID,delay)
                 returnValue(delay)
             @inlineCallbacks
             def getter():
@@ -545,7 +545,7 @@ def SmartScanGUI():
                     0,
                     3896550.0,
                     0,
-                    10000,
+                    3000000,
                     1,
                     100
                 ),
