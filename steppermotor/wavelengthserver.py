@@ -22,7 +22,10 @@ class WavelengthWAMP(BaseWAMP):
     STEP = 0
     WAVELENGTH = 1
     
-    WAVELENGTHS_PER_STEP = 1.0 / 42.0
+    #WAVELENGTHS_PER_STEP = 1.0 / 42.0
+    #WAVELENGTHS_PER_STEP = 2.397514e-2
+    WAVELENGTHS_PER_STEP = 2.399842e-2
+    
     
     MESSAGES = {
         'calibration-changed':'laser (SURF) calibration has changed',
