@@ -10,12 +10,14 @@ with the necessary parameters as key/val pairs in that dictionary
 
 DYEPM, XPM, IONINTEG, KDPTHERM, DEV0 = 0,1,2,3,4
 
+from daqmx.task.ai import AITask
+
 VM_SERVER_CONFIG = {
     'url':'ws://172.17.13.201:8789',
     'samplingRate':10000,
     'callbackRate':20,
     'trigChannel':'/dev1/pfi0',
-    'trigEdge':'falling'
+    'trigEdge':AITask.FALLING
 }
 
 VM_DEBUG_SERVER_CONFIG = {
