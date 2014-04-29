@@ -6,7 +6,7 @@ if QtCore.QCoreApplication.instance() is None:
     import qt4reactor
     qt4reactor.install()
 ## BOILERPLATE ##
-from goto import MIN, MAX, PRECISION, SLIDER, GotoWidget
+from goto import MIN, MAX, PRECISION, SLIDER, POI, GotoWidget
 from config.steppermotor import PDL, KDP, BBO, SM_CONFIG, REMPI_POI
 from qtutils.dictcombobox import DictComboBox
 from qtutils.toggle import ToggleObject, ToggleWidget
@@ -15,7 +15,8 @@ from qtutils.qled import LEDWidget
 from steppermotorclient import StepperMotorClient
 from twisted.internet.defer import inlineCallbacks
 from functools import partial
-from sitz import WAVELENGTH_SERVER, TEST_WAVELENGTH_SERVER, STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER, compose
+from config.serverURLs import WAVELENGTH_SERVER, TEST_WAVELENGTH_SERVER, STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER
+from sitz import compose
 
 CRYSTALS = {
     id: SM_CONFIG[id]['name'] for id in (KDP,BBO)
@@ -138,6 +139,10 @@ class TrackingWidget(QtGui.QWidget):
         def initTracking(tracking):
             if tracking: toggle.toggle()            
         wavelengthProtocol.sendCommand('is-tracking').addCallback(initTracking)
+    
+    def closeEvent(self, event):
+        event.accept()
+        quit()
         
 @inlineCallbacks
 def main():
