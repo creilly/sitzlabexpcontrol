@@ -263,8 +263,8 @@ class LoggedStepperMotor(CounterStepperMotor):
             logName = str(counter_channel).replace('/','-')+'.txt'
         else:
             logName = log_file
-        log_file = os.path.join(SMLOGSPATH,logName)
-        self.log_file = LogFile(log_file)
+        self.logName = os.path.join(SMLOGSPATH,logName)
+        self._openLog()
         try:
             last_date, last_position, last_direction = self._getLastPosition()
         except TypeError:
@@ -283,24 +283,31 @@ class LoggedStepperMotor(CounterStepperMotor):
             tasks=tasks
         )
     
+    def _openLog(self):
+        self.log_file = LogFile(self.logName)
+    
+    def _closeLog(self):
+        self.log_file.close()
+    
+    def toggleStatus(self):
+        if self._getEnableStatus() == self.ENABLED: 
+            self.updateLog()
+            self._closeLog()
+            self.disable()
+        elif self._getEnableStatus() == self.DISABLED: 
+            self._openLog()
+            self.enable()
+    
     def _getLastPosition(self):
         return self.log_file.readLastLine()
-    
-    def setPosition(self,position,callback):
-        CounterStepperMotor._setPosition(
-            self,
-            position,
-            self.loggedCallback(callback)
-        )
-
-    def loggedCallback(self,callback):
-        def cb():
-            self.log_file.update((self.getPosition(),self.getDirection()))
-            callback()
-        return cb
+   
+    def updateLog(self):
+        currPos = self.getPosition()
+        currDir = self.getDirection()
+        self.log_file.update((currPos,currDir))
         
     def destroy(self):
-        self.log_file.close()
+        self._closeLog()
         EnabledStepperMotor.destroy(self)
 
 class PulseGeneratorStepperMotor(LoggedStepperMotor):
@@ -342,7 +349,9 @@ class PulseGeneratorStepperMotor(LoggedStepperMotor):
         rate = 1.0 / period
         return rate
 
+
 class DigitalLineStepperMotor(LoggedStepperMotor):
+    import threading
     def __init__(
             self,
             step_channel,
@@ -369,16 +378,32 @@ class DigitalLineStepperMotor(LoggedStepperMotor):
             tasks
         )
 
+    def run(self,steps,callback):
+        for i in range(steps):
+            for state in (True,False):
+                self.step_task.writeState(state)
+                sleep(.5 / self.step_rate)
+        callback()
+        
     def _generateSteps(self,steps,callback):
-        this = self
-        class GenerateSteps(Thread):
-            def run(self):
-                for i in range(steps):
-                    for state in (True,False):
-                        this.step_task.writeState(state)
-                        sleep(.5 / this.step_rate)
-                callback()
-        GenerateSteps().start()
+        thread = Thread(target=self.run, args=(steps,callback))
+        thread.start()
+        
+        
+        
+    
+        
+    # def _generateSteps(self,steps,callback):
+        # this = self
+        # class GenerateSteps(Thread):
+            # def run(self):
+                # for i in range(steps):
+                    # for state in (True,False):
+                        # this.step_task.writeState(state)
+                        # sleep(.5 / this.step_rate)
+                # callback()
+        # GenerateSteps().start()
+        
 
     def setStepRate(self,step_rate): self.step_rate = step_rate
 
