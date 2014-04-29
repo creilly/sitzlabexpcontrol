@@ -388,11 +388,7 @@ class DigitalLineStepperMotor(LoggedStepperMotor):
     def _generateSteps(self,steps,callback):
         thread = Thread(target=self.run, args=(steps,callback))
         thread.start()
-        
-        
-        
-    
-        
+ 
     # def _generateSteps(self,steps,callback):
         # this = self
         # class GenerateSteps(Thread):
