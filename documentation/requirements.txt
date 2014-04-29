@@ -1,0 +1,21 @@
+********python requirements********
+python 2.7
+
+* numpy
+* scipy (>0.12)
+* tornado
+& twisted 
+& pyserial
+! autobahn (>0.5) - https://pypi.python.org/pypi/autobahn
+! pyqtgraph - download .exe from http://www.pyqtgraph.org/ (confirm proper 32b vs. 64b)
+! qt4reactor - https://pypi.python.org/pypi/qt4reactor/1.0
+* pywin32
+
+
+********other requirements********
+NI-DAQmx - https://apps.engr.utexas.edu/itg/ni/download.cfm
+    once installed, under measurement automation explorer create a virtual 
+        pci-6024e and call it 'alpha' so the 'debug' server option works
+
+environment variables:
+    pythonpath = Z:\stevens4\gitHub\sitzlabexpcontrol;Z:\stevens4\gitHub\sitzlabexpcontrol\libs

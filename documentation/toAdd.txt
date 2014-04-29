@@ -1,0 +1,8 @@
+things to add to smartscan:
+
+disable widgets while scanning
+errorbars
+save csv w/ data folder structure
+configs or just interpret from dropdown settings?
+
+put input dropdown onto tabs: 'wavelength', 'delay'
