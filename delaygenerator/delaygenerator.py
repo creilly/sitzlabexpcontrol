@@ -73,7 +73,7 @@ class DelayGenerator:
             print 'could not find arduino!'
             return False
         else:
-            self.ser.write(strToWrite)
+            self.ser.write(strToWrite+'ns')
             echo = self.ser.readline().replace('\r\n','') #the ardy echoes the result
             #print 'sent '+strToWrite
             #print 'received '+echo+'\n\n\n'
