@@ -37,9 +37,9 @@ SM_CONFIG = {
     KDP : {
         'name':'kdp',
         'enable_channel':'/alpha/port0/line1',
-        'pulse_channel':'dev2/ctr4',
-        'direction_channel':'/dev2/port0/line2',
-        'counter_channel':'dev2/ctr3',
+        'pulse_channel':'dev2/ctr4',                #to inrad: green -> Ch1StepWrite
+        'direction_channel':'/dev2/port0/line2',    #to inrad: blue -> Ch1DirWrite
+        'counter_channel':'dev2/ctr3',              #to inrad: black -> Ch1StepRead  &&  brown -> Ch1DirRead
         'step_rate':175.0,
         'backlash':285,
         'log_file':os.path.join(SMLOGSPATH,'kdp_log.txt'),
@@ -49,9 +49,9 @@ SM_CONFIG = {
     BBO : {
         'name':'bbo',
         'enable_channel':'/alpha/port0/line2',
-        'pulse_channel':'dev2/ctr1',
-        'direction_channel':'dev2/port0/line1',
-        'counter_channel':'dev2/ctr2',
+        'pulse_channel':'dev2/ctr1',                #to inrad: purple -> Ch2StepWrite    
+        'direction_channel':'dev2/port0/line1',     #to inrad: grey -> Ch2DirWrite
+        'counter_channel':'dev2/ctr2',              #to inrad: red -> Ch2StepRead  &&  orange -> Ch2DirRead
         'step_rate':800.0,
         'backlash':195,
         'log_file':os.path.join(SMLOGSPATH,'bbo_log.txt'),
