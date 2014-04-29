@@ -7,7 +7,7 @@ if QtCore.QCoreApplication.instance() is None:
     qt4reactor.install()
 ## BOILERPLATE ##
 from goto import MIN, MAX, PRECISION, SLIDER, GotoWidget
-from config.steppermotor import PDL, KDP, BBO, SM_CONFIG
+from config.steppermotor import PDL, KDP, BBO, SM_CONFIG, REMPI_POI
 from qtutils.dictcombobox import DictComboBox
 from qtutils.toggle import ToggleObject, ToggleWidget
 from qtutils.label import LabelWidget
@@ -36,7 +36,8 @@ class TrackingWidget(QtGui.QWidget):
                 MIN:24100,
                 MAX:24800,
                 PRECISION:2,
-                SLIDER:2.0
+                SLIDER:2.0,
+                POI:REMPI_POI
             }
         )
         self.layout().addWidget(gotoWidget)
@@ -150,8 +151,10 @@ def main():
         TEST_STEPPER_MOTOR_SERVER if DEBUG else STEPPER_MOTOR_SERVER
     )
     #memory management nonsense
-    container.append(TrackingWidget(wavelengthProtocol,stepperMotorProtocol))
+    trackingWidget = TrackingWidget(wavelengthProtocol,stepperMotorProtocol)
+    container.append(trackingWidget)
     container[0].show()
+    trackingWidget.setWindowTitle('tracking client')
 
 if __name__ == '__main__':
     from twisted.internet import reactor
