@@ -12,8 +12,8 @@ from config.steppermotor import POL
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 URL = TEST_POLARIZER_SERVER if DEBUG else POLARIZER_SERVER
 
-class WavelengthWAMP(BaseWAMP):
-    __wampname__ = 'wavelength server'
+class PolarizerWAMP(BaseWAMP):
+    __wampname__ = 'polarizer server'
     ANGLE = 0
     DEGREES_PER_STEP = - 1.0 / 100.0
     MESSAGES = {
@@ -69,7 +69,7 @@ class WavelengthWAMP(BaseWAMP):
 
         
 def main():
-    runServer(WAMP = WavelengthWAMP, URL = URL, debug = True)
+    runServer(WAMP = PolarizerWAMP, URL = URL, debug = True)
 if __name__ == '__main__':
     main()
     reactor.run()
