@@ -8,7 +8,7 @@ if QtCore.QCoreApplication.instance() is None:
 ## BOILERPLATE ##
 from twisted.internet.defer import inlineCallbacks
 from steppermotorclient import ChunkedStepperMotorClient
-from goto import MIN, MAX, PRECISION, SLIDER, GotoWidget
+from goto import MIN, MAX, PRECISION, SLIDER, POI, GotoWidget
 from qtutils.label import LabelWidget
 from qtutils.qled import LEDWidget
 from operator import index
@@ -20,7 +20,8 @@ PARAMS = {
     MIN:-99999,
     MAX:99999,
     PRECISION:0,
-    SLIDER:200
+    SLIDER:200,
+    POI:{'none':0}
 }
 
 RATE_MIN = 1
@@ -37,6 +38,11 @@ class StepperMotorWidget(QtGui.QWidget):
                 reactor.stop()
                 protocol.__class__.connectionLost(protocol,reason)
         protocol.connectionLost = onConnectionLost
+        
+        self.gotoWids = {}
+        self.enbButtons = {}
+        self.sms = {}
+        
         @inlineCallbacks
         def onInit():
             config = yield protocol.sendCommand('get-configuration')
@@ -53,9 +59,11 @@ class StepperMotorWidget(QtGui.QWidget):
                 thisLayout = QtGui.QVBoxLayout()
                 
                 sm = ChunkedStepperMotorClient(protocol,id)
-                
+                self.sms[id] = sm
                 #create a goto widget for this steppermotor
+                PARAMS[POI] = config['pts_of_int']
                 gotoWidget = GotoWidget(PARAMS)
+                self.gotoWids[sm.id] = gotoWidget
                 thisLayout.addWidget(gotoWidget)
                 @inlineCallbacks
                 def onGotoRequested(sm,payload):
@@ -74,15 +82,19 @@ class StepperMotorWidget(QtGui.QWidget):
 
                 #create an enable toggle button for this sm
                 enableButton = QtGui.QPushButton('enable', self)
+                self.enbButtons[sm.id] = enableButton
                 enableButton.clicked.connect(sm.toggleStatus)
-                def adjustText(status):
+                #handle external application toggling this sm
+                def adjustText(sm,status):
                     if status == 'enabled': 
-                        enableButton.setText('disable')
-                        gotoWidget.setEnabled(True)
+                        self.enbButtons[sm.id].setText('disable')
+                        self.gotoWids[sm.id].setEnabled(True)
                     elif status == 'disabled': 
-                        enableButton.setText('enable')
-                        gotoWidget.setEnabled(False)
-                sm.addListener(sm.ENABLE,adjustText)
+                        self.enbButtons[sm.id].setText('enable')
+                        self.gotoWids[sm.id].setEnabled(False)
+                sm.addListener(sm.ENABLE,partial(adjustText,sm))
+                
+                #disable enable button if this sm doesn't have that functionality
                 if config['enable_channel'] == None: enableButton.setEnabled(False)
                 else: gotoWidget.setEnabled(False)
                 thisLayout.addWidget(enableButton)
@@ -114,26 +126,41 @@ class StepperMotorWidget(QtGui.QWidget):
         onInit()
         
     def closeEvent(self, event):
-        event.accept()
-        quit()
+        globalStatus = False
+        
+        for id, gotoWidget in self.gotoWids.items():
+            thisStatus = gotoWidget.isEnabled()
+            enableable = self.enbButtons[id].isEnabled()
+            print str(id) + ': '+str(thisStatus) + '  ' + str(enableable)
+            globalStatus = globalStatus or not (thisStatus ^ enableable) #xor between these two
+            print globalStatus
+        if globalStatus:
+            msgBox = QtGui.QMessageBox()
+            msgBox.setText("You must disable ALL motors first!")
+            msgBox.exec_()
+            event.ignore()
+        else:
+            event.accept()
+            quit()
         
         
 @inlineCallbacks
 def main(container):
     # check if debugging / testing
     import sys
-    debug = len(sys.argv) > 1 and sys.argv[1] == 'debug'
+    DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 
-    from sitz import STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER
+    #from sitz import STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER
+    from config.serverURLs import STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER
     from ab.abclient import getProtocol
     protocol = yield getProtocol(
         TEST_STEPPER_MOTOR_SERVER
-        if debug else
+        if DEBUG else
         STEPPER_MOTOR_SERVER
     )
     widget = StepperMotorWidget(protocol)
     container.append(widget)    
-    widget.setWindowTitle('%s stepper motor client' % ('debug' if debug else 'real'))    
+    widget.setWindowTitle('%s stepper motor gui' % ('debug' if DEBUG else 'real'))    
 
 if __name__ == '__main__':
     from twisted.internet import reactor

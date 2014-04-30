@@ -59,11 +59,13 @@ class StepperMotorWAMP(BaseWAMP):
     def getEnableState(self,sm):
         return self.sms[sm].getEnableStatus()
     
+    
     @command('set-enable-status','set enable status of stepper motor')
     def setEnableState(self,sm,status):
         self.sms[sm].setEnableStatus(status)
         newState = self.sms[sm].getEnableStatus()
         self.dispatch('enable-status-changed', (sm,newState))
+    
     
     @command('toggle-status','flip the enabled status of stepper motor')
     def toggleStatus(self,sm):

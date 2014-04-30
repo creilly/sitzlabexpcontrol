@@ -36,7 +36,7 @@ The user can also cancel the goto request. manage this request by connecting \
 to the cancelRequested signal.
 
 '''
-MIN, MAX, PRECISION, SLIDER = 0,1,2,3
+MIN, MAX, PRECISION, SLIDER, POI = 0,1,2,3,4
 class GotoWidget(QtGui.QWidget):
     updateRequested = Signal()
     gotoRequested = Signal(object)
@@ -48,7 +48,8 @@ class GotoWidget(QtGui.QWidget):
                 MIN:0,
                 MAX:100,
                 PRECISION:0,
-                SLIDER:20
+                SLIDER:20,
+                POI:{'none':0}
             }
     ):
         QtGui.QWidget.__init__(self)
@@ -98,6 +99,19 @@ class GotoWidget(QtGui.QWidget):
         toggle.activated.connect(onActivated)
         toggle.deactivationRequested.connect(self.cancelRequested.emit)
 
+        ## POINTS OF INTEREST ##
+        def popSpinbox(text):
+            value = self.poiDict[text]
+            self.spin.setValue(value)
+        self.poiCombo = QtGui.QComboBox()
+        gotoLayout.addWidget(self.poiCombo)
+        self.poiDict = params[POI]
+        for name in self.poiDict.keys():
+            self.poiCombo.addItem(name)
+        self.poiCombo.activated[str].connect(popSpinbox)
+        
+        
+        
         ## SLIDER ##
         slider = QtGui.QSlider()
         @inlineCallbacks

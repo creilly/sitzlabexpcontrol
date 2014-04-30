@@ -6,8 +6,8 @@ if QtCore.QCoreApplication.instance() is None:
     import qt4reactor
     qt4reactor.install()
 ## BOILERPLATE ##
-from goto import MIN, MAX, PRECISION, SLIDER, GotoWidget
-from config.steppermotor import PDL, KDP, BBO, SM_CONFIG
+from goto import MIN, MAX, PRECISION, SLIDER, POI, GotoWidget
+from config.steppermotor import PDL, KDP, BBO, SM_CONFIG, REMPI_POI
 from qtutils.dictcombobox import DictComboBox
 from qtutils.toggle import ToggleObject, ToggleWidget
 from qtutils.label import LabelWidget
@@ -15,7 +15,8 @@ from qtutils.qled import LEDWidget
 from steppermotorclient import StepperMotorClient
 from twisted.internet.defer import inlineCallbacks
 from functools import partial
-from sitz import WAVELENGTH_SERVER, TEST_WAVELENGTH_SERVER, STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER, compose
+from config.serverURLs import WAVELENGTH_SERVER, TEST_WAVELENGTH_SERVER, STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER
+from sitz import compose
 
 CRYSTALS = {
     id: SM_CONFIG[id]['name'] for id in (KDP,BBO)
@@ -36,7 +37,8 @@ class TrackingWidget(QtGui.QWidget):
                 MIN:24100,
                 MAX:24800,
                 PRECISION:2,
-                SLIDER:2.0
+                SLIDER:2.0,
+                POI:REMPI_POI
             }
         )
         self.layout().addWidget(gotoWidget)
@@ -64,7 +66,17 @@ class TrackingWidget(QtGui.QWidget):
         )
         
         # initialize position of goto widget
-        wavelengthProtocol.sendCommand('get-wavelength').addCallback(gotoWidget.setPosition)        
+        wavelengthProtocol.sendCommand('get-wavelength').addCallback(gotoWidget.setPosition)    
+        
+        # this bit below is for a future hardware change where the pdl sm is on a relay
+        # disable the goto widget until the pdl is enabled
+        # gotoWidget.setEnabled(False)
+        # def toggleGoto(status):
+            # if status == 'enabled': 
+                # gotoWidget.setEnabled(True)
+            # elif status == 'disabled': 
+                # gotoWidget.setEnabled(False)
+        # StepperMotorClient(stepperMotorProtocol,PDL).addListener(StepperMotorClient.ENABLE,toggleGoto)
                 
         #########################
         ## crystal calibration ##
@@ -75,29 +87,36 @@ class TrackingWidget(QtGui.QWidget):
         tuningGB.setLayout(tuningLayout)
 
         # button to tune calibration #
+        
+        def calibKDP():
+            wavelengthProtocol.sendCommand('calibrate-crystal',KDP)
+        tuningButtonKDP = QtGui.QPushButton('KDP tuned')
+        tuningLayout.addWidget(tuningButtonKDP)
+        tuningButtonKDP.clicked.connect(calibKDP)
+        # tuningButtonKDP.setEnabled(False)
+        # def toggleKDP(status):
+            # if status == 'enabled': 
+                # tuningButtonKDP.setEnabled(True)
+            # elif status == 'disabled': 
+                # tuningButtonKDP.setEnabled(False)
+        # StepperMotorClient(stepperMotorProtocol,KDP).addListener(StepperMotorClient.ENABLE,toggleKDP)
+        
+        
+        def calibBBO():
+            wavelengthProtocol.sendCommand('calibrate-crystal',BBO)
+        tuningButtonBBO = QtGui.QPushButton('BBO tuned')
+        tuningLayout.addWidget(tuningButtonBBO)
+        tuningButtonBBO.clicked.connect(calibBBO)
+        # tuningButtonBBO.setEnabled(False)
+        # def toggleBBO(status):
+            # if status == 'enabled': 
+                # tuningButtonBBO.setEnabled(True)
+            # elif status == 'disabled': 
+                # tuningButtonBBO.setEnabled(False)
+        # StepperMotorClient(stepperMotorProtocol,BBO).addListener(StepperMotorClient.ENABLE,toggleBBO)
+        
 
-        tuningButton = QtGui.QPushButton('set tuned')
-
-        tuningLayout.addWidget(tuningButton)
-
-        # combo box to select crystal #
-
-        tuningCombo = DictComboBox(CRYSTALS)
-
-        tuningLayout.addWidget(tuningCombo)
-
-        # connect button to combo
-
-        tuningButton.clicked.connect(
-            compose(
-                partial(
-                    wavelengthProtocol.sendCommand,
-                    'calibrate-crystal'
-                ),
-                tuningCombo.getCurrentKey
-            )
-        )
-
+        
         self.layout().addWidget(LabelWidget('tuning',tuningLayout))
 
         #####################
@@ -137,6 +156,10 @@ class TrackingWidget(QtGui.QWidget):
         def initTracking(tracking):
             if tracking: toggle.toggle()            
         wavelengthProtocol.sendCommand('is-tracking').addCallback(initTracking)
+    
+    def closeEvent(self, event):
+        event.accept()
+        quit()
         
 @inlineCallbacks
 def main():
@@ -150,8 +173,10 @@ def main():
         TEST_STEPPER_MOTOR_SERVER if DEBUG else STEPPER_MOTOR_SERVER
     )
     #memory management nonsense
-    container.append(TrackingWidget(wavelengthProtocol,stepperMotorProtocol))
+    trackingWidget = TrackingWidget(wavelengthProtocol,stepperMotorProtocol)
+    container.append(trackingWidget)
     container[0].show()
+    trackingWidget.setWindowTitle('tracking client')
 
 if __name__ == '__main__':
     from twisted.internet import reactor
