@@ -66,7 +66,17 @@ class TrackingWidget(QtGui.QWidget):
         )
         
         # initialize position of goto widget
-        wavelengthProtocol.sendCommand('get-wavelength').addCallback(gotoWidget.setPosition)        
+        wavelengthProtocol.sendCommand('get-wavelength').addCallback(gotoWidget.setPosition)    
+        
+        # this bit below is for a future hardware change where the pdl sm is on a relay
+        # disable the goto widget until the pdl is enabled
+        # gotoWidget.setEnabled(False)
+        # def toggleGoto(status):
+            # if status == 'enabled': 
+                # gotoWidget.setEnabled(True)
+            # elif status == 'disabled': 
+                # gotoWidget.setEnabled(False)
+        # StepperMotorClient(stepperMotorProtocol,PDL).addListener(StepperMotorClient.ENABLE,toggleGoto)
                 
         #########################
         ## crystal calibration ##
@@ -77,29 +87,36 @@ class TrackingWidget(QtGui.QWidget):
         tuningGB.setLayout(tuningLayout)
 
         # button to tune calibration #
+        
+        def calibKDP():
+            wavelengthProtocol.sendCommand('calibrate-crystal',KDP)
+        tuningButtonKDP = QtGui.QPushButton('KDP tuned')
+        tuningLayout.addWidget(tuningButtonKDP)
+        tuningButtonKDP.clicked.connect(calibKDP)
+        # tuningButtonKDP.setEnabled(False)
+        # def toggleKDP(status):
+            # if status == 'enabled': 
+                # tuningButtonKDP.setEnabled(True)
+            # elif status == 'disabled': 
+                # tuningButtonKDP.setEnabled(False)
+        # StepperMotorClient(stepperMotorProtocol,KDP).addListener(StepperMotorClient.ENABLE,toggleKDP)
+        
+        
+        def calibBBO():
+            wavelengthProtocol.sendCommand('calibrate-crystal',BBO)
+        tuningButtonBBO = QtGui.QPushButton('BBO tuned')
+        tuningLayout.addWidget(tuningButtonBBO)
+        tuningButtonBBO.clicked.connect(calibBBO)
+        # tuningButtonBBO.setEnabled(False)
+        # def toggleBBO(status):
+            # if status == 'enabled': 
+                # tuningButtonBBO.setEnabled(True)
+            # elif status == 'disabled': 
+                # tuningButtonBBO.setEnabled(False)
+        # StepperMotorClient(stepperMotorProtocol,BBO).addListener(StepperMotorClient.ENABLE,toggleBBO)
+        
 
-        tuningButton = QtGui.QPushButton('set tuned')
-
-        tuningLayout.addWidget(tuningButton)
-
-        # combo box to select crystal #
-
-        tuningCombo = DictComboBox(CRYSTALS)
-
-        tuningLayout.addWidget(tuningCombo)
-
-        # connect button to combo
-
-        tuningButton.clicked.connect(
-            compose(
-                partial(
-                    wavelengthProtocol.sendCommand,
-                    'calibrate-crystal'
-                ),
-                tuningCombo.getCurrentKey
-            )
-        )
-
+        
         self.layout().addWidget(LabelWidget('tuning',tuningLayout))
 
         #####################
