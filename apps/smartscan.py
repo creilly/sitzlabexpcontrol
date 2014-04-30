@@ -54,6 +54,8 @@ from math import pow
 import numpy as np
 from pyqtgraph import PlotWidget, ErrorBarItem
 
+import os
+import datetime
 
 '''optional parameters interpretation code
 has debug mode as well as optional input modes for
@@ -201,6 +203,7 @@ class ManualInputWidget(CancelInputWidget):
                         parent, 
                         'next x value', 
                         'enter next x value',
+                        decimals=6
                     )
                     return result if valid else None
             return ManualInput()
@@ -656,12 +659,37 @@ def SmartScanGUI():
     saveLayout.addWidget(measureCombo)
 
     def onSaveClicked():
-        measure = measureCombo.currentText()
         dataArray = np.asarray(
             [self.x,self.y,self.err],
             dtype=np.dtype(np.float32)
         )
-        saveCSV(measure,dataArray.T,POOHDATAPATH)
+        date = datetime.datetime.now().strftime("%Y-%m-%d")
+        time = datetime.datetime.now().strftime("%H%M")
+        dir = os.path.join(
+            POOHDATAPATH,
+            date
+        )
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        path = QtGui.QFileDialog.getExistingDirectory(
+            widget,
+            'select filename', 
+            dir
+        )
+        desc, valid = QtGui.QInputDialog.getText(
+            widget,
+            'enter file description',
+            'description'
+        )
+        filename = '%s_%s.csv' % (time,desc) if valid else '%s.csv' % time 
+        np.savetxt(
+            os.path.join(
+                path,
+                filename
+            ),
+            dataArray,
+            delimiter=','
+        )
     saveCSVButton = QtGui.QPushButton('save (csv)')
     saveCSVButton.clicked.connect(onSaveClicked)
     saveLayout.addWidget(SqueezeRow(saveCSVButton))
