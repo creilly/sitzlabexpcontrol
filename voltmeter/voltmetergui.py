@@ -20,6 +20,7 @@ from filecreationmethods import filenameGen, checkPath
 from daqmx.task.ai import VoltMeter as VM
 from math import log10
 import time
+import re
 from qtutils.toggle import ToggleObject, ToggleWidget
 
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
@@ -114,31 +115,38 @@ class ChannelEditDialog(QtGui.QDialog):
                 ],
                 trmCfgComboBox
             )
-            for param in (VM.MIN,VM.MAX):
-                spinBox = QtGui.QDoubleSpinBox()
-                spinBox.setDecimals(2)
-                spinBox.setSingleStep(.01)
-                spinBox.setRange(
-                    *{
-                        VM.MIN:(-10.0,-.01),
-                        VM.MAX:(.01,10.0)
-                    }[param]
+
+            vrngComboBox = QtGui.QComboBox()
+            vrngKeys, vrngVals = zip(*VM.VOLTAGE_RANGES)
+            for key, val in VM.VOLTAGE_RANGES:
+                vrngComboBox.addItem(
+                    '%.2f (V)' % val, key
                 )
-                spinBox.setValue(parameters[param])
-                spinBox.valueChanged.connect(
+            vrngComboBox.setCurrentIndex(
+                vrngComboBox.findData(
+                    parameters[
+                        VM.VOLTAGE_RANGE
+                    ]
+                )
+            )
+            vrngComboBox.currentIndexChanged.connect(
+                compose(
                     partial(
                         setParameter,
-                        param
+                        VM.VOLTAGE_RANGE
+                    ),
+                    vrngComboBox.itemData
+                )
+            )
+            layout.addRow(
+                PARAM_NAMES[
+                    PARAM_KEYS.index(
+                        VM.VOLTAGE_RANGE
                     )
-                )
-                layout.addRow(
-                    PARAM_NAMES[
-                        PARAM_KEYS.index(
-                            param
-                        )
-                    ],
-                    spinBox
-                )
+                ],
+                vrngComboBox
+            )
+
             colorEditButton = QtGui.QPushButton('edit')
             colorEditButton.pressed.connect(
                 compose(
@@ -156,6 +164,16 @@ class VoltMeterWidget(QtGui.QWidget):
     ID_ROLE = 999
     HISTORY = 200
     MEASUREMENT_TYPE = 'voltmeter'
+    
+    @staticmethod
+    def vrngk2v(k):
+        vrngKeys, vrngVals = zip(*VM.VOLTAGE_RANGES)
+        return vrngVals[
+            vrngKeys.index(
+                k
+            )
+        ]
+        
     def __init__(self,protocol):
         @inlineCallbacks
         def init():
@@ -166,12 +184,14 @@ class VoltMeterWidget(QtGui.QWidget):
                     channel,
                     VM.DESCRIPTION
                 )
-                maxVoltage = yield protocol.sendCommand(
+                voltageRange = yield protocol.sendCommand(
                     'get-channel-parameter',
                     channel,
-                    VM.MAX
-                )                
-                decimalPlaces = int(-1*log10(maxVoltage)) + 1
+                    VM.VOLTAGE_RANGE
+                )
+                voltageRange = self.vrngk2v(voltageRange)
+                
+                decimalPlaces = int(-1*log10(voltageRange)) + 1
                 formatString = '%.' + str(decimalPlaces if decimalPlaces > 0 else 0) + 'f'
                 items[channel].setText(
                     '%s\t%s\t%s V' % (
@@ -179,7 +199,7 @@ class VoltMeterWidget(QtGui.QWidget):
                         channel,
                         (
                             formatString
-                        ) % maxVoltage
+                        ) % voltageRange
                     )
                 )
             def rightClicked(listWidget,p):
@@ -207,8 +227,9 @@ class VoltMeterWidget(QtGui.QWidget):
                     scale = yield protocol.sendCommand(
                         'get-channel-parameter',
                         channel,
-                        VM.MAX
+                        VM.VOLTAGE_RANGE
                     )
+                    scale = self.vrngk2v(scale)
                     yData.append(voltage)
                     plots[channel].setData(
                         xData,
@@ -268,6 +289,8 @@ class VoltMeterWidget(QtGui.QWidget):
             controlsLayout.addWidget(listWidget)
             controlsLayout.addStretch(1)
             channels = yield protocol.sendCommand('get-channels')
+            channels = sorted(channels,key = lambda channel: int(re.search('\d+$',channel).group()))
+            print [re.search('\d+$',channel).group() for channel in channels]
             data = {
                 channel:(
                     range(self.HISTORY),
@@ -334,7 +357,7 @@ class VoltMeterWidget(QtGui.QWidget):
                 relPath, fileName = filenameGen(self.MEASUREMENT_TYPE)
                 absPath = os.path.join(POOHDATAPATH,relPath)
                 checkPath(absPath)
-                self.fileName = os.path.join(absPath,fileName)
+                self.fileName = os.path.join(absPath,fileName,'.txt')
                 with open(self.fileName,'w') as file:
                     file.write(
                         '%s\n' % '\t'.join(
