@@ -127,9 +127,13 @@ class StepperMotorWidget(QtGui.QWidget):
         
     def closeEvent(self, event):
         globalStatus = False
-        for gotoWidget in self.gotoWids.values():
+        
+        for id, gotoWidget in self.gotoWids.items():
             thisStatus = gotoWidget.isEnabled()
-            globalStatus = globalStatus or thisStatus
+            enableable = self.enbButtons[id].isEnabled()
+            print str(id) + ': '+str(thisStatus) + '  ' + str(enableable)
+            globalStatus = globalStatus or not (thisStatus ^ enableable) #xor between these two
+            print globalStatus
         if globalStatus:
             msgBox = QtGui.QMessageBox()
             msgBox.setText("You must disable ALL motors first!")
@@ -144,18 +148,19 @@ class StepperMotorWidget(QtGui.QWidget):
 def main(container):
     # check if debugging / testing
     import sys
-    debug = len(sys.argv) > 1 and sys.argv[1] == 'debug'
+    DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 
-    from sitz import STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER
+    #from sitz import STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER
+    from config.serverURLs import STEPPER_MOTOR_SERVER, TEST_STEPPER_MOTOR_SERVER
     from ab.abclient import getProtocol
     protocol = yield getProtocol(
         TEST_STEPPER_MOTOR_SERVER
-        if debug else
+        if DEBUG else
         STEPPER_MOTOR_SERVER
     )
     widget = StepperMotorWidget(protocol)
     container.append(widget)    
-    widget.setWindowTitle('%s stepper motor client' % ('debug' if debug else 'real'))    
+    widget.setWindowTitle('%s stepper motor gui' % ('debug' if DEBUG else 'real'))    
 
 if __name__ == '__main__':
     from twisted.internet import reactor
