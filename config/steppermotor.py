@@ -24,7 +24,7 @@ from config.filecreation import SMLOGSPATH
 SM_CONFIG = {
     PDL : {
         'name':'pdl',
-        'enable_channel':'/alpha/port0/line0',
+        'enable_channel':None,
         'pulse_channel':'/dev2/port0/line6',   #'dev1/ctr1',
         'direction_channel':'/dev2/port0/line4',   #'/dev1/port0/line2',
         'counter_channel':'dev2/ctr7',
@@ -36,7 +36,7 @@ SM_CONFIG = {
     },
     KDP : {
         'name':'kdp',
-        'enable_channel':'/alpha/port0/line1',
+        'enable_channel':None,
         'pulse_channel':'dev2/ctr4',                #to inrad: green -> Ch1StepWrite
         'direction_channel':'/dev2/port0/line2',    #to inrad: blue -> Ch1DirWrite
         'counter_channel':'dev2/ctr3',              #to inrad: black -> Ch1StepRead  &&  brown -> Ch1DirRead
@@ -48,7 +48,7 @@ SM_CONFIG = {
     },
     BBO : {
         'name':'bbo',
-        'enable_channel':'/alpha/port0/line2',
+        'enable_channel':None,
         'pulse_channel':'dev2/ctr1',                #to inrad: purple -> Ch2StepWrite    
         'direction_channel':'dev2/port0/line1',     #to inrad: grey -> Ch2DirWrite
         'counter_channel':'dev2/ctr2',              #to inrad: red -> Ch2StepRead  &&  orange -> Ch2DirRead
@@ -93,7 +93,14 @@ SM_CONFIG = {
 
 
 REMPI_POI = {
+    'v0 Q0':24195.6,
     'v0 Q1':24209.4,
-    'v1 Q1':24666.4
+    'v0 Q2':24236.1,
+    'v0 Q3':24276.0,
+    'v1 Q1':24666.4,
+    'v0 S0':24149.8,
+    'v0 S1':24132.4,
+    'v0 S2':24129.2,
+    'v0 S3':24140.4    
 }
 
