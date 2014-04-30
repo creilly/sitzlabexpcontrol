@@ -8,6 +8,7 @@ from daqmx.task.ai import VoltMeter
 from sitz import VOLTMETER_SERVER, TEST_VOLTMETER_SERVER, compose
 
 from config.voltmeter import VM_CONFIG, VM_SERVER_CONFIG, VM_DEBUG_SERVER_CONFIG, VM_DEBUG_CONFIG
+from config.filecreation import LOGS_DIR
 
 import os
 
@@ -21,9 +22,8 @@ TRIGGERING = not DEBUG
 URL = (VM_SERVER_CONFIG if not DEBUG else VM_DEBUG_SERVER_CONFIG)['url']
 CALLBACK_RATE = 15.0
 
-CONFIG_DIR = 'Z:\\creilly\\sitzlabexpcontrol\\voltmeter\\config'
-
-config_filename = None
+CONFIG_FILENAME = 'vm_settings_config.cfg'
+CONFIG_FILEPATH = os.path.join(LOGS_DIR,CONFIG_FILENAME)
 
 class VoltMeterWAMP(BaseWAMP):    
     MESSAGES = {
@@ -109,22 +109,9 @@ def getTriggerSourceEdge():
     )
 
 @inlineCallbacks
-def getVoltMeter():    
-    config_files = filter(
-        compose(
-            os.path.isfile,
-            partial(
-                os.path.join,
-                CONFIG_DIR
-            )            
-        ),
-        os.listdir(CONFIG_DIR)
-    )
-    global config_filename 
-    selection = yield selectFromList([None] + config_files,'select a config file')
-    if selection:
-        config_filename = selection
-        with open(os.path.join(CONFIG_DIR,config_filename),'r') as config_file:
+def getVoltMeter():
+    if os.path.isfile(CONFIG_FILEPATH):
+        with open(CONFIG_FILEPATH,'r') as config_file:
             config_dict = pickle.loads(config_file.read())
         returnValue(
             VoltMeter(
@@ -132,7 +119,6 @@ def getVoltMeter():
             )
         )
     else:        
-        config_filename = yield getUserInput('enter new config name')
         device = yield selectFromList(daqmx.getDevices(),'select a device')
         returnValue(
             VoltMeter(
