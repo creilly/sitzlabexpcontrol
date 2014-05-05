@@ -64,14 +64,15 @@ to enable just pass the associated letter (see inputs_keys)
 like this: python smartscan.py swdm
 '''
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
-SM_BOOL, WL_BOOL, DDG_BOOL, MAN_BOOL = 0,1,2,3
-INPUTS = (SM_BOOL,WL_BOOL,DDG_BOOL,MAN_BOOL)
+SM_BOOL, WL_BOOL, DDG_BOOL, MAN_BOOL, MAN_LIST_BOOL = 0,1,2,3,4
+INPUTS = (SM_BOOL,WL_BOOL,DDG_BOOL,MAN_BOOL,MAN_LIST_BOOL)
 INPUTS_TOGGLE = {input:False for input in INPUTS}
 INPUTS_KEYS = {
     's':SM_BOOL,
     'w':WL_BOOL,
     'd':DDG_BOOL,
-    'm':MAN_BOOL
+    'm':MAN_BOOL,
+    'q':MAN_LIST_BOOL
 }
 if len(sys.argv) > 1 and all(
         any(
@@ -208,13 +209,12 @@ class ManualInputWidget(CancelInputWidget):
                     return result if valid else None
             return ManualInput()
         CancelInputWidget.__init__(self,scan_input_generator,lambda:None,lambda:None)
-                    
-class CenterInputWidget(CancelInputWidget):
+
+class SmartScanListInputWidget(CancelInputWidget):
     def __init__(
-        self,
+        self,            
         next_agent,
         cancel_agent,
-        get_position,
         limit_min,
         limit_max,
         limit_prec,
@@ -223,8 +223,8 @@ class CenterInputWidget(CancelInputWidget):
         step_max,
         step_prec,
         step_init
-    ):                
-        this = IntervalScanInputWidget()        
+    ):
+        this = self.intervalScanInputWidget = IntervalScanInputWidget()
         CancelInputWidget.__init__(
             self,
             this.getInput,
@@ -256,6 +256,37 @@ class CenterInputWidget(CancelInputWidget):
             }[spinID].items():
                 this.setParameter(spinID,param,value)
 
+        layout.addWidget(this,1)
+
+class CenterInputWidget(SmartScanListInputWidget):
+    def __init__(
+        self,
+        next_agent,
+        cancel_agent,
+        limit_min,
+        limit_max,
+        limit_prec,
+        limit_init,
+        step_min,
+        step_max,
+        step_prec,
+        step_init,
+        get_position
+    ):
+        SmartScanListInputWidget.__init__(
+            self,
+            next_agent,
+            cancel_agent,
+            limit_min,
+            limit_max,
+            limit_prec,
+            limit_init,
+            step_min,
+            step_max,
+            step_prec,
+            step_init
+        )
+        this = self.intervalScanInputWidget
         # create button that centers scan around current value
         center_button = QtGui.QPushButton('center scan')
         @inlineCallbacks
@@ -292,9 +323,32 @@ class CenterInputWidget(CancelInputWidget):
             )
         center_button = QtGui.QPushButton('center scan')        
         center_button.clicked.connect(center_scan)
-        layout.addWidget(SqueezeRow(center_button,0))        
-        layout.addWidget(this,1)
+        self.layout().insertWidget(0,SqueezeRow(center_button,0),0)        
 
+
+class ManualScanInputWidget(SmartScanListInputWidget):
+    def __init__(self,parent):
+        def next(position):
+            QtGui.QMessageBox.information(
+                parent,
+                'next position',
+                'next position:\t%s' % position
+            )
+            return position
+        SmartScanListInputWidget.__init__(
+            self,
+            next,
+            lambda:None,
+            -1.e10,
+            1.e10,
+            10,
+            0,
+            1.e-10,
+            1.e10,
+            10,
+            1.
+        )
+        
 '''
 
 -> __init__(volt_meter_client)
@@ -442,6 +496,10 @@ def SmartScanGUI():
         ManualInputWidget(widget),
         'manual'
     )
+    inputWidget.addTab(
+        ManualScanInputWidget(widget),
+        'manual scan'
+    )
 
     # algorithm for scan inputs is:
     # 0. check to see if input is disabled
@@ -468,7 +526,6 @@ def SmartScanGUI():
                 CenterInputWidget(
                     smClient.setPosition,
                     smClient.cancel,
-                    smClient.getPosition,
                     -99999,
                     99999,
                     0,
@@ -476,7 +533,8 @@ def SmartScanGUI():
                     0,
                     1000,
                     0,
-                    10
+                    10,
+                    smClient.getPosition                    
                 ),
                 'interval'
             )
@@ -509,7 +567,6 @@ def SmartScanGUI():
             CenterInputWidget(
                 wlClient.setWavelength,
                 wlClient.cancelWavelengthSet,
-                wlClient.getWavelength,
                 24100.0,            
                 25000.0,
                 2,
@@ -517,7 +574,8 @@ def SmartScanGUI():
                 0.01,
                 100.0,
                 2,
-                .2
+                .2,
+                wlClient.getWavelength                
             ),
             'interval'
         )
@@ -560,7 +618,6 @@ def SmartScanGUI():
                 CenterInputWidget(
                     setter(dgID),
                     cancel(dgID),
-                    getter(dgID),
                     1,
                     50000000,
                     0,
@@ -568,7 +625,8 @@ def SmartScanGUI():
                     0,
                     1000000,
                     1,
-                    100
+                    100,
+                    getter(dgID)                    
                 ),
                 'interval'
             )
