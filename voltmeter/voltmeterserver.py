@@ -30,11 +30,18 @@ class VoltMeterWAMP(BaseWAMP):
         'voltages-acquired':'voltages recently acquired',
         'channel-parameter-changed':'user changed channel parameter'
     }
+    VOLTAGE,COUNT,TOTAL,DEFERRED,CHANNEL = 0,1,2,3,4
     @inlineCallbacks
     def initializeWAMP(self):
         self.voltMeter = vm = yield getVoltMeter()
         self.updateLogFile()
-        vm.setCallback(self.onVoltages)
+
+        vm.setCallback(self._onVoltages)
+        self.d = Deferred()
+        self.d.addCallback(self.onVoltages)
+
+        self.requests = []
+        
         vm.setCallbackRate(CALLBACK_RATE)
         if TRIGGERING:
             getTriggerSourceEdge().addCallback(
@@ -46,14 +53,42 @@ class VoltMeterWAMP(BaseWAMP):
         vm.startSampling()
         BaseWAMP.initializeWAMP(self)
 
+    def _onVoltages(self,voltages):
+        self.d.callback(voltages)
+
     def onVoltages(self,voltages):
         self.voltages = voltages
         self.voltMeter.startSampling()
         self.dispatch('voltages-acquired',voltages)
+        self.d = Deferred()
+        self.d.addCallback(self.onVoltages)
+        for request in list(self.requests):
+            request[self.VOLTAGE] += voltages[request[self.CHANNEL]] / float(request[self.TOTAL])
+            request[self.COUNT] += 1
+            if request[self.COUNT] is request[self.TOTAL]:
+                self.requests.remove(request)
+                request[self.DEFERRED].callback(request[self.VOLTAGE])
 
     @command('get-voltages','returns most recently measured voltages')
     def getVoltages(self):
         return self.voltages
+
+    @command('get-n-voltages','get average of next n samples')
+    def getNVoltages(self,channel,total):
+        voltage = 0.
+        count = 0
+        total = total
+        deferred = Deferred()
+        self.requests.append(
+            {
+                self.VOLTAGE:voltage,
+                self.CHANNEL:channel,
+                self.COUNT:count,
+                self.TOTAL:total,
+                self.DEFERRED:deferred                
+            }
+        )
+        return deferred
 
     @command('get-channels','get list of active channels')
     def getChannels(self):
@@ -86,8 +121,7 @@ class VoltMeterWAMP(BaseWAMP):
         self.updateLogFile()
 
     def updateLogFile(self):
-        global config_filename
-        with open(os.path.join(CONFIG_DIR,config_filename),'w') as config_file:
+        with open(CONFIG_FILEPATH,'w') as config_file:
             config_file.write(
                 pickle.dumps(
                     {

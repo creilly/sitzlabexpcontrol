@@ -12,6 +12,9 @@ class VoltMeterClient:
     def getVoltages(self):
         return self.protocol.sendCommand('get-voltages')
 
+    def getNVoltages(self,channel,total):
+        return self.protocol.sendCommand('get-n-voltages',channel,total)
+
     def getChannels(self):
         return self.protocol.sendCommand('get-channels')
         
