@@ -5,7 +5,6 @@ from ab.abbase import selectFromList, getFloat, getUserInput
 from functools import partial
 import daqmx
 from daqmx.task.ai import VoltMeter
-from sitz import VOLTMETER_SERVER, TEST_VOLTMETER_SERVER, compose
 
 from config.voltmeter import VM_CONFIG, VM_SERVER_CONFIG, VM_DEBUG_SERVER_CONFIG, VM_DEBUG_CONFIG
 from config.filecreation import LOGS_DIR
@@ -24,6 +23,7 @@ CALLBACK_RATE = 15.0
 
 CONFIG_FILENAME = 'vm_settings_config.cfg'
 CONFIG_FILEPATH = os.path.join(LOGS_DIR,CONFIG_FILENAME)
+
 
 class VoltMeterWAMP(BaseWAMP):    
     MESSAGES = {
