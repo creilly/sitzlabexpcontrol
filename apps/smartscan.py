@@ -732,7 +732,7 @@ def SmartScanGUI():
                 path,
                 filename
             ),
-            dataArray,
+            dataArray.transpose(),
             delimiter=','
         )
     saveCSVButton = QtGui.QPushButton('save (csv)')
