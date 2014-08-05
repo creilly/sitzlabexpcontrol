@@ -513,6 +513,30 @@ class AITask(Task):
             )
         )
 
+class BlockingAITask(AITask):
+    def __init__(self,channelDicts=None):
+        AITask.__init__(self,channelDicts)
+        def cb(samples):
+            self.samples = samples
+            self.busy = False
+        AITask.setCallback(self,cb)
+    def setCallback(self,callback):
+        raise SitzException('callbacks disabled for blocking task')
+
+    # returns requested samples
+    def startSampling(self):
+        self.busy = True
+        AITask.startSampling(self)
+        daqmx(
+            dll.DAQmxWaitUntilTaskDone,
+            (
+                self.handle, 
+                c_double(constants['DAQmx_Val_WaitInfinitely'])
+                )
+            )
+        while self.busy: continue
+        return self.samples        
+
 class VoltMeter(AITask):
     def __init__(self,channelDicts):
         """

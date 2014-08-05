@@ -62,12 +62,15 @@ CI = 2
 """id for counter input task type"""
 CO = 3
 """id for counter output task type"""
+AO = 4
+"""id for analog output task type"""
 
 TASK_TYPES = {
     AI:'analog input',
     DO:'digital output',
     CI:'counter input',
-    CO:'counter output'
+    CO:'counter output',
+    AO:'analog output'
 }
 """dictionary associating readable names with task type ids"""
 
@@ -96,7 +99,8 @@ def getPhysicalChannels(device):
                     AI:'DAQmxGetDevAIPhysicalChans',
                     DO:'DAQmxGetDevDOLines',
                     CI:'DAQmxGetDevCIPhysicalChans',
-                    CO:'DAQmxGetDevCOPhysicalChans'
+                    CO:'DAQmxGetDevCOPhysicalChans',
+                    AO:'DAQmxGetDevAOPhysicalChans'
                 }[taskType]
             ),
             (
