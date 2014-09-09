@@ -48,6 +48,7 @@ from steppermotor.steppermotorclient import ChunkedStepperMotorClient
 from voltmeter.voltmeterclient import VoltMeterClient
 from steppermotor.wavelengthclient import WavelengthClient
 from delaygenerator.delaygeneratorclient import DelayGeneratorClient
+from steppermotor.polarizerclient import PolarizerClient
 
 # plotting
 from math import pow
@@ -57,19 +58,20 @@ from pyqtgraph import PlotWidget, ErrorBarItem
 
 '''optional parameters interpretation code
 has debug mode as well as optional input modes for
-steppermotor, wavelengthserver, ddg, & manual modes
+steppermotor, wavelengthserver, ddg, manual, & polarizer modes
 to enable just pass the associated letter (see inputs_keys)
 like this: python smartscan.py swdm
 '''
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
-SM_BOOL, WL_BOOL, DDG_BOOL, MAN_BOOL = 0,1,2,3
-INPUTS = (SM_BOOL,WL_BOOL,DDG_BOOL,MAN_BOOL)
+SM_BOOL, WL_BOOL, DDG_BOOL, MAN_BOOL, POL_BOOL = 0,1,2,3,4
+INPUTS = (SM_BOOL,WL_BOOL,DDG_BOOL,MAN_BOOL,POL_BOOL)
 INPUTS_TOGGLE = {input:False for input in INPUTS}
 INPUTS_KEYS = {
     's':SM_BOOL,
     'w':WL_BOOL,
     'd':DDG_BOOL,
-    'm':MAN_BOOL
+    'm':MAN_BOOL,
+    'p':POL_BOOL
 }
 if len(sys.argv) > 1 and all(
         any(
@@ -528,6 +530,40 @@ def SmartScanGUI():
         inputWidget.addTab(
             wlInputWidget,
             'surf'
+        )
+    if INPUTS_TOGGLE[POL_BOOL]:
+        # add wavelength client to scan input
+        polProtocol = yield getProtocol(
+            TEST_POLARIZER_SERVER if DEBUG else POLARIZER_SERVER
+        )
+        polClient = PolarizerClient(polProtocol)
+        polInputWidget = ComboWidget()
+        polInputWidget.addTab(
+            CenterInputWidget(
+                polClient.setAngle,
+                polClient.cancelAngleSet,
+                polClient.getAngle,
+                -360.0,            
+                360.0,
+                2,
+                90.0,
+                0.1,
+                5.0,
+                2,
+                .2
+            ),
+            'interval'
+        )
+        polInputWidget.addTab(
+            ListInputWidget(
+                polClient.setAngle,
+                polClient.cancelAngleSet
+            ),
+            'list'
+        )
+        inputWidget.addTab(
+            polInputWidget,
+            'pol'
         )
     if INPUTS_TOGGLE[DDG_BOOL]:
         # add delay generator to scan input
