@@ -23,12 +23,11 @@ class AITask(Task):
     """
     class for analog input tasks
     """
-    PHYSICAL_CHANNEL,NAME,TERMINAL_CONFIG,MIN,MAX,DESCRIPTION=0,1,2,3,4,5
+    PHYSICAL_CHANNEL,NAME,TERMINAL_CONFIG,VOLTAGE_RANGE,DESCRIPTION=0,1,2,3,4
     PARAMETERS = (
         (DESCRIPTION,'description'),
         (PHYSICAL_CHANNEL,'physical channel'),
-        (MIN,'minimum voltage'),
-        (MAX,'maximum voltage'),
+        (VOLTAGE_RANGE,'voltage range'),
         (TERMINAL_CONFIG,'terminal configuration')
     )
     TERM_DEFAULT,TERM_RSE,TERM_NRSE,TERM_DIFF,TERM_PSEUDO_DIFF=0,1,2,3,4
@@ -61,6 +60,13 @@ class AITask(Task):
     )
     RISING, FALLING = 0, 1
     EDGE_TYPES = (RISING, FALLING)
+    V10, V5, V0_5, V0_05 = 0,1,2,3
+    VOLTAGE_RANGES = (
+        (V10,10.0),
+        (V5,5.0),
+        (V0_5,.5),
+        (V0_05,.05)
+    )
     def __init__(self,channelDicts=None):
         """
         create an analog input task
@@ -144,22 +150,37 @@ class AITask(Task):
         
         @type channelDict: dictionary
         """
+        physical_channel = channelDict[self.PHYSICAL_CHANNEL]
+        name = channelDict.get(self.NAME,None)
+
+        trmcfg_keys, trmcfg_vals, _ = zip(*self.TERMINAL_CONFIGS)        
+        terminal_config = trmcfg_vals[
+            trmcfg_keys.index(
+                channelDict.get(
+                    self.TERMINAL_CONFIG,
+                    self.TERM_DEFAULT
+                )
+            )
+        ]
+        
+        vrng_keys, vrng_vals = zip(*self.VOLTAGE_RANGES)
+        voltage_range = vrng_vals[
+            vrng_keys.index(
+                channelDict.get(
+                    self.VOLTAGE_RANGE,
+                    self.V10
+                )
+            )
+        ]        
         daqmx(
             dll.DAQmxCreateAIVoltageChan,
             (
                 self.handle,
                 channelDict[self.PHYSICAL_CHANNEL],
-                channelDict.get(self.NAME,None),
-                zip(*self.TERMINAL_CONFIGS)[1][
-                    zip(*self.TERMINAL_CONFIGS)[0].index(
-                        channelDict.get(
-                            self.TERMINAL_CONFIG,
-                            self.TERM_DEFAULT
-                        )
-                    )
-                ],
-                c_double(channelDict.get(self.MIN,-10.0)),
-                c_double(channelDict.get(self.MAX,10.0)),
+                name,
+                terminal_config,
+                c_double(-1. * voltage_range),
+                c_double(voltage_range),
                 constants['DAQmx_Val_Volts'],
                 None
             )
@@ -182,7 +203,7 @@ class AITask(Task):
                 c_double(samplingRate)
             )
         )
-        self._setSamplesPerChannel()
+        self.setCallbackRate(self.getCallbackRate())
             
     def getSamplingRate(self):
         """
@@ -354,8 +375,7 @@ class AITask(Task):
     PARAM_METHOD_MAP = {
         PHYSICAL_CHANNEL:'PhysicalChannel',
         TERMINAL_CONFIG:'TerminalConfig',
-        MIN:'Min',
-        MAX:'Max',
+        VOLTAGE_RANGE:'VoltageRange',
         DESCRIPTION:'Description'
     }
     
@@ -419,29 +439,7 @@ class AITask(Task):
             )
         )
 
-    def getChannelMin(self,channel):
-        min = c_double()
-        daqmx(
-            dll.DAQmxGetAIMin,
-            (
-                self.handle,
-                channel,
-                byref(min)
-            )
-        )
-        return min.value
-
-    @schedule
-    def setChannelMin(self,channel,min):
-        daqmx(
-            dll.DAQmxSetAIMin,
-            (
-                self.handle,
-                channel,
-                c_double(min),
-            )
-        )
-    def getChannelMax(self,channel):
+    def getChannelVoltageRange(self,channel):
         max = c_double()
         daqmx(
             dll.DAQmxGetAIMax,
@@ -451,16 +449,36 @@ class AITask(Task):
                 byref(max)
             )
         )
-        return max.value
+        vrng_keys, vrng_vals = zip(*self.VOLTAGE_RANGES)
+        return vrng_keys[
+            vrng_vals.index(
+                max.value
+            )
+        ]
 
-    @schedule        
-    def setChannelMax(self,channel,max):
+    @schedule
+    def setChannelVoltageRange(self,channel,voltage_range):
+        vrng_keys, vrng_vals = zip(*self.VOLTAGE_RANGES)
+        max = vrng_vals[
+            vrng_keys.index(
+                voltage_range
+            )
+        ]
+        min = -1. * max
         daqmx(
             dll.DAQmxSetAIMax,
             (
                 self.handle,
                 channel,
                 c_double(max),
+            )
+        )
+        daqmx(
+            dll.DAQmxSetAIMin,
+            (
+                self.handle,
+                channel,
+                c_double(min),
             )
         )
         
@@ -494,6 +512,30 @@ class AITask(Task):
                 ]
             )
         )
+
+class BlockingAITask(AITask):
+    def __init__(self,channelDicts=None):
+        AITask.__init__(self,channelDicts)
+        def cb(samples):
+            self.samples = samples
+            self.busy = False
+        AITask.setCallback(self,cb)
+    def setCallback(self,callback):
+        raise SitzException('callbacks disabled for blocking task')
+
+    # returns requested samples
+    def startSampling(self):
+        self.busy = True
+        AITask.startSampling(self)
+        daqmx(
+            dll.DAQmxWaitUntilTaskDone,
+            (
+                self.handle, 
+                c_double(constants['DAQmx_Val_WaitInfinitely'])
+                )
+            )
+        while self.busy: continue
+        return self.samples        
 
 class VoltMeter(AITask):
     def __init__(self,channelDicts):

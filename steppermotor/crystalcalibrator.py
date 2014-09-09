@@ -56,19 +56,23 @@ class CrystalCalibrator(object):
         return gamma + self.delta_o
         
     def searchLookupTable(self,dialValue):
-        lowMatch, highMatch = -99999, 99999
+        lowDiff, highDiff = -99999, 99999
+        #lowDiff is the difference between the dialValue and the closest value in lookup table on the low side
+        #same for highDiff but on high side
         #search through lookupTable for closest low and high matched values
         for knownDial, knownCrystal in self.lookupTable:
+            knownDial = float(knownDial)
+            knownCrystal = float(knownCrystal)
             diff = knownDial - dialValue
-            if diff < 0 and diff > lowMatch:
-                lowMatch = diff
+            if diff < 0 and diff > lowDiff:
+                lowDiff = diff
                 lowPoint = (knownDial,knownCrystal)
-            if diff > 0 and diff < highMatch:
-                highMatch = diff
+            if diff > 0 and diff < highDiff:
+                highDiff = diff
                 highPoint = (knownDial,knownCrystal)
             if diff == 0:
                 return knownCrystal
-        if lowMatch == -99999 or highMatch == 99999:
+        if lowDiff == -99999 or highDiff == 99999:
             print 'outside bounds of table! reverting to poly'
             return self.polyPredict(dialValue)
         #calculate the slope between these two closest points and return linearly interpolated result

@@ -20,6 +20,7 @@ from filecreationmethods import filenameGen, checkPath
 from daqmx.task.ai import VoltMeter as VM
 from math import log10
 import time
+import re
 from qtutils.toggle import ToggleObject, ToggleWidget
 
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
@@ -55,6 +56,7 @@ class ChannelEditDialog(QtGui.QDialog):
                 'set-channel-parameter',
                 channel
             )
+            print channel
             parameters = {}
             for parameter in PARAM_KEYS:
                 value = yield protocol.sendCommand('get-channel-parameter',channel,parameter)
@@ -97,15 +99,11 @@ class ChannelEditDialog(QtGui.QDialog):
                     ]
                 )
             )
-            trmCfgComboBox.currentIndexChanged.connect(
-                compose(
-                    partial(
-                        setParameter,
-                        VM.TERMINAL_CONFIG
-                    ),
-                    trmCfgComboBox.itemData
-                )
-            )
+            def onConfigChange():
+                newConfig = trmCfgComboBox.itemData(trmCfgComboBox.currentIndex())
+                setParameter(VM.TERMINAL_CONFIG, newConfig)
+            
+            trmCfgComboBox.currentIndexChanged.connect(onConfigChange)
             layout.addRow(
                 PARAM_NAMES[
                     PARAM_KEYS.index(
@@ -114,31 +112,38 @@ class ChannelEditDialog(QtGui.QDialog):
                 ],
                 trmCfgComboBox
             )
-            for param in (VM.MIN,VM.MAX):
-                spinBox = QtGui.QDoubleSpinBox()
-                spinBox.setDecimals(2)
-                spinBox.setSingleStep(.01)
-                spinBox.setRange(
-                    *{
-                        VM.MIN:(-10.0,-.01),
-                        VM.MAX:(.01,10.0)
-                    }[param]
+
+            vrngComboBox = QtGui.QComboBox()
+            vrngKeys, vrngVals = zip(*VM.VOLTAGE_RANGES)
+            for key, val in VM.VOLTAGE_RANGES:
+                vrngComboBox.addItem(
+                    '%.2f (V)' % val, key
                 )
-                spinBox.setValue(parameters[param])
-                spinBox.valueChanged.connect(
+            vrngComboBox.setCurrentIndex(
+                vrngComboBox.findData(
+                    parameters[
+                        VM.VOLTAGE_RANGE
+                    ]
+                )
+            )
+            vrngComboBox.currentIndexChanged.connect(
+                compose(
                     partial(
                         setParameter,
-                        param
+                        VM.VOLTAGE_RANGE
+                    ),
+                    vrngComboBox.itemData
+                )
+            )
+            layout.addRow(
+                PARAM_NAMES[
+                    PARAM_KEYS.index(
+                        VM.VOLTAGE_RANGE
                     )
-                )
-                layout.addRow(
-                    PARAM_NAMES[
-                        PARAM_KEYS.index(
-                            param
-                        )
-                    ],
-                    spinBox
-                )
+                ],
+                vrngComboBox
+            )
+
             colorEditButton = QtGui.QPushButton('edit')
             colorEditButton.pressed.connect(
                 compose(
@@ -156,6 +161,16 @@ class VoltMeterWidget(QtGui.QWidget):
     ID_ROLE = 999
     HISTORY = 200
     MEASUREMENT_TYPE = 'voltmeter'
+    
+    @staticmethod
+    def vrngk2v(k):
+        vrngKeys, vrngVals = zip(*VM.VOLTAGE_RANGES)
+        return vrngVals[
+            vrngKeys.index(
+                k
+            )
+        ]
+        
     def __init__(self,protocol):
         @inlineCallbacks
         def init():
@@ -166,12 +181,14 @@ class VoltMeterWidget(QtGui.QWidget):
                     channel,
                     VM.DESCRIPTION
                 )
-                maxVoltage = yield protocol.sendCommand(
+                voltageRange = yield protocol.sendCommand(
                     'get-channel-parameter',
                     channel,
-                    VM.MAX
-                )                
-                decimalPlaces = int(-1*log10(maxVoltage)) + 1
+                    VM.VOLTAGE_RANGE
+                )
+                voltageRange = self.vrngk2v(voltageRange)
+                
+                decimalPlaces = int(-1*log10(voltageRange)) + 1
                 formatString = '%.' + str(decimalPlaces if decimalPlaces > 0 else 0) + 'f'
                 items[channel].setText(
                     '%s\t%s\t%s V' % (
@@ -179,7 +196,7 @@ class VoltMeterWidget(QtGui.QWidget):
                         channel,
                         (
                             formatString
-                        ) % maxVoltage
+                        ) % voltageRange
                     )
                 )
             def rightClicked(listWidget,p):
@@ -207,12 +224,13 @@ class VoltMeterWidget(QtGui.QWidget):
                     scale = yield protocol.sendCommand(
                         'get-channel-parameter',
                         channel,
-                        VM.MAX
+                        VM.VOLTAGE_RANGE
                     )
+                    scale = self.vrngk2v(scale)
                     yData.append(voltage)
                     plots[channel].setData(
                         xData,
-                        [100.0 * voltage / scale for voltage in yData]
+                        yData
                     )
                 if recordToggle.isToggled():
                     with open(self.fileName,'a') as file:
@@ -268,6 +286,8 @@ class VoltMeterWidget(QtGui.QWidget):
             controlsLayout.addWidget(listWidget)
             controlsLayout.addStretch(1)
             channels = yield protocol.sendCommand('get-channels')
+            channels = sorted(channels,key = lambda channel: int(re.search('\d+$',channel).group()))
+            print [re.search('\d+$',channel).group() for channel in channels]
             data = {
                 channel:(
                     range(self.HISTORY),
@@ -334,8 +354,8 @@ class VoltMeterWidget(QtGui.QWidget):
                 relPath, fileName = filenameGen(self.MEASUREMENT_TYPE)
                 absPath = os.path.join(POOHDATAPATH,relPath)
                 checkPath(absPath)
-                self.fileName = os.path.join(absPath,fileName)
-                with open(self.fileName,'w') as file:
+                self.fileName = os.path.join(absPath,fileName+'.txt')
+                with open(self.fileName,'w+') as file:
                     file.write(
                         '%s\n' % '\t'.join(
                             ['time'] + [
@@ -365,76 +385,6 @@ class VoltMeterWidget(QtGui.QWidget):
             loop()
             
         init()
-        
-        # plotter = PlotWidget()
-        # self.plot = plotter.plot()
-        # self.layout().addWidget(plotter,1)
-        # self.filename = None
-        # self.fileObj = None
-        
-        # voltages = [0] * MAX
-        
-        # def onVoltagesAcquired(data):
-        #     datum = data[self.channel] *1000
-        #     lcd.display(datum)
-        #     voltages.pop(0)
-        #     voltages.append(datum)
-        #     self.plot.setData(range(len(voltages)),voltages)
-        #     if self.filename is not None:
-        #         timeStamp = datetime.datetime.now() - self.startTime
-        #         timeStampStr = str(timeStamp.seconds)+'.'+str(timeStamp.microseconds/1000).zfill(3)
-        #         csvLine = timeStampStr+','+str(datum)+'\n'
-        #         self.fileObj.write(csvLine)
-
-
-        # controlPanel = QtGui.QHBoxLayout()
-        # controlPanel.addStretch(1)
-
-        # vmCombo = QtGui.QComboBox()
-        # vmCombo.currentIndexChanged[unicode].connect(
-        #     partial(setattr,self,'channel')
-        # )
-        # vmCombo.setCurrentIndex(0)
-        # protocol.sendCommand('get-channels').addCallback(vmCombo.addItems)
-
-        # controlPanel.addWidget(vmCombo)
-
-        # def recButFunc():
-        #     #if filename isn't set, initialize a file and filewriter to write to
-        #     if self.filename == None:
-        #         vmName = vmCombo.currentText()
-        #         subfolder = os.path.join('voltmeterLog',vmName)
-        #         relPath, self.filename = filenameGen(subfolder)
-        #         absPath = os.path.join(POOHDATAPATH,relPath)
-        #         checkPath(absPath)
-        #         self.filename = os.path.join(absPath,self.filename+'.csv')
-        #         self.fileObj = open(self.filename, 'wb')
-        #         self.startTime = datetime.datetime.now()
-        #         recordButton.setText('logging...')
-        #     #if there is a filename, close the file and set filename to none
-        #     else:
-        #         self.filename = None
-        #         self.fileObj.close()
-        #         recordButton.setText('start log')
-                
-        # recordButton = QtGui.QPushButton('log')
-        # recordButton.clicked.connect(recButFunc)
-        # controlPanel.addWidget(recordButton)
-
-        # lcd = QtGui.QLCDNumber(5)
-        # lcd.setSegmentStyle(lcd.Flat)
-
-        # controlPanel.addWidget(lcd)
-
-        # self.layout().addLayout(controlPanel)
-        
-        # @inlineCallbacks
-        # def loop():
-        #     voltages = yield protocol.sendCommand('get-voltages')
-        #     onVoltagesAcquired(voltages)
-        #     yield sleep(SLEEP)
-        #     loop()
-        # loop()
 
 @inlineCallbacks
 def main():

@@ -55,6 +55,8 @@ from math import pow
 import numpy as np
 from pyqtgraph import PlotWidget, ErrorBarItem
 
+import os
+import datetime
 
 '''optional parameters interpretation code
 has debug mode as well as optional input modes for
@@ -63,14 +65,15 @@ to enable just pass the associated letter (see inputs_keys)
 like this: python smartscan.py swdm
 '''
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
-SM_BOOL, WL_BOOL, DDG_BOOL, MAN_BOOL, POL_BOOL = 0,1,2,3,4
-INPUTS = (SM_BOOL,WL_BOOL,DDG_BOOL,MAN_BOOL,POL_BOOL)
+SM_BOOL, WL_BOOL, DDG_BOOL, MAN_BOOL, MAN_LIST_BOOL, POL_BOOL = 0,1,2,3,4,5
+INPUTS = (SM_BOOL,WL_BOOL,DDG_BOOL,MAN_BOOL,MAN_LIST_BOOL)
 INPUTS_TOGGLE = {input:False for input in INPUTS}
 INPUTS_KEYS = {
     's':SM_BOOL,
     'w':WL_BOOL,
     'd':DDG_BOOL,
     'm':MAN_BOOL,
+    'q':MAN_LIST_BOOL,
     'p':POL_BOOL
 }
 if len(sys.argv) > 1 and all(
@@ -83,9 +86,7 @@ if len(sys.argv) > 1 and all(
 else:
     for input in INPUTS_TOGGLE:
         INPUTS_TOGGLE[input] = True
-
-print INPUTS_TOGGLE        
-        
+       
 '''
 any widget added to the input widget tab will be expected to \
 implement a getInput() method that returns an object with two \
@@ -203,17 +204,17 @@ class ManualInputWidget(CancelInputWidget):
                         parent, 
                         'next x value', 
                         'enter next x value',
+                        decimals=6
                     )
                     return result if valid else None
             return ManualInput()
         CancelInputWidget.__init__(self,scan_input_generator,lambda:None,lambda:None)
-                    
-class CenterInputWidget(CancelInputWidget):
+
+class SmartScanListInputWidget(CancelInputWidget):
     def __init__(
-        self,
+        self,            
         next_agent,
         cancel_agent,
-        get_position,
         limit_min,
         limit_max,
         limit_prec,
@@ -222,8 +223,8 @@ class CenterInputWidget(CancelInputWidget):
         step_max,
         step_prec,
         step_init
-    ):                
-        this = IntervalScanInputWidget()        
+    ):
+        this = self.intervalScanInputWidget = IntervalScanInputWidget()
         CancelInputWidget.__init__(
             self,
             this.getInput,
@@ -255,6 +256,37 @@ class CenterInputWidget(CancelInputWidget):
             }[spinID].items():
                 this.setParameter(spinID,param,value)
 
+        layout.addWidget(this,1)
+
+class CenterInputWidget(SmartScanListInputWidget):
+    def __init__(
+        self,
+        next_agent,
+        cancel_agent,
+        limit_min,
+        limit_max,
+        limit_prec,
+        limit_init,
+        step_min,
+        step_max,
+        step_prec,
+        step_init,
+        get_position
+    ):
+        SmartScanListInputWidget.__init__(
+            self,
+            next_agent,
+            cancel_agent,
+            limit_min,
+            limit_max,
+            limit_prec,
+            limit_init,
+            step_min,
+            step_max,
+            step_prec,
+            step_init
+        )
+        this = self.intervalScanInputWidget
         # create button that centers scan around current value
         center_button = QtGui.QPushButton('center scan')
         @inlineCallbacks
@@ -291,9 +323,32 @@ class CenterInputWidget(CancelInputWidget):
             )
         center_button = QtGui.QPushButton('center scan')        
         center_button.clicked.connect(center_scan)
-        layout.addWidget(SqueezeRow(center_button,0))        
-        layout.addWidget(this,1)
+        self.layout().insertWidget(0,SqueezeRow(center_button,0),0)        
 
+
+class ManualScanInputWidget(SmartScanListInputWidget):
+    def __init__(self,parent):
+        def next(position):
+            QtGui.QMessageBox.information(
+                parent,
+                'next position',
+                'next position:\t%s' % position
+            )
+            return position
+        SmartScanListInputWidget.__init__(
+            self,
+            next,
+            lambda:None,
+            -1.e10,
+            1.e10,
+            10,
+            0,
+            1.e-10,
+            1.e10,
+            10,
+            1.
+        )
+        
 '''
 
 -> __init__(volt_meter_client)
@@ -441,6 +496,10 @@ def SmartScanGUI():
         ManualInputWidget(widget),
         'manual'
     )
+    inputWidget.addTab(
+        ManualScanInputWidget(widget),
+        'manual scan'
+    )
 
     # algorithm for scan inputs is:
     # 0. check to see if input is disabled
@@ -467,7 +526,6 @@ def SmartScanGUI():
                 CenterInputWidget(
                     smClient.setPosition,
                     smClient.cancel,
-                    smClient.getPosition,
                     -99999,
                     99999,
                     0,
@@ -475,7 +533,8 @@ def SmartScanGUI():
                     0,
                     1000,
                     0,
-                    10
+                    10,
+                    smClient.getPosition                    
                 ),
                 'interval'
             )
@@ -508,7 +567,6 @@ def SmartScanGUI():
             CenterInputWidget(
                 wlClient.setWavelength,
                 wlClient.cancelWavelengthSet,
-                wlClient.getWavelength,
                 24100.0,            
                 25000.0,
                 2,
@@ -516,7 +574,8 @@ def SmartScanGUI():
                 0.01,
                 100.0,
                 2,
-                .2
+                .2,
+                wlClient.getWavelength                
             ),
             'interval'
         )
@@ -593,7 +652,6 @@ def SmartScanGUI():
                 CenterInputWidget(
                     setter(dgID),
                     cancel(dgID),
-                    getter(dgID),
                     1,
                     50000000,
                     0,
@@ -601,7 +659,8 @@ def SmartScanGUI():
                     0,
                     1000000,
                     1,
-                    100
+                    100,
+                    getter(dgID)                    
                 ),
                 'interval'
             )
@@ -679,25 +738,39 @@ def SmartScanGUI():
     # set up data saving capabilities (ask bobby re: this)
     saveLayout = QtGui.QVBoxLayout()
 
-    #dropdown box for measurementType so saveCSV (below) uses correct directory
-    measureList = SCAN_TYPES.keys()
-    measureCombo = QtGui.QComboBox()
-    measureCombo.addItems(measureList)
-    cpLayout.addWidget(
-        LabelWidget(
-            measureCombo,
-            'measurement'
-        )
-    )
-    saveLayout.addWidget(measureCombo)
-
     def onSaveClicked():
-        measure = measureCombo.currentText()
         dataArray = np.asarray(
             [self.x,self.y,self.err],
             dtype=np.dtype(np.float32)
         )
-        saveCSV(measure,dataArray.T,POOHDATAPATH)
+        date = datetime.datetime.now().strftime("%Y-%m-%d")
+        time = datetime.datetime.now().strftime("%H%M")
+        dir = os.path.join(
+            POOHDATAPATH,
+            date
+        )
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        path = QtGui.QFileDialog.getExistingDirectory(
+            widget,
+            'select filename', 
+            dir
+        )
+        if not path: return
+        desc, valid = QtGui.QInputDialog.getText(
+            widget,
+            'enter file description',
+            'description'
+        )
+        filename = '%s_%s.csv' % (time,desc) if valid else '%s.csv' % time 
+        np.savetxt(
+            os.path.join(
+                path,
+                filename
+            ),
+            dataArray.transpose(),
+            delimiter=','
+        )
     saveCSVButton = QtGui.QPushButton('save (csv)')
     saveCSVButton.clicked.connect(onSaveClicked)
     saveLayout.addWidget(SqueezeRow(saveCSVButton))
