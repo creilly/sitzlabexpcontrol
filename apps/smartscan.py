@@ -204,7 +204,7 @@ class ManualInputWidget(CancelInputWidget):
                         parent, 
                         'next x value', 
                         'enter next x value',
-                        decimals=6
+                        decimals=3
                     )
                     return result if valid else None
             return ManualInput()
@@ -339,16 +339,15 @@ class ManualScanInputWidget(SmartScanListInputWidget):
             self,
             next,
             lambda:None,
-            -1.e10,
-            1.e10,
+            -1.e4,
+            1.e4,
+            4,
             10,
-            0,
-            1.e-10,
-            1.e10,
-            10,
+            1.e-4,
+            1.e3,
+            4,
             1.
         )
-        
 '''
 
 -> __init__(volt_meter_client)
