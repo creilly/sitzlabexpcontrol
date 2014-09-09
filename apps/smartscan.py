@@ -53,7 +53,7 @@ from steppermotor.polarizerclient import PolarizerClient
 # plotting
 from math import pow
 import numpy as np
-from pyqtgraph import PlotWidget, ErrorBarItem
+from pyqtgraph import PlotWidget, ErrorBarItem, mkPen, LegendItem
 
 import os
 import datetime
@@ -438,7 +438,7 @@ class VoltMeterOutputWidget(QtGui.QWidget):
 
 '''
 
-extends ScanToggleObject for canceling capabilities
+extends ScanToggleObject for cancelling capabilities
 
 '''
 class SmartScanToggleObject(ScanToggleObject):
@@ -457,7 +457,8 @@ def SmartScanGUI():
     # oh god i'm so sorry
     class self:
         x,y,err = [], [], []
-        
+        refData = {}
+
     #configure a layout for the plot widget & controls to go side by side on
     widget = QtGui.QWidget()
     container.append(widget)
@@ -705,7 +706,38 @@ def SmartScanGUI():
         scanToggle.toggle()    
     scanToggle.activationRequested.connect(onActivationRequested)
     
+    def xYPlot(plotWidget,x,y,yerr=None,xerr=None,color='w',name='Current'):
+        thisPlot = plotWidget.plot(x,y,pen=mkPen(color,width=2))
+        plotWidget.addItem(
+            ErrorBarItem(
+                x=np.asarray(x),
+                y=np.asarray(y),
+                top=np.asarray(yerr) if yerr is not None else None,
+                bottom=np.asarray(yerr) if yerr is not None else None,
+                left=np.asarray(xerr) if xerr is not None else None,
+                right=np.asarray(xerr) if xerr is not None else None,
+                beam=.05,
+                pen=mkPen(color)
+            )
+        )
+        
+    
     # plot on step completion
+    def updatePlot():
+        plotWidget.clear()
+        for name, refData in self.refData.iteritems():
+            xYPlot(
+                plotWidget,
+                refData['data'][0],
+                refData['data'][1],
+                yerr=refData['data'][2],
+                color=refData['color'],
+                name=name
+            )
+        if len(self.x) >= 1:
+            xYPlot(plotWidget,self.x,self.y,yerr=self.err)
+        
+    
     def onStepped(data):
         # unpack scan step data
         position, output = data
@@ -719,23 +751,66 @@ def SmartScanGUI():
         self.err.append(err)
 
         # update plot
-        plotWidget.clear()
-        plotWidget.plot(self.x,self.y)
-        plotWidget.addItem(
-            ErrorBarItem(
-                x=np.asarray(self.x),
-                y=np.asarray(self.y),
-                top=np.asarray(self.err),
-                bottom=np.asarray(self.err),
-                beam=.05
-            )
-        )
+        updatePlot()
 
         # ready for next step!
         scanToggle.completeStep()        
     scanToggle.stepped.connect(onStepped)
 
-    # set up data saving capabilities (ask bobby re: this)
+    
+    # set up reference data capabilities
+    refLayout = QtGui.QHBoxLayout()
+    
+    def onLoadClicked():
+        date = datetime.datetime.now().strftime("%Y-%m-%d")
+        time = datetime.datetime.now().strftime("%H%M")
+        dir = os.path.join(
+            POOHDATAPATH,
+            date
+        )
+        
+        refFileName = QtGui.QFileDialog.getOpenFileName(
+            widget,
+            'select file', 
+            dir,
+            "CSV Files (*.csv)"
+        )
+        
+        refData = np.loadtxt(open(refFileName[0],"rb"),delimiter=",")
+        name = refFileName[0].rpartition('/')[2]
+        
+        color = QtGui.QColorDialog.getColor()
+        
+        self.refData[name] = {
+            'color': color,
+            'data': [refData[:,0], refData[:,1], refData[:,2]]
+        }
+        
+        updatePlot()
+    
+    loadButton = QtGui.QPushButton('load')
+    loadButton.clicked.connect(onLoadClicked)
+    refLayout.addWidget(SqueezeRow(loadButton))
+
+    def onClearClicked():
+        for refs in self.refData.keys():
+            del self.refData[refs]
+            
+        updatePlot()
+
+    clearButton = QtGui.QPushButton('clear all')
+    clearButton.clicked.connect(onClearClicked)
+    refLayout.addWidget(SqueezeRow(clearButton))
+
+    cpLayout.addWidget(
+        LabelWidget(
+            'reference',
+            refLayout
+        )
+    )    
+
+    
+    # set up data saving capabilities
     saveLayout = QtGui.QVBoxLayout()
 
     def onSaveClicked():
@@ -780,7 +855,10 @@ def SmartScanGUI():
             'save',
             saveLayout
         )
-    )    
+    )
+    
+   
+
 
 if __name__ == '__main__':
     from twisted.internet import reactor
