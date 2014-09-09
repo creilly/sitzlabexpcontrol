@@ -66,7 +66,7 @@ like this: python smartscan.py swdm
 '''
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 SM_BOOL, WL_BOOL, DDG_BOOL, MAN_BOOL, MAN_LIST_BOOL, POL_BOOL = 0,1,2,3,4,5
-INPUTS = (SM_BOOL,WL_BOOL,DDG_BOOL,MAN_BOOL,MAN_LIST_BOOL)
+INPUTS = (SM_BOOL,WL_BOOL,DDG_BOOL,MAN_BOOL,MAN_LIST_BOOL,POL_BOOL)
 INPUTS_TOGGLE = {input:False for input in INPUTS}
 INPUTS_KEYS = {
     's':SM_BOOL,
@@ -261,17 +261,17 @@ class SmartScanListInputWidget(CancelInputWidget):
 class CenterInputWidget(SmartScanListInputWidget):
     def __init__(
         self,
-        next_agent,
-        cancel_agent,
-        limit_min,
-        limit_max,
-        limit_prec,
-        limit_init,
-        step_min,
-        step_max,
-        step_prec,
-        step_init,
-        get_position
+        next_agent,    #agent to progress the scan
+        cancel_agent,  #agent to abort the scan
+        limit_min,     #minimum value of scan bounds
+        limit_max,     #maximum value of scan bounds 
+        limit_prec,    #precision (number of zeroes after decimal) on bounds
+        limit_init,    #initial value for scan bounds
+        step_min,      #minimum value of step size
+        step_max,      #maximum value of scan bounds
+        step_prec,     #precision (number of zeroes after decimal) on step size
+        step_init,     #initial value for step size
+        get_position   #agent to read position for scan
     ):
         SmartScanListInputWidget.__init__(
             self,
@@ -599,17 +599,17 @@ def SmartScanGUI():
         polInputWidget = ComboWidget()
         polInputWidget.addTab(
             CenterInputWidget(
-                polClient.setAngle,
-                polClient.cancelAngleSet,
-                polClient.getAngle,
-                -360.0,            
-                360.0,
-                2,
-                90.0,
-                0.1,
-                5.0,
-                2,
-                .2
+                polClient.setAngle,  #agent to progress the scan
+                polClient.cancelAngleSet,  #agent to abort the scan
+                -720.0, #minimum value of scan bounds           
+                720.0,  #maximum value of scan bounds 
+                2,      #precision (number of zeroes after decimal) on bounds 
+                90.0,   #initial value for scan bounds
+                0.01,   #minimum value of step size
+                180.0,  #maximum value of scan bounds
+                2,      #precision (number of zeroes after decimal) on step size
+                5.0,    #initial value for step size
+                polClient.getAngle  #agent to read position for scan
             ),
             'interval'
         )
