@@ -17,8 +17,8 @@ from ab.abclient import getProtocol
 from functools import partial
 
 PARAMS = {
-    MIN:-99999,
-    MAX:99999,
+    MIN:-999999,
+    MAX:999999,
     PRECISION:0,
     SLIDER:200,
     POI:{'none':0}
