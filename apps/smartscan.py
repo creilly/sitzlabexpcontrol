@@ -86,7 +86,9 @@ if len(sys.argv) > 1 and all(
 else:
     for input in INPUTS_TOGGLE:
         INPUTS_TOGGLE[input] = True
-       
+
+print INPUTS_TOGGLE
+        
 '''
 any widget added to the input widget tab will be expected to \
 implement a getInput() method that returns an object with two \
@@ -466,7 +468,6 @@ def SmartScanGUI():
     widget.setLayout(layout)
     
     # create a plot and associated widget
-    
     plotWidget = PlotWidget()
     plot = plotWidget.plot()
     layout.addWidget(plotWidget,1)
@@ -591,6 +592,7 @@ def SmartScanGUI():
             'surf'
         )
     if INPUTS_TOGGLE[POL_BOOL]:
+        print 'adding pol'
         # add wavelength client to scan input
         polProtocol = yield getProtocol(
             TEST_POLARIZER_SERVER if DEBUG else POLARIZER_SERVER
@@ -845,9 +847,9 @@ def SmartScanGUI():
             dataArray.transpose(),
             delimiter=','
         )
-    saveCSVButton = QtGui.QPushButton('save (csv)')
-    saveCSVButton.clicked.connect(onSaveClicked)
-    saveLayout.addWidget(SqueezeRow(saveCSVButton))
+    saveButton = QtGui.QPushButton('save')
+    saveButton.clicked.connect(onSaveClicked)
+    saveLayout.addWidget(SqueezeRow(saveButton))
     
     cpLayout.addWidget(
         LabelWidget(
