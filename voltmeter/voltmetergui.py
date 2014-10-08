@@ -22,6 +22,8 @@ from math import log10
 import time
 import re
 from qtutils.toggle import ToggleObject, ToggleWidget
+from qtutils.label import LabelWidget
+import numpy as np
 
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 URL = (VM_DEBUG_SERVER_CONFIG if DEBUG else VM_SERVER_CONFIG)['url']
@@ -161,7 +163,8 @@ class VoltMeterWidget(QtGui.QWidget):
     ID_ROLE = 999
     HISTORY = 200
     MEASUREMENT_TYPE = 'voltmeter'
-    
+    newBufferVal = False 
+        
     @staticmethod
     def vrngk2v(k):
         vrngKeys, vrngVals = zip(*VM.VOLTAGE_RANGES)
@@ -219,19 +222,22 @@ class VoltMeterWidget(QtGui.QWidget):
             def loop():
                 voltages = yield protocol.sendCommand('get-voltages')
                 for channel, voltage in voltages.items():
+                    if self.newBufferVal == True: onBufferUpdate()
                     xData, yData = data[channel]
-                    yData.pop(0)
-                    scale = yield protocol.sendCommand(
-                        'get-channel-parameter',
-                        channel,
-                        VM.VOLTAGE_RANGE
-                    )
-                    scale = self.vrngk2v(scale)
-                    yData.append(voltage)
+                    yData = np.delete(yData,0)
+                                #scale = yield protocol.sendCommand(
+                                #    'get-channel-parameter',
+                                #    channel,
+                                #    VM.VOLTAGE_RANGE
+                                #)
+                                #scale = self.vrngk2v(scale)
+                    yData = np.append(yData,np.asarray(voltage))
                     plots[channel].setData(
                         xData,
                         yData
                     )
+                    data[channel] = (xData, yData)
+                
                 if recordToggle.isToggled():
                     with open(self.fileName,'a') as file:
                         file.write(
@@ -287,11 +293,11 @@ class VoltMeterWidget(QtGui.QWidget):
             controlsLayout.addStretch(1)
             channels = yield protocol.sendCommand('get-channels')
             channels = sorted(channels,key = lambda channel: int(re.search('\d+$',channel).group()))
-            print [re.search('\d+$',channel).group() for channel in channels]
+            #print [re.search('\d+$',channel).group() for channel in channels]
             data = {
                 channel:(
-                    range(self.HISTORY),
-                    [0] * self.HISTORY
+                    np.arange(self.HISTORY),
+                    np.zeros(self.HISTORY)
                 ) for index, channel in enumerate(channels)
             }
             colors = {
@@ -338,6 +344,41 @@ class VoltMeterWidget(QtGui.QWidget):
                     onChannelParameterChanged
                 )                
             )
+            
+            # set up buffer function and spinbox
+            def onBufferUpdate():
+                oldBufferSize = data[channels[0]][0].size
+                newBufferSize = bufferSpin.value()
+                change = newBufferSize - oldBufferSize
+                
+                if change > 0:
+                    backendToAdd = np.zeros(change)
+                    for index, channel in enumerate(channels):
+                        data[channel] = (
+                            np.arange(newBufferSize),
+                            np.hstack((backendToAdd,data[channel][1]))
+                        )
+                
+                if change < 0:
+                    for index, channel in enumerate(channels):
+                        data[channel] = (
+                            np.arange(newBufferSize),
+                            np.delete(data[channel][1],np.arange(abs(change)))
+                        )
+                
+                self.newBufferVal = False
+            
+            def newBufferToggle():
+                self.newBufferVal = True
+            
+            bufferSpin = QtGui.QSpinBox()
+            bufferSpin.setRange(1,100000)
+            bufferSpin.setValue(self.HISTORY)
+            controlsLayout.addWidget(LabelWidget('buffer',bufferSpin))
+            bufferSpin.editingFinished.connect(newBufferToggle)
+            
+            
+            # set up recording functions and buttons
             checked = []
             recording = []            
             recordToggle = ToggleObject()
