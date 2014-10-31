@@ -87,7 +87,7 @@ else:
     for input in INPUTS_TOGGLE:
         INPUTS_TOGGLE[input] = True
 
-print INPUTS_TOGGLE
+#print INPUTS_TOGGLE
         
 '''
 any widget added to the input widget tab will be expected to \
@@ -592,7 +592,6 @@ def SmartScanGUI():
             'surf'
         )
     if INPUTS_TOGGLE[POL_BOOL]:
-        print 'adding pol'
         # add wavelength client to scan input
         polProtocol = yield getProtocol(
             TEST_POLARIZER_SERVER if DEBUG else POLARIZER_SERVER
@@ -702,7 +701,10 @@ def SmartScanGUI():
             scanInput.cancel()
             scanOutput.cancel()
         scanToggle.setCancel(cancel)
-
+        
+        # set autoscale on x & y axes when a new scan is started
+        plotWidget.enableAutoRange()
+        
         # start scan
         scanToggle.toggle()    
     scanToggle.activationRequested.connect(onActivationRequested)
