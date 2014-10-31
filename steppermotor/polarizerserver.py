@@ -15,7 +15,7 @@ URL = TEST_POLARIZER_SERVER if DEBUG else POLARIZER_SERVER
 class PolarizerWAMP(BaseWAMP):
     __wampname__ = 'polarizer server'
     ANGLE = 0
-    DEGREES_PER_STEP = - 68.0 / 10000.0
+    DEGREES_PER_STEP = - .10 / 9.998686
     MESSAGES = {
         'calibration-changed':'polarization calibration has changed'
     }
