@@ -15,6 +15,8 @@ from operator import index
 from sitz import compose
 from ab.abclient import getProtocol
 from functools import partial
+from qtutils.qled import LEDWidget
+
 
 PARAMS = {
     MIN:-999999,
@@ -42,6 +44,7 @@ class StepperMotorWidget(QtGui.QWidget):
         self.gotoWids = {}
         self.enbButtons = {}
         self.sms = {}
+        #self.LEDs = {}
         
         @inlineCallbacks
         def onInit():
@@ -58,8 +61,17 @@ class StepperMotorWidget(QtGui.QWidget):
             for id, guiOrder, config in sorted_sms:
                 thisLayout = QtGui.QVBoxLayout()
                 
+                '''
+                # add a ready LED indicator
+                self.LEDs[id].toggle()
+                self.LEDs[id] = LEDWidget(initialState=False)
+                thisLayout.addLayout(self.LEDs[id])
+                '''
+                
+                # establish the stepper motor protocol
                 sm = ChunkedStepperMotorClient(protocol,id)
                 self.sms[id] = sm
+                
                 #create a goto widget for this steppermotor
                 PARAMS[POI] = config['pts_of_int']
                 gotoWidget = GotoWidget(PARAMS)
@@ -80,6 +92,7 @@ class StepperMotorWidget(QtGui.QWidget):
                 position = yield sm.getPosition()
                 gotoWidget.setPosition(position)
 
+                '''
                 #create an enable toggle button for this sm
                 enableButton = QtGui.QPushButton('enable', self)
                 self.enbButtons[sm.id] = enableButton
@@ -98,6 +111,7 @@ class StepperMotorWidget(QtGui.QWidget):
                 if config['enable_channel'] == None: enableButton.setEnabled(False)
                 else: gotoWidget.setEnabled(False)
                 thisLayout.addWidget(enableButton)
+                '''
                 
                 #create a spinbox to control the step rate for this sm
                 rate = yield sm.getStepRate()
@@ -126,6 +140,7 @@ class StepperMotorWidget(QtGui.QWidget):
         onInit()
         
     def closeEvent(self, event):
+        '''
         globalStatus = False
         
         for id, gotoWidget in self.gotoWids.items():
@@ -140,9 +155,10 @@ class StepperMotorWidget(QtGui.QWidget):
             msgBox.exec_()
             event.ignore()
         else:
-            event.accept()
-            quit()
-        
+        '''
+        event.accept()
+        quit()
+    
         
 @inlineCallbacks
 def main(container):

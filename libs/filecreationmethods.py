@@ -55,7 +55,8 @@ class LogFile:
     
     def readLastLine(self):
         last_line = ''
-        for line in self.logFile: 
+        for line in self.logFile:
+            if not line: break
             last_line = line
         if not last_line: return None
         lastLineTuple = tuple(last_line.strip().split('\t'))

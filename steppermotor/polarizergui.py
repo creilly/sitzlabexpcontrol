@@ -61,7 +61,8 @@ class PolarizerWidget(QtGui.QWidget):
         # initialize position of goto widget
         polarizerProtocol.sendCommand('get-angle').addCallback(gotoWidget.setPosition)
         
-
+                
+        '''
         # add enable button to toggle state of sm
         enableButton = QtGui.QPushButton('enable', self)
         enableButton.clicked.connect(self.polSMC.toggleStatus)
@@ -74,7 +75,8 @@ class PolarizerWidget(QtGui.QWidget):
                 gotoWidget.setEnabled(False)
         self.polSMC.addListener(self.polSMC.ENABLE,adjustEnbStatus)
         self.layout().addWidget(enableButton)
-
+        '''
+        
     def closeEvent(self, event):
         event.accept()
         quit()
