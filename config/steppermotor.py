@@ -70,9 +70,10 @@ SM_CONFIG = {
         'pts_of_int':{
             'scatter':-23550, #193600,
             'sputter':65950, #100000,
-            'LEED':112950, #53000,
+            'LEED':121950, #53000,
             'LIPD':160950, #5000,
-            'maximum':200000,
+            'window':200000,
+            'maximum':300000,
             'minimum':-100000
             },
         'guiOrder':4
