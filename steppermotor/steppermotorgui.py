@@ -140,22 +140,6 @@ class StepperMotorWidget(QtGui.QWidget):
         onInit()
         
     def closeEvent(self, event):
-        '''
-        globalStatus = False
-        
-        for id, gotoWidget in self.gotoWids.items():
-            thisStatus = gotoWidget.isEnabled()
-            enableable = self.enbButtons[id].isEnabled()
-            print str(id) + ': '+str(thisStatus) + '  ' + str(enableable)
-            globalStatus = globalStatus or not (thisStatus ^ enableable) #xor between these two
-            print globalStatus
-        if globalStatus:
-            msgBox = QtGui.QMessageBox()
-            msgBox.setText("You must disable ALL motors first!")
-            msgBox.exec_()
-            event.ignore()
-        else:
-        '''
         event.accept()
         quit()
     
