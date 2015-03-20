@@ -267,7 +267,8 @@ class LoggedStepperMotor(CounterStepperMotor):
         self._openLog()
         try:
             last_date, last_position, last_direction = self._getLastPosition()
-        except TypeError:
+            print last_date, last_position, last_direction
+        except TypeError or ValueError:
             print 'error with log file! reverting to 0 & forwards'
             last_date, last_position, last_direction = ('never',0,'FORWARDS')
         last_direction = {'FORWARDS':DigitalLineStepperMotor.FORWARDS,'BACKWARDS':DigitalLineStepperMotor.BACKWARDS}[last_direction]
