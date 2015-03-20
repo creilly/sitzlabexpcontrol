@@ -37,7 +37,7 @@ from functools import partial
 
 # logging
 import os.path
-from filecreationmethods import filenameGen, checkPath
+from filecreationmethods import filenameGen, checkPath, LogFile
 import time
 
 # regular expressions
@@ -141,6 +141,7 @@ class ChannelEditDialog(QtGui.QDialog):
             layout.addRow('color',colorEditButton)
         init()
 
+
         
 # defines the main window of the program which is a plotter with a control panel        
 class VoltMeterWidget(QtGui.QWidget):    
@@ -210,8 +211,13 @@ class VoltMeterWidget(QtGui.QWidget):
                 # get latest values
                 voltages = yield protocol.sendCommand('get-voltages')
                 for channel, voltage in voltages.items():
+                    # extend the size of arrays if user asks for more values to be stored
                     if self.newBufferVal == True: onBufferUpdate()
+                    
+                    # populate arrays from historical values
                     xData, yData = data[channel]
+                    
+                    # pop oldest voltage
                     yData = np.delete(yData,0)
                                 #scale = yield protocol.sendCommand(
                                 #    'get-channel-parameter',
@@ -219,16 +225,21 @@ class VoltMeterWidget(QtGui.QWidget):
                                 #    VM.VOLTAGE_RANGE
                                 #)
                                 #scale = self.vrngk2v(scale)
+                    # add newest voltage
                     yData = np.append(yData,np.asarray(voltage))
+                    
+                    # plot all voltages in range
                     plots[channel].setData(
                         xData,
                         yData
                     )
+                    
+                    # set the historical values to these values
                     data[channel] = (xData, yData)
                 
                 # log values, if requested
                 if recordToggle.isToggled():
-                    nextLine = ()
+                    nextLine = []
                     for channel in recording:
                         nextLine.append(voltages[channel])
                     self.LogFile.update(nextLine)
@@ -264,13 +275,11 @@ class VoltMeterWidget(QtGui.QWidget):
             # define controls panel
             controlsLayout = QtGui.QVBoxLayout()
             self.layout().addLayout(controlsLayout)
-                       
-            # channel list
+
+            # define the list for variable tiles to go onto
             listWidget = QtGui.QListWidget()
             listWidget.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
-            listWidget.setContextMenuPolicy(
-                QtCore.Qt.ContextMenuPolicy.CustomContextMenu
-            )
+            listWidget.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
             listWidget.customContextMenuRequested.connect(
                 partial(
                     rightClicked,
@@ -278,8 +287,7 @@ class VoltMeterWidget(QtGui.QWidget):
                 )
             )
             controlsLayout.addWidget(listWidget)
-            controlsLayout.addStretch(1)
-            
+           
             # iterate through channels on server and populate dictionaries for data, colors, and plots
             channels = yield protocol.sendCommand('get-channels')
             channels = sorted(channels,key = lambda channel: int(re.search('\d+$',channel).group()))
@@ -378,7 +386,7 @@ class VoltMeterWidget(QtGui.QWidget):
                 checkPath(absPath)
                 logName = os.path.join(absPath,fileName+'.txt')
                 self.LogFile = LogFile(logName)
-                headerLine = ()
+                headerLine = []
                 for channel in recording:
                     headerLine.append(tiles[channel].text().replace('\t','_'))
                 self.LogFile.update(headerLine)
@@ -393,6 +401,7 @@ class VoltMeterWidget(QtGui.QWidget):
                         )
                     )
                 recordToggle.toggle()
+                self.LogFile.close()
             recordToggle.deactivationRequested.connect(onRecordStopRequested)
             
             # add record & stop buttons to layout
