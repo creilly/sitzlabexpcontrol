@@ -24,6 +24,9 @@ MAV_PROBE_LAMP = 'probe laser lamps'
 MAV_PROBE_QSW = 'probe laser q-switch'
 MAV_NOZZLE = 'nozzle'
 
+MIN_DELAY = 0
+MAX_DELAY = (2**20 + 1)*100
+
 '''
 numberings of ddgs on pooh computer, for ease of reference
 

@@ -56,6 +56,21 @@ class ScanToggleObject(ToggleObject):
     def setOutput(self,output):
         self.output = output
         
+# extends ScanToggleObject for cancelling capabilities
+class CancelScanToggleObject(ScanToggleObject):
+    def __init__(self):
+        ScanToggleObject.__init__(self)
+        self._cancel = lambda:None
+        self.deactivationRequested.connect(self.cancel)
+    def setCancel(self,cancel):
+        self.cancel = cancel
+    def cancel(self):
+        return self._cancel()
+
+
+        
+        
+        
 class IntervalScanInputWidget(QtGui.QWidget):
     START,STOP,STEP = 0,1,2
     NAME, ATTRIBUTE = 0,1
@@ -135,6 +150,8 @@ class IntervalScanInputWidget(QtGui.QWidget):
             }
         )
 
+
+        
 class ListScanInputWidget(QtGui.QWidget):
     def __init__(self,positions = None):
         QtGui.QWidget.__init__(self)
