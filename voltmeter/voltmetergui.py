@@ -56,6 +56,7 @@ class ChannelEditDialog(QtGui.QDialog):
                 'set-channel-parameter',
                 channel
             )
+            print channel
             parameters = {}
             for parameter in PARAM_KEYS:
                 value = yield protocol.sendCommand('get-channel-parameter',channel,parameter)
@@ -98,15 +99,11 @@ class ChannelEditDialog(QtGui.QDialog):
                     ]
                 )
             )
-            trmCfgComboBox.currentIndexChanged.connect(
-                compose(
-                    partial(
-                        setParameter,
-                        VM.TERMINAL_CONFIG
-                    ),
-                    trmCfgComboBox.itemData
-                )
-            )
+            def onConfigChange():
+                newConfig = trmCfgComboBox.itemData(trmCfgComboBox.currentIndex())
+                setParameter(VM.TERMINAL_CONFIG, newConfig)
+            
+            trmCfgComboBox.currentIndexChanged.connect(onConfigChange)
             layout.addRow(
                 PARAM_NAMES[
                     PARAM_KEYS.index(
@@ -233,7 +230,7 @@ class VoltMeterWidget(QtGui.QWidget):
                     yData.append(voltage)
                     plots[channel].setData(
                         xData,
-                        [100.0 * voltage / scale for voltage in yData]
+                        yData
                     )
                 if recordToggle.isToggled():
                     with open(self.fileName,'a') as file:
@@ -357,8 +354,8 @@ class VoltMeterWidget(QtGui.QWidget):
                 relPath, fileName = filenameGen(self.MEASUREMENT_TYPE)
                 absPath = os.path.join(POOHDATAPATH,relPath)
                 checkPath(absPath)
-                self.fileName = os.path.join(absPath,fileName,'.txt')
-                with open(self.fileName,'w') as file:
+                self.fileName = os.path.join(absPath,fileName+'.txt')
+                with open(self.fileName,'w+') as file:
                     file.write(
                         '%s\n' % '\t'.join(
                             ['time'] + [
@@ -388,76 +385,6 @@ class VoltMeterWidget(QtGui.QWidget):
             loop()
             
         init()
-        
-        # plotter = PlotWidget()
-        # self.plot = plotter.plot()
-        # self.layout().addWidget(plotter,1)
-        # self.filename = None
-        # self.fileObj = None
-        
-        # voltages = [0] * MAX
-        
-        # def onVoltagesAcquired(data):
-        #     datum = data[self.channel] *1000
-        #     lcd.display(datum)
-        #     voltages.pop(0)
-        #     voltages.append(datum)
-        #     self.plot.setData(range(len(voltages)),voltages)
-        #     if self.filename is not None:
-        #         timeStamp = datetime.datetime.now() - self.startTime
-        #         timeStampStr = str(timeStamp.seconds)+'.'+str(timeStamp.microseconds/1000).zfill(3)
-        #         csvLine = timeStampStr+','+str(datum)+'\n'
-        #         self.fileObj.write(csvLine)
-
-
-        # controlPanel = QtGui.QHBoxLayout()
-        # controlPanel.addStretch(1)
-
-        # vmCombo = QtGui.QComboBox()
-        # vmCombo.currentIndexChanged[unicode].connect(
-        #     partial(setattr,self,'channel')
-        # )
-        # vmCombo.setCurrentIndex(0)
-        # protocol.sendCommand('get-channels').addCallback(vmCombo.addItems)
-
-        # controlPanel.addWidget(vmCombo)
-
-        # def recButFunc():
-        #     #if filename isn't set, initialize a file and filewriter to write to
-        #     if self.filename == None:
-        #         vmName = vmCombo.currentText()
-        #         subfolder = os.path.join('voltmeterLog',vmName)
-        #         relPath, self.filename = filenameGen(subfolder)
-        #         absPath = os.path.join(POOHDATAPATH,relPath)
-        #         checkPath(absPath)
-        #         self.filename = os.path.join(absPath,self.filename+'.csv')
-        #         self.fileObj = open(self.filename, 'wb')
-        #         self.startTime = datetime.datetime.now()
-        #         recordButton.setText('logging...')
-        #     #if there is a filename, close the file and set filename to none
-        #     else:
-        #         self.filename = None
-        #         self.fileObj.close()
-        #         recordButton.setText('start log')
-                
-        # recordButton = QtGui.QPushButton('log')
-        # recordButton.clicked.connect(recButFunc)
-        # controlPanel.addWidget(recordButton)
-
-        # lcd = QtGui.QLCDNumber(5)
-        # lcd.setSegmentStyle(lcd.Flat)
-
-        # controlPanel.addWidget(lcd)
-
-        # self.layout().addLayout(controlPanel)
-        
-        # @inlineCallbacks
-        # def loop():
-        #     voltages = yield protocol.sendCommand('get-voltages')
-        #     onVoltagesAcquired(voltages)
-        #     yield sleep(SLEEP)
-        #     loop()
-        # loop()
 
 @inlineCallbacks
 def main():

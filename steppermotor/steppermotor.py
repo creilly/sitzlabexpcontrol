@@ -6,7 +6,7 @@ from daqmx.task.co import COTask
 from daqmx.task.do import DOTask
 from daqmx.task.ci import CITask
 
-from libs.filecreationmethods import LogFile
+from filecreationmethods import LogFile
 
 from threading import Lock, Thread
 from numpy import linspace

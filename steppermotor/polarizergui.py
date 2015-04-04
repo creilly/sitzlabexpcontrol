@@ -6,7 +6,7 @@ if QtCore.QCoreApplication.instance() is None:
     import qt4reactor
     qt4reactor.install()
 ## BOILERPLATE ##
-from goto import MIN, MAX, PRECISION, SLIDER, GotoWidget
+from goto import MIN, MAX, PRECISION, SLIDER, POI, GotoWidget
 from config.steppermotor import POL, SM_CONFIG
 from qtutils.label import LabelWidget
 from steppermotorclient import StepperMotorClient
@@ -27,7 +27,8 @@ class PolarizerWidget(QtGui.QWidget):
                 MIN:-360,
                 MAX:360,
                 PRECISION:.1,
-                SLIDER:2
+                SLIDER:2,
+                POI:{}
             }
         )
         self.layout().addWidget(LabelWidget('angle',gotoWidget))

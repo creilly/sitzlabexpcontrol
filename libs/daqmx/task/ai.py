@@ -203,7 +203,7 @@ class AITask(Task):
                 c_double(samplingRate)
             )
         )
-        self._setSamplesPerChannel()
+        self.setCallbackRate(self.getCallbackRate())
             
     def getSamplingRate(self):
         """

@@ -84,9 +84,7 @@ if len(sys.argv) > 1 and all(
 else:
     for input in INPUTS_TOGGLE:
         INPUTS_TOGGLE[input] = True
-
-print INPUTS_TOGGLE        
-        
+       
 '''
 any widget added to the input widget tab will be expected to \
 implement a getInput() method that returns an object with two \
@@ -704,18 +702,6 @@ def SmartScanGUI():
     # set up data saving capabilities (ask bobby re: this)
     saveLayout = QtGui.QVBoxLayout()
 
-    #dropdown box for measurementType so saveCSV (below) uses correct directory
-    measureList = SCAN_TYPES.keys()
-    measureCombo = QtGui.QComboBox()
-    measureCombo.addItems(measureList)
-    cpLayout.addWidget(
-        LabelWidget(
-            measureCombo,
-            'measurement'
-        )
-    )
-    saveLayout.addWidget(measureCombo)
-
     def onSaveClicked():
         dataArray = np.asarray(
             [self.x,self.y,self.err],
@@ -734,6 +720,7 @@ def SmartScanGUI():
             'select filename', 
             dir
         )
+        if not path: return
         desc, valid = QtGui.QInputDialog.getText(
             widget,
             'enter file description',
@@ -745,7 +732,7 @@ def SmartScanGUI():
                 path,
                 filename
             ),
-            dataArray,
+            dataArray.transpose(),
             delimiter=','
         )
     saveCSVButton = QtGui.QPushButton('save (csv)')
