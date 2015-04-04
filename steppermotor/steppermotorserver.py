@@ -8,6 +8,9 @@ from ab.abbase import sleep
 import sys
 from os import path
 from config.steppermotor import SM_CONFIG
+import time
+
+DELAY_TIME = 10.
 
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
     
@@ -50,8 +53,18 @@ class StepperMotorWAMP(BaseWAMP):
                     log_file = options['log_file'],
                     enable_channel = options['enable_channel']
                 )
-            
-               
+        
+        ## build a dictionary of timers for enabled SMs;
+        ## this is an example of how to start and stop a timer
+        self.timers = {}
+        for id, sm in self.sms.items():
+            if sm.enable_channel is not None:
+                self.timers[id] = reactor.callLater(
+                    DELAY_TIME,
+                    sm.disable
+                )
+                self.timers[id].cancel()
+
         ## complete initialization
         BaseWAMP.initializeWAMP(self)
 
@@ -80,6 +93,21 @@ class StepperMotorWAMP(BaseWAMP):
     @command('set-position','set position of stepper motor')
     @inlineCallbacks
     def setPosition(self,sm,position):
+        ## check if enabled, if not first enable and wait
+        if self.sms[sm].enable_channel is not None:
+            timer = self.timers[sm]
+            stepper_motor = self.sms[sm]
+            if timer.active(): timer.reset(DELAY_TIME)
+            if stepper_motor._getEnableStatus() is stepper_motor.DISABLED:
+                stepper_motor.enable()
+                time.sleep(.25)
+                self.timers[sm] = reactor.callLater(
+                    DELAY_TIME,
+                    self.sms[sm].disable
+                )
+                
+                
+            
         ## initialize deferred that will fire at end of stepping journey
         d = Deferred()
         ## function that is called periodically to update listeners on journey progress
@@ -101,6 +129,7 @@ class StepperMotorWAMP(BaseWAMP):
         ## wait until journey done
         yield d
         done = True
+        
         ## return ending position
         returnValue(self.getPosition(sm))
 
@@ -125,6 +154,9 @@ class StepperMotorWAMP(BaseWAMP):
 
 def main():
     runServer(WAMP = StepperMotorWAMP, URL = STEPPER_MOTOR_SERVER if not DEBUG else TEST_STEPPER_MOTOR_SERVER,debug = False,outputToConsole=True)
+
+    
+    
 if __name__ == '__main__':
     main()
     reactor.run()

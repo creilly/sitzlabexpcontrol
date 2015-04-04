@@ -267,7 +267,8 @@ class LoggedStepperMotor(CounterStepperMotor):
         self._openLog()
         try:
             last_date, last_position, last_direction = self._getLastPosition()
-        except TypeError:
+            print last_date, last_position, last_direction
+        except TypeError or ValueError:
             print 'error with log file! reverting to 0 & forwards'
             last_date, last_position, last_direction = ('never',0,'FORWARDS')
         last_direction = {'FORWARDS':DigitalLineStepperMotor.FORWARDS,'BACKWARDS':DigitalLineStepperMotor.BACKWARDS}[last_direction]
@@ -289,19 +290,19 @@ class LoggedStepperMotor(CounterStepperMotor):
     def _closeLog(self):
         self.log_file.close()
     
-    def toggleStatus(self):
-        if self._getEnableStatus() == self.ENABLED: 
-            self.updateLog()
-            self._closeLog()
-            self.disable()
-        elif self._getEnableStatus() == self.DISABLED: 
-            self._openLog()
-            self.enable()
+    def enable(self):
+        self._openLog()
+        EnabledStepperMotor.enable(self)
+        
+    def disable(self):
+        self.updateLog()
+        self._closeLog()
+        EnabledStepperMotor.disable(self)
     
     def _getLastPosition(self):
         return self.log_file.readLastLine()
    
-    def updateLog(self):
+    def updateLog(self):    # remember that you have to close the logfile before you can see these changes!!
         currPos = self.getPosition()
         currDir = self.getDirection()
         self.log_file.update((currPos,currDir))

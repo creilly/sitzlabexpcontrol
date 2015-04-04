@@ -54,10 +54,14 @@ class LogFile:
             self.logFile = open(self.logFileName, 'w+')
     
     def readLastLine(self):
-        last_line = ''
-        for line in self.logFile: 
-            last_line = line
-        if not last_line: return None
+        lines = self.logFile.readlines()
+        last_line = '\n'
+        i = 1
+        while last_line == '\n' or i <= len(lines):
+            last_line = lines[len(lines)-i]
+            i += 1
+        if last_line == '\n':
+            last_line = 'never\t0\tforwards'
         lastLineTuple = tuple(last_line.strip().split('\t'))
         return lastLineTuple
         
@@ -67,6 +71,7 @@ class LogFile:
         logElements.append(timestamp)
         for element in tupleToWrite:
            logElements.append(str(element))
+           #logElements.append('\t')
         logEntry = '\t'.join(logElements)
         self.logFile.write(logEntry+'\n')
     

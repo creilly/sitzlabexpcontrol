@@ -68,11 +68,12 @@ SM_CONFIG = {
         'backlash':1525,
         'log_file':os.path.join(SMLOGSPATH,'lid_log.txt'),
         'pts_of_int':{
-            'scatter':-27650, #193600,
+            'scatter':-23550, #193600,
             'sputter':65950, #100000,
-            'LEED':112950, #53000,
+            'LEED':121950, #53000,
             'LIPD':160950, #5000,
-            'maximum':200000,
+            'window':200000,
+            'maximum':300000,
             'minimum':-100000
             },
         'guiOrder':4
@@ -83,7 +84,7 @@ SM_CONFIG = {
         'pulse_channel':'/dev1/port0/line4',
         'direction_channel':'/dev1/port0/line2',
         'counter_channel':'dev1/ctr0', #direction in: dev1/port0/line6; steps in: dev1/pfi8
-        'step_rate':100.0,
+        'step_rate':500.0,
         'backlash':20,
         'log_file':os.path.join(SMLOGSPATH,'polarizer_log.txt'),
         'pts_of_int':{},
@@ -104,3 +105,6 @@ REMPI_POI = {
     'v0 S3':24140.4    
 }
 
+ANGLE_POI = {
+    '0':0.0
+}

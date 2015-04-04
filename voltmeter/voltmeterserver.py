@@ -11,6 +11,8 @@ from config.filecreation import LOGS_DIR
 
 import os
 
+import numpy as np
+
 import pickle
 
 import sys
@@ -30,7 +32,7 @@ class VoltMeterWAMP(BaseWAMP):
         'voltages-acquired':'voltages recently acquired',
         'channel-parameter-changed':'user changed channel parameter'
     }
-    VOLTAGE,COUNT,TOTAL,DEFERRED,CHANNEL = 0,1,2,3,4
+    VOLTAGELIST,AVERAGE,STD,COUNT,TOTAL,DEFERRED,CHANNEL = 0,1,2,3,4,5,6
     @inlineCallbacks
     def initializeWAMP(self):
         self.voltMeter = vm = yield getVoltMeter()
@@ -63,25 +65,33 @@ class VoltMeterWAMP(BaseWAMP):
         self.d = Deferred()
         self.d.addCallback(self.onVoltages)
         for request in list(self.requests):
-            request[self.VOLTAGE] += voltages[request[self.CHANNEL]] / float(request[self.TOTAL])
+            #request[self.VOLTAGE] += voltages[request[self.CHANNEL]] / float(request[self.TOTAL])
+            newVoltage = voltages[request[self.CHANNEL]]
+            request[self.VOLTAGELIST].append(newVoltage)
             request[self.COUNT] += 1
             if request[self.COUNT] is request[self.TOTAL]:
                 self.requests.remove(request)
-                request[self.DEFERRED].callback(request[self.VOLTAGE])
+                request[self.AVERAGE] = np.mean(request[self.VOLTAGELIST])
+                request[self.STD] = np.std(request[self.VOLTAGELIST])
+                #request[self.DEFERRED].callback(request[self.VOLTAGE])
+                request[self.DEFERRED].callback((request[self.AVERAGE],request[self.STD]))
 
     @command('get-voltages','returns most recently measured voltages')
     def getVoltages(self):
         return self.voltages
 
-    @command('get-n-voltages','get average of next n samples')
+    @command('get-n-voltages','get average & sDev of next n samples')
     def getNVoltages(self,channel,total):
-        voltage = 0.
+        average = 0.
+        std = 0.
         count = 0
         total = total
         deferred = Deferred()
         self.requests.append(
             {
-                self.VOLTAGE:voltage,
+                self.VOLTAGELIST:[],
+                self.AVERAGE:average,
+                self.STD:std,
                 self.CHANNEL:channel,
                 self.COUNT:count,
                 self.TOTAL:total,
@@ -89,7 +99,7 @@ class VoltMeterWAMP(BaseWAMP):
             }
         )
         return deferred
-
+        
     @command('get-channels','get list of active channels')
     def getChannels(self):
         return self.voltMeter.getChannels()

@@ -6,22 +6,45 @@ if QtCore.QCoreApplication.instance() is None:
     app = QtGui.QApplication(sys.argv)
     import qt4reactor
     qt4reactor.install() 
+
+# server calls
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks, returnValue
 from ab.abclient import getProtocol
-from config.voltmeter import VM_SERVER_CONFIG, VM_DEBUG_SERVER_CONFIG
-from sitz import compose
 from ab.abbase import selectFromList, sleep
-from functools import partial
-import pyqtgraph as pg
-import os
+
+# configuration parameters
+from config.voltmeter import VM_SERVER_CONFIG, VM_DEBUG_SERVER_CONFIG
 from config.filecreation import POOHDATAPATH
-from filecreationmethods import filenameGen, checkPath
+
+# base voltmeter functionality (for configuring channel parameters)
 from daqmx.task.ai import VoltMeter as VM
-from math import log10
-import time
-import re
+
+# custom GUI libraries
 from qtutils.toggle import ToggleObject, ToggleWidget
+from qtutils.label import LabelWidget
+
+# math libraries
+import numpy as np
+from math import log10
+
+# plotting
+import pyqtgraph as pg
+
+# function manipulators for easier GUI programming
+from sitz import compose
+from functools import partial
+
+# logging
+import os.path
+from filecreationmethods import filenameGen, checkPath, LogFile
+import time
+
+# regular expressions
+import re
+
+# python types
+from types import *
 
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
 URL = (VM_DEBUG_SERVER_CONFIG if DEBUG else VM_SERVER_CONFIG)['url']
@@ -41,109 +64,70 @@ SLEEP = .1
 # parameter settings
 #
 ####################
+
+# defines the new window drawn on right clicking a channel tile.
+# used to edit channel properties (e.g. range, termination)
 class ChannelEditDialog(QtGui.QDialog):
     colorChanged = QtCore.Signal(QtGui.QColor)
     def __init__(self,protocol,channel,color,parent=None):
         @inlineCallbacks
         def init():
             QtGui.QDialog.__init__(self,parent)
-            self.setWindowTitle('%s edit dialog' % channel)
+            self.setWindowTitle('%s properties' % channel)
             layout = QtGui.QFormLayout()
             self.setLayout(layout)
-            PARAM_KEYS,PARAM_NAMES = zip(*VM.PARAMETERS)
-            setParameter = partial(
-                protocol.sendCommand,
-                'set-channel-parameter',
-                channel
-            )
-            print channel
-            parameters = {}
-            for parameter in PARAM_KEYS:
-                value = yield protocol.sendCommand('get-channel-parameter',channel,parameter)
-                parameters[parameter] = value
-            layout.addRow(
-                PARAM_NAMES[
-                    PARAM_KEYS.index(
-                        VM.PHYSICAL_CHANNEL
-                    )
-                ],
-                QtGui.QLabel(parameters[VM.PHYSICAL_CHANNEL])
-            )
-            descriptionLineEdit = QtGui.QLineEdit(parameters[VM.DESCRIPTION])
-            descriptionLineEdit.returnPressed.connect(
-                compose(
-                    partial(
-                        setParameter,
-                        VM.DESCRIPTION
-                    ),
-                    descriptionLineEdit.text
-                )
-            )
-            layout.addRow(
-                PARAM_NAMES[
-                    PARAM_KEYS.index(
-                        VM.DESCRIPTION
-                    )
-                ],
-                descriptionLineEdit
-            )
-            trmCfgComboBox = QtGui.QComboBox()
-            for trmCfgKey, _, trmCfgName in VM.TERMINAL_CONFIGS:
-                trmCfgComboBox.addItem(
-                    trmCfgName,trmCfgKey
-                )
-            trmCfgComboBox.setCurrentIndex(
-                trmCfgComboBox.findData(
-                    parameters[
-                        VM.TERMINAL_CONFIG
-                    ]
-                )
-            )
-            def onConfigChange():
-                newConfig = trmCfgComboBox.itemData(trmCfgComboBox.currentIndex())
-                setParameter(VM.TERMINAL_CONFIG, newConfig)
             
-            trmCfgComboBox.currentIndexChanged.connect(onConfigChange)
-            layout.addRow(
-                PARAM_NAMES[
-                    PARAM_KEYS.index(
-                        VM.TERMINAL_CONFIG
-                    )
-                ],
-                trmCfgComboBox
-            )
+            # create two lists pertaining to this channel's properties
+            PARAM_KEYS,PARAM_NAMES = zip(*VM.PARAMETERS)
 
-            vrngComboBox = QtGui.QComboBox()
-            vrngKeys, vrngVals = zip(*VM.VOLTAGE_RANGES)
-            for key, val in VM.VOLTAGE_RANGES:
-                vrngComboBox.addItem(
-                    '%.2f (V)' % val, key
-                )
-            vrngComboBox.setCurrentIndex(
-                vrngComboBox.findData(
-                    parameters[
-                        VM.VOLTAGE_RANGE
-                    ]
-                )
-            )
-            vrngComboBox.currentIndexChanged.connect(
-                compose(
-                    partial(
-                        setParameter,
-                        VM.VOLTAGE_RANGE
-                    ),
-                    vrngComboBox.itemData
-                )
-            )
-            layout.addRow(
-                PARAM_NAMES[
-                    PARAM_KEYS.index(
-                        VM.VOLTAGE_RANGE
-                    )
-                ],
-                vrngComboBox
-            )
-
+            # build a dictionary of dictionaries of the form [propertyKey]:{[propertyItems]:[value]}
+            propDict = {}
+            for propKey, propName in zip(PARAM_KEYS,PARAM_NAMES):
+                value = yield protocol.sendCommand('get-channel-parameter',channel,propKey)
+                propDict[propKey] = {}
+                propDict[propKey]['name'] = propName
+                propDict[propKey]['value'] = value
+                if propKey == 0:  # physical channel property
+                    propDict[propKey]['editor'] = None
+                    propDict[propKey]['display'] = QtGui.QLabel(value)
+                if propKey != 0:  # all other properties can be changed
+                    propDict[propKey]['editor'] = partial(protocol.sendCommand,'set-channel-parameter',channel,propKey)
+                    if type(value) is UnicodeType:
+                        thisDisplayObj = QtGui.QLineEdit()
+                        thisDisplayObj.setText(value)
+                        thisDisplayObj.editingFinished.connect(
+                            compose(
+                                propDict[propKey]['editor'],
+                                thisDisplayObj.text
+                            )
+                        )
+                        propDict[propKey]['display'] = thisDisplayObj
+                    
+                    if type(value) is IntType:
+                        thisDisplayObj = QtGui.QComboBox()
+                        if propKey == 3:  #voltage range
+                            for voltConfKey, voltConfVal in VM.VOLTAGE_RANGES:
+                                thisDisplayObj.addItem(
+                                    '%.2f (V)' % voltConfVal, voltConfKey
+                                )
+                        if propKey == 2: #terminal configuration
+                            for termConfKey, _, termConfName in VM.TERMINAL_CONFIGS:
+                                thisDisplayObj.addItem(
+                                    termConfName,termConfKey
+                                )
+                        thisDisplayObj.setCurrentIndex(
+                            thisDisplayObj.findData(value)
+                        )
+                        thisDisplayObj.currentIndexChanged.connect(
+                            compose(
+                                propDict[propKey]['editor'],
+                                thisDisplayObj.itemData
+                            )
+                        )
+                        propDict[propKey]['display'] = thisDisplayObj
+                    
+                    layout.addRow(propDict[propKey]['name'],propDict[propKey]['display'])
+            
             colorEditButton = QtGui.QPushButton('edit')
             colorEditButton.pressed.connect(
                 compose(
@@ -157,23 +141,24 @@ class ChannelEditDialog(QtGui.QDialog):
             layout.addRow('color',colorEditButton)
         init()
 
+
+        
+# defines the main window of the program which is a plotter with a control panel        
 class VoltMeterWidget(QtGui.QWidget):    
     ID_ROLE = 999
     HISTORY = 200
     MEASUREMENT_TYPE = 'voltmeter'
-    
+    newBufferVal = False 
+        
     @staticmethod
     def vrngk2v(k):
         vrngKeys, vrngVals = zip(*VM.VOLTAGE_RANGES)
-        return vrngVals[
-            vrngKeys.index(
-                k
-            )
-        ]
+        return vrngVals[vrngKeys.index(k)]
         
     def __init__(self,protocol):
         @inlineCallbacks
         def init():
+            # to change displayed values of channel tiles
             @inlineCallbacks
             def setText(channel):
                 description = yield protocol.sendCommand(
@@ -190,7 +175,7 @@ class VoltMeterWidget(QtGui.QWidget):
                 
                 decimalPlaces = int(-1*log10(voltageRange)) + 1
                 formatString = '%.' + str(decimalPlaces if decimalPlaces > 0 else 0) + 'f'
-                items[channel].setText(
+                tiles[channel].setText(
                     '%s\t%s\t%s V' % (
                         description,
                         channel,
@@ -199,6 +184,8 @@ class VoltMeterWidget(QtGui.QWidget):
                         ) % voltageRange
                     )
                 )
+            
+            # to bring up channel edit dialogue
             def rightClicked(listWidget,p):
                 item = listWidget.itemAt(p)
                 if item is None: return
@@ -206,49 +193,61 @@ class VoltMeterWidget(QtGui.QWidget):
                 editDialog = ChannelEditDialog(protocol,channel,colors[channel],self)
                 editDialog.colorChanged.connect(partial(colorChanged,channel))
                 editDialog.show()
+            
+            # to update a channel's color
             def colorChanged(channel,color):
                 colors[channel] = color
-                items[channel].setBackground(color)
+                tiles[channel].setBackground(color)
                 plots[channel].setPen(
                     pg.mkPen(
                         color,
                         width=2
                     )
                 )
+            
+            # the main execution loop
             @inlineCallbacks
             def loop():
+                # get latest values
                 voltages = yield protocol.sendCommand('get-voltages')
                 for channel, voltage in voltages.items():
+                    # extend the size of arrays if user asks for more values to be stored
+                    if self.newBufferVal == True: onBufferUpdate()
+                    
+                    # populate arrays from historical values
                     xData, yData = data[channel]
-                    yData.pop(0)
-                    scale = yield protocol.sendCommand(
-                        'get-channel-parameter',
-                        channel,
-                        VM.VOLTAGE_RANGE
-                    )
-                    scale = self.vrngk2v(scale)
-                    yData.append(voltage)
+                    
+                    # pop oldest voltage
+                    yData = np.delete(yData,0)
+                                #scale = yield protocol.sendCommand(
+                                #    'get-channel-parameter',
+                                #    channel,
+                                #    VM.VOLTAGE_RANGE
+                                #)
+                                #scale = self.vrngk2v(scale)
+                    # add newest voltage
+                    yData = np.append(yData,np.asarray(voltage))
+                    
+                    # plot all voltages in range
                     plots[channel].setData(
                         xData,
                         yData
                     )
+                    
+                    # set the historical values to these values
+                    data[channel] = (xData, yData)
+                
+                # log values, if requested
                 if recordToggle.isToggled():
-                    with open(self.fileName,'a') as file:
-                        file.write(
-                            '%s\n' % '\t'.join(
-                                str(datum) for datum in (
-                                    [time.time()] + [
-                                        voltages[channel]
-                                        for channel in
-                                        recording
-                                    ]
-                                )
-                            )
-                        )
-                        
+                    nextLine = []
+                    for channel in recording:
+                        nextLine.append(voltages[channel])
+                    self.LogFile.update(nextLine)
+                
+                # update selected list
                 for channel in channels:
-                    item = items[channel]
-                    if item.checkState() is QtCore.Qt.CheckState.Checked:
+                    tile = tiles[channel]
+                    if tile.checkState() is QtCore.Qt.CheckState.Checked:
                         if channel not in checked:
                             checked.append(channel)
                             plotWidget.addItem(
@@ -259,24 +258,28 @@ class VoltMeterWidget(QtGui.QWidget):
                         plotWidget.removeItem(
                             plots[channel]
                         )
+                
+                # wait for server's callback rate (nom. 10Hz), iterate
                 callbackRate = yield protocol.sendCommand('get-callback-rate')
                 yield sleep(1.0 / callbackRate)
                 loop()
 
+            # define overall layout: graph to left of control panel
             QtGui.QWidget.__init__(self)
             self.setLayout(QtGui.QHBoxLayout())
             
+            # define plot
             plotWidget = pg.PlotWidget()
             self.layout().addWidget(plotWidget,1)
-
+            
+            # define controls panel
             controlsLayout = QtGui.QVBoxLayout()
             self.layout().addLayout(controlsLayout)
-            
+
+            # define the list for variable tiles to go onto
             listWidget = QtGui.QListWidget()
             listWidget.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
-            listWidget.setContextMenuPolicy(
-                QtCore.Qt.ContextMenuPolicy.CustomContextMenu
-            )
+            listWidget.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
             listWidget.customContextMenuRequested.connect(
                 partial(
                     rightClicked,
@@ -284,51 +287,41 @@ class VoltMeterWidget(QtGui.QWidget):
                 )
             )
             controlsLayout.addWidget(listWidget)
-            controlsLayout.addStretch(1)
+           
+            # iterate through channels on server and populate dictionaries for data, colors, and plots
             channels = yield protocol.sendCommand('get-channels')
             channels = sorted(channels,key = lambda channel: int(re.search('\d+$',channel).group()))
-            print [re.search('\d+$',channel).group() for channel in channels]
-            data = {
-                channel:(
-                    range(self.HISTORY),
-                    [0] * self.HISTORY
-                ) for index, channel in enumerate(channels)
-            }
-            colors = {
-                channel:QtGui.QColor.fromHsv(
-                    int(
-                        255 * float(index) / len(channels)
-                    ),
+            data =  {}
+            colors =  {}
+            plots =  {}
+            tiles = {}
+            for index, channel in enumerate(channels):
+                data[channel] = (np.arange(self.HISTORY), np.zeros(self.HISTORY))
+                colors[channel] = QtGui.QColor.fromHsv(
+                    int(255*float(index)/len(channels)),
                     255,
                     255
-                ) for index, channel in enumerate(channels)
-            }
-            plots = {
-                channel:pg.PlotDataItem(
+                )
+                plots[channel] = pg.PlotDataItem(
                     data[channel][0],
                     data[channel][1],
                     name=channel,
-                    pen=pg.mkPen(
-                        colors[channel],
-                        width=2
-                    )
-                ) for channel in channels
-            }
-            items = {}
-            for index, channel in enumerate(channels):
+                    pen=pg.mkPen(colors[channel], width=2)
+                )
                 description = yield protocol.sendCommand(
                     'get-channel-parameter',
                     channel,
                     VM.DESCRIPTION
                 )
-                listWidgetItem = QtGui.QListWidgetItem()                
-                listWidgetItem.setData(self.ID_ROLE,channel)
-                listWidgetItem.setBackground(QtGui.QBrush(colors[channel]))
-                listWidget.addItem(listWidgetItem)
-                items[channel] = listWidgetItem
+                listWidgetTile = QtGui.QListWidgetItem()                
+                listWidgetTile.setData(self.ID_ROLE,channel)
+                listWidgetTile.setBackground(QtGui.QBrush(colors[channel]))
+                listWidgetTile.setCheckState(QtCore.Qt.CheckState.Unchecked)
+                listWidget.addItem(listWidgetTile)
+                tiles[channel] = listWidgetTile
                 setText(channel)
-            for index in range(listWidget.count()):
-                listWidget.item(index).setCheckState(QtCore.Qt.CheckState.Unchecked)                                             
+            
+            # when a channel is updated, update its associated tile
             def onChannelParameterChanged(channel,parameter,value):
                 setText(channel)
             protocol.messageSubscribe(
@@ -338,53 +331,89 @@ class VoltMeterWidget(QtGui.QWidget):
                     onChannelParameterChanged
                 )                
             )
+            
+            # set up buffer function and spinbox
+            def onBufferUpdate():
+                oldBufferSize = data[channels[0]][0].size
+                newBufferSize = bufferSpin.value()
+                change = newBufferSize - oldBufferSize
+                
+                if change > 0:
+                    backendToAdd = np.zeros(change)
+                    for index, channel in enumerate(channels):
+                        data[channel] = (
+                            np.arange(newBufferSize),
+                            np.hstack((backendToAdd,data[channel][1]))
+                        )
+                
+                if change < 0:
+                    for index, channel in enumerate(channels):
+                        data[channel] = (
+                            np.arange(newBufferSize),
+                            np.delete(data[channel][1],np.arange(abs(change)))
+                        )
+                
+                self.newBufferVal = False
+            
+            def newBufferToggle():
+                self.newBufferVal = True
+            
+            bufferSpin = QtGui.QSpinBox()
+            bufferSpin.setRange(1,100000)
+            bufferSpin.setValue(self.HISTORY)
+            controlsLayout.addWidget(LabelWidget('buffer',bufferSpin))
+            bufferSpin.editingFinished.connect(newBufferToggle)
+            
+            # set up recording functions and buttons
             checked = []
             recording = []            
             recordToggle = ToggleObject()
             def onRecordStartRequested():
+                # build a list of selected channels, record only those, set text color to red
                 for channel in channels:
-                    item = items[channel]
-                    if item.checkState() is QtCore.Qt.CheckState.Checked:
+                    tile = tiles[channel]
+                    if tile.checkState() is QtCore.Qt.CheckState.Checked:
                         recording.append(channel)
-                        item.setForeground(
+                        tile.setForeground(
                             QtGui.QBrush(
                                 QtGui.QColor('red')
                             )
                         )
+                
+                # initialize logfile in today's folder / voltmeter / start time
                 relPath, fileName = filenameGen(self.MEASUREMENT_TYPE)
                 absPath = os.path.join(POOHDATAPATH,relPath)
                 checkPath(absPath)
-                self.fileName = os.path.join(absPath,fileName+'.txt')
-                with open(self.fileName,'w+') as file:
-                    file.write(
-                        '%s\n' % '\t'.join(
-                            ['time'] + [
-                                items[channel].text().replace('\t','_')
-                                for channel in
-                                recording
-                            ]
-                        )
-                    )
+                logName = os.path.join(absPath,fileName+'.txt')
+                self.LogFile = LogFile(logName)
+                headerLine = []
+                for channel in recording:
+                    headerLine.append(tiles[channel].text().replace('\t','_'))
+                self.LogFile.update(headerLine)
                 recordToggle.toggle()
             recordToggle.activationRequested.connect(onRecordStartRequested)
+            
             def onRecordStopRequested():
                 while recording:
-                    items[recording.pop()].setForeground(
+                    tiles[recording.pop()].setForeground(
                         QtGui.QBrush(
                             QtGui.QColor('black')
                         )
                     )
                 recordToggle.toggle()
+                self.LogFile.close()
             recordToggle.deactivationRequested.connect(onRecordStopRequested)
-            controlsLayout.addWidget(
-                ToggleWidget(
-                    recordToggle,
-                    ('record','stop')
-                )
-            )
-            loop()
             
+            # add record & stop buttons to layout
+            controlsLayout.addWidget(ToggleWidget(recordToggle,('record','stop')))
+            
+            loop()   
         init()
+        
+    def closeEvent(self, event):
+        event.accept()
+        quit()
+
 
 @inlineCallbacks
 def main():
@@ -392,7 +421,7 @@ def main():
     widget = VoltMeterWidget(protocol)
     container.append(widget)
     widget.show()
-    widget.setWindowTitle('voltmeter client ' + ('debug ' if DEBUG else 'real '))
+    widget.setWindowTitle('voltmeter gui ' + ('debug ' if DEBUG else 'real '))
 
 
 if __name__ == '__main__':

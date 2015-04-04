@@ -11,13 +11,8 @@ if QtCore.QCoreApplication.instance() is None:
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 from ab.abclient import getProtocol
 
+# configuration parameters
 from config.serverURLs import *
-'''# URLs (need to find better URL structure)
-from sitz import STEPPER_MOTOR_SERVER, \
-    TEST_STEPPER_MOTOR_SERVER, WAVELENGTH_SERVER, \
-    TEST_WAVELENGTH_SERVER, DELAY_GENERATOR_SERVER, \
-    TEST_DELAY_GENERATOR_SERVER 
-'''
 from config.voltmeter import VM_SERVER_CONFIG, VM_DEBUG_SERVER_CONFIG
 
 # some utility widgets
@@ -32,44 +27,43 @@ from sitz import compose
 
 # saving scan data
 from filecreationmethods import saveCSV
-from config.scantypes import SCAN_TYPES
 from config.filecreation import POOHDATAPATH
 
 # core scan structures
 from scan import Scan
-from scan.widget import ScanToggleObject, IntervalScanInputWidget, ListScanInputWidget
+from scan.widget import CancelScanToggleObject, IntervalScanInputWidget, ListScanInputWidget
 
 # ID info for different apps
 from daqmx.task.ai import VoltMeter
-from config.steppermotor import KDP, BBO, PDL
+from config.steppermotor import KDP, BBO, PDL, LID, POL
 
 # clients
 from steppermotor.steppermotorclient import ChunkedStepperMotorClient
 from voltmeter.voltmeterclient import VoltMeterClient
 from steppermotor.wavelengthclient import WavelengthClient
 from delaygenerator.delaygeneratorclient import DelayGeneratorClient
+from steppermotor.polarizerclient import PolarizerClient
 
 # plotting
 from math import pow
 import numpy as np
-from pyqtgraph import PlotWidget, ErrorBarItem
+from pyqtgraph import PlotWidget, ErrorBarItem, mkPen, LegendItem
 
 import os
 import datetime
 
 '''optional parameters interpretation code
 has debug mode as well as optional input modes for
-steppermotor, wavelengthserver, ddg, & manual modes
+steppermotor, wavelengthserver, ddg, manual, & polarizer modes
 to enable just pass the associated letter (see inputs_keys)
 like this: python smartscan.py swdm
 '''
 DEBUG = len(sys.argv) > 1 and sys.argv[1] == 'debug'
-SM_BOOL, WL_BOOL, DDG_BOOL, MAN_BOOL, MAN_LIST_BOOL = 0,1,2,3,4
-INPUTS = (SM_BOOL,WL_BOOL,DDG_BOOL,MAN_BOOL,MAN_LIST_BOOL)
+SM_BOOL, DDG_BOOL, MAN_BOOL, MAN_LIST_BOOL, = 0,1,2,3
+INPUTS = (SM_BOOL,DDG_BOOL,MAN_BOOL,MAN_LIST_BOOL)
 INPUTS_TOGGLE = {input:False for input in INPUTS}
 INPUTS_KEYS = {
     's':SM_BOOL,
-    'w':WL_BOOL,
     'd':DDG_BOOL,
     'm':MAN_BOOL,
     'q':MAN_LIST_BOOL
@@ -84,7 +78,9 @@ if len(sys.argv) > 1 and all(
 else:
     for input in INPUTS_TOGGLE:
         INPUTS_TOGGLE[input] = True
-       
+
+#print INPUTS_TOGGLE
+        
 '''
 any widget added to the input widget tab will be expected to \
 implement a getInput() method that returns an object with two \
@@ -112,6 +108,10 @@ class OutputWidget:
     def getOutput(self):
         raise Exception('dont instantiate this abstract class')
 
+'''
+a subclass of QTabWidget that has special methods to return the input and\
+output methods of the active tabs.
+'''        
 class ComboWidget(QtGui.QTabWidget):
     def __init__(self):
         QtGui.QTabWidget.__init__(self)
@@ -160,18 +160,6 @@ class CancelInputWidget(QtGui.QWidget):
         
 '''
 
-CancelInputWidget where scan_input_generator is a list scan input widget
-
-'''
-class ListInputWidget(CancelInputWidget):
-    def __init__(self,next_agent,cancel_agent):
-        this = ListScanInputWidget()
-        CancelInputWidget.__init__(self,this.getInput,next_agent,cancel_agent)
-        self.setLayout(QtGui.QVBoxLayout())
-        self.layout().addWidget(this)
-
-'''
-
 CancelInputWidget where scan_input_generator is a interval scan input widget.
 
 Has button that centers scan around 'current position' of object to be scanned.
@@ -202,7 +190,7 @@ class ManualInputWidget(CancelInputWidget):
                         parent, 
                         'next x value', 
                         'enter next x value',
-                        decimals=6
+                        decimals=3
                     )
                     return result if valid else None
             return ManualInput()
@@ -259,17 +247,17 @@ class SmartScanListInputWidget(CancelInputWidget):
 class CenterInputWidget(SmartScanListInputWidget):
     def __init__(
         self,
-        next_agent,
-        cancel_agent,
-        limit_min,
-        limit_max,
-        limit_prec,
-        limit_init,
-        step_min,
-        step_max,
-        step_prec,
-        step_init,
-        get_position
+        next_agent,    #agent to progress the scan
+        cancel_agent,  #agent to abort the scan
+        limit_min,     #minimum value of scan bounds
+        limit_max,     #maximum value of scan bounds 
+        limit_prec,    #precision (number of zeroes after decimal) on bounds
+        limit_init,    #initial value for scan bounds
+        step_min,      #minimum value of step size
+        step_max,      #maximum value of scan bounds
+        step_prec,     #precision (number of zeroes after decimal) on step size
+        step_init,     #initial value for step size
+        get_position   #agent to read position for scan
     ):
         SmartScanListInputWidget.__init__(
             self,
@@ -337,27 +325,26 @@ class ManualScanInputWidget(SmartScanListInputWidget):
             self,
             next,
             lambda:None,
-            -1.e10,
-            1.e10,
+            -1.e4,
+            1.e4,
+            4,
             10,
-            0,
-            1.e-10,
-            1.e10,
-            10,
+            1.e-4,
+            1.e3,
+            4,
             1.
         )
-        
 '''
 
--> __init__(volt_meter_client)
-takes in client to volt meter server, returns object that implements \
+-> __init__(voltmeterClient)
+takes in client to voltmeter server, returns object that implements \
 the ScanOutput interface. Can specify channel to read from, and number \
 of shots to read for each output. Returns mean value over shots as well \
 as estimator of error on the mean.
 
 '''
 class VoltMeterOutputWidget(QtGui.QWidget):
-    def __init__(self,volt_meter_client):                         
+    def __init__(self,voltmeterClient):                         
         QtGui.QWidget.__init__(self)
         layout = QtGui.QFormLayout()
         self.setLayout(layout)            
@@ -369,7 +356,7 @@ class VoltMeterOutputWidget(QtGui.QWidget):
 
         # let user select number of shots to average
         shots_spin = QtGui.QSpinBox()
-        shots_spin.setRange(0,1000)
+        shots_spin.setRange(1,1000)
         shots_spin.setValue(10)
         layout.addRow('shots',shots_spin)
 
@@ -384,19 +371,19 @@ class VoltMeterOutputWidget(QtGui.QWidget):
                 else:
                     channels_combo.updateCombo(channels_dict)
                     self.setEnabled(True)
-            volt_meter_client.getChannelParameter(
+            voltmeterClient.getChannelParameter(
                 channel,VoltMeter.DESCRIPTION                
             ).addCallback(on_description)
-        volt_meter_client.getChannels().addCallback(on_channels)
+        voltmeterClient.getChannels().addCallback(on_channels)
 
         # don't enable widget until we get all the channels
         self.setEnabled(False)
         
-        self.volt_meter_client = volt_meter_client
+        self.voltmeterClient = voltmeterClient
         self.channels_combo = channels_combo
         self.shots_spin = shots_spin
         self.cancel = False
-                         
+        
 
     def getOutput(self):
         # measure current selected channel
@@ -409,6 +396,7 @@ class VoltMeterOutputWidget(QtGui.QWidget):
         class Output:
             def __init__(self):
                 self._cancel = False
+            
             def next(self):
                 voltages_list = []
                 d = Deferred()
@@ -417,45 +405,27 @@ class VoltMeterOutputWidget(QtGui.QWidget):
                     voltages_list.append(voltages_dict[channel])                    
                     # are we done?
                     if len(voltages_list) is shots or self._cancel:
-                        total = len(voltages_list)
-                        self._cancel = False
-                        this.volt_meter_client.removeListener(onVoltages)
-                        mean = sum(voltages_list) / total
-                        variance = sum(
-                            voltage**2 for voltage in voltages_list
-                        )/total - mean**2
-                        error = pow(variance / total,.5)
+                        mean = np.mean(voltages_list)
+                        error = np.std(voltages_list)/np.sqrt(shots)
                         d.callback((mean,error))
                 # sign up for messages about new acquisitions
-                this.volt_meter_client.addListener(onVoltages)
+                this.voltmeterClient.addListener(onVoltages)
                 return d
+            
             def cancel(self):
                 # if acquiring, quit on next acquisition
                 self._cancel = True
         return Output()
 
-'''
-
-extends ScanToggleObject for canceling capabilities
-
-'''
-class SmartScanToggleObject(ScanToggleObject):
-    def __init__(self):
-        ScanToggleObject.__init__(self)
-        self._cancel = lambda:None
-        self.deactivationRequested.connect(self.cancel)
-    def setCancel(self,cancel):
-        self.cancel = cancel
-    def cancel(self):
-        return self._cancel()
 
 # put together the interface
 @inlineCallbacks
 def SmartScanGUI():
-    # oh god i'm so sorry
+    # oh god i'm so sorry. don't listen to him; he's never sorry.
     class self:
         x,y,err = [], [], []
-        
+        refData = {}
+
     #configure a layout for the plot widget & controls to go side by side on
     widget = QtGui.QWidget()
     container.append(widget)
@@ -464,7 +434,6 @@ def SmartScanGUI():
     widget.setLayout(layout)
     
     # create a plot and associated widget
-    
     plotWidget = PlotWidget()
     plot = plotWidget.plot()
     layout.addWidget(plotWidget,1)
@@ -474,8 +443,11 @@ def SmartScanGUI():
     layout.addLayout(cpLayout)
 
     # configure the output widget
-    outputWidget = ComboWidget()
-    cpLayout.addWidget(LabelWidget('output',outputWidget))
+    outputPane = ComboWidget()
+    cpLayout.addWidget(LabelWidget('output',outputPane))
+
+
+    ############################################################# VOLTMETER OUTPUT ###########################################################
 
     # add volt meter to scan output
     vmProtocol = yield getProtocol(
@@ -483,18 +455,21 @@ def SmartScanGUI():
     )
     vmClient = VoltMeterClient(vmProtocol)    
     vmWidget = VoltMeterOutputWidget(vmClient)
-    outputWidget.addTab(vmWidget,'voltmeter')
+    outputPane.addTab(vmWidget,'voltmeter')
+
+
+    ############################################################# BEGIN INPUTS ###########################################################
 
     # configure the input widget
-    inputWidget = ComboWidget()
-    inputWidget.setTabPosition(inputWidget.West)
-    cpLayout.addWidget(LabelWidget('input',inputWidget),1)    
+    inputPane = ComboWidget()
+    inputPane.setTabPosition(inputPane.West)
+    cpLayout.addWidget(LabelWidget('input',inputPane),1)    
 
-    inputWidget.addTab(
+    inputPane.addTab(
         ManualInputWidget(widget),
         'manual'
     )
-    inputWidget.addTab(
+    inputPane.addTab(
         ManualScanInputWidget(widget),
         'manual scan'
     )
@@ -506,6 +481,9 @@ def SmartScanGUI():
     # 3. create interval widget using client object, add to combo
     # 4. same for list widget
     # 5. add combo widget to base combo widget (resulting in 2-D tab widget)
+
+    
+    ############################################################# STEPPER MOTOR INPUTS ###########################################################
     
     if INPUTS_TOGGLE[SM_BOOL]:
         # add stepper motors to scan input
@@ -514,55 +492,44 @@ def SmartScanGUI():
         )    
         smClients = {
             smID:ChunkedStepperMotorClient(smProtocol,smID)
-            for smID in (KDP,BBO,PDL)
+            for smID in (KDP,BBO,PDL,LID,POL)
         }
 
         for smID,smClient in smClients.items():
-            combo_input_widget = ComboWidget()
-            
-            combo_input_widget.addTab(
-                CenterInputWidget(
-                    smClient.setPosition,
-                    smClient.cancel,
-                    -99999,
-                    99999,
-                    0,
-                    0,
-                    0,
-                    1000,
-                    0,
-                    10,
-                    smClient.getPosition                    
-                ),
-                'interval'
+            thisInputWidget = CenterInputWidget(
+                smClient.setPosition,
+                smClient.cancel,
+                -99999,
+                99999,
+                0,
+                0,
+                0,
+                1000,
+                0,
+                10,
+                smClient.getPosition                    
             )
         
-            combo_input_widget.addTab(
-                ListInputWidget(
-                    smClient.setPosition,
-                    smClient.cancel
-                ),
-                'list'
-            )
-        
-            inputWidget.addTab(
-                combo_input_widget,
+            inputPane.addTab(
+                thisInputWidget,
                 {
                     KDP:'kdp',
                     BBO:'bbo',
-                    PDL:'pdl'
+                    PDL:'pdl',
+                    LID:'lid',
+                    POL:'pol'
                 }[smID]
             )
-    
+    '''
+    ############################################################# WAVELENGTH SERVER INPUT ###########################################################
+
     if INPUTS_TOGGLE[WL_BOOL]:
         # add wavelength client to scan input
         wlProtocol = yield getProtocol(
             TEST_WAVELENGTH_SERVER if DEBUG else WAVELENGTH_SERVER
         )
         wlClient = WavelengthClient(wlProtocol)
-        wlInputWidget = ComboWidget()
-        wlInputWidget.addTab(
-            CenterInputWidget(
+        wlInputWidget = CenterInputWidget(
                 wlClient.setWavelength,
                 wlClient.cancelWavelengthSet,
                 24100.0,            
@@ -574,20 +541,43 @@ def SmartScanGUI():
                 2,
                 .2,
                 wlClient.getWavelength                
-            ),
-            'interval'
-        )
-        wlInputWidget.addTab(
-            ListInputWidget(
-                wlClient.setWavelength,
-                wlClient.cancelWavelengthSet
-            ),
-            'list'
-        )
-        inputWidget.addTab(
+            )
+
+        inputPane.addTab(
             wlInputWidget,
             'surf'
         )
+
+    ############################################################# POLARIZER SERVER INPUT ###########################################################
+
+        if INPUTS_TOGGLE[POL_BOOL]:
+        # add wavelength client to scan input
+        polProtocol = yield getProtocol(
+            TEST_POLARIZER_SERVER if DEBUG else POLARIZER_SERVER
+        )
+        polClient = PolarizerClient(polProtocol)
+        polInputWidget = CenterInputWidget(
+                polClient.setAngle,  #agent to progress the scan
+                polClient.cancelAngleSet,  #agent to abort the scan
+                -720.0, #minimum value of scan bounds           
+                720.0,  #maximum value of scan bounds 
+                2,      #precision (number of zeroes after decimal) on bounds 
+                90.0,   #initial value for scan bounds
+                0.01,   #minimum value of step size
+                180.0,  #maximum value of scan bounds
+                2,      #precision (number of zeroes after decimal) on step size
+                5.0,    #initial value for step size
+                polClient.getAngle  #agent to read position for scan
+            )
+
+        inputPane.addTab(
+            polInputWidget,
+            'polServ'
+        )
+    '''
+    
+    ############################################################# DDG INPUTS ###########################################################
+
     if INPUTS_TOGGLE[DDG_BOOL]:
         # add delay generator to scan input
         dgProtocol = yield getProtocol(
@@ -611,9 +601,8 @@ def SmartScanGUI():
             def cancel(dgID):
                 def _cancel(): pass
                 return _cancel
-            dgCombo = ComboWidget()
-            dgCombo.addTab(
-                CenterInputWidget(
+            
+            dgCombo = CenterInputWidget(
                     setter(dgID),
                     cancel(dgID),
                     1,
@@ -625,28 +614,25 @@ def SmartScanGUI():
                     1,
                     100,
                     getter(dgID)                    
-                ),
-                'interval'
-            )
-            dgCombo.addTab(
-                ListInputWidget(
-                    setter(dgID),
-                    cancel(dgID)
-                ),
-                'list'
-            )
-            inputWidget.addTab(
+                )
+            inputPane.addTab(
                 dgCombo,
                 dgID
             )
+    ############################################################# END INPUTS ###########################################################
+
+
+    ############################################################# SCANNING ###########################################################
 
     #create a scan toggle
-    scanToggle = SmartScanToggleObject()
-    cpLayout.addWidget(
-        LabelWidget(
-            'scan',ToggleWidget(scanToggle)
-        )
-    )
+    scanToggle = CancelScanToggleObject()
+    scanPane = QtGui.QVBoxLayout()
+    scanPane.addWidget(ToggleWidget(scanToggle))
+    repeatSpinBox = QtGui.QSpinBox()
+    repeatSpinBox.setRange(1,10000)
+    repeatSpinBox.setValue(1)
+    scanPane.addWidget(LabelWidget('repeat',repeatSpinBox))
+    cpLayout.addWidget(LabelWidget('scan',scanPane))
     
     def onActivationRequested():
         # empty data
@@ -654,8 +640,8 @@ def SmartScanGUI():
             while l: l.pop()
 
         # get current selected scan output, scan input
-        scanOutput = outputWidget.getOutput()
-        scanInput = inputWidget.getInput()
+        scanOutput = outputPane.getOutput()
+        scanInput = inputPane.getInput()
         scanToggle.setOutput(scanOutput.next)
         scanToggle.setInput(scanInput.next)
 
@@ -664,12 +650,49 @@ def SmartScanGUI():
             scanInput.cancel()
             scanOutput.cancel()
         scanToggle.setCancel(cancel)
-
+        
+        # set autoscale on x & y axes when a new scan is started
+        plotWidget.enableAutoRange()
+        
         # start scan
         scanToggle.toggle()    
     scanToggle.activationRequested.connect(onActivationRequested)
     
+    
+    ############################################################# PLOTTING ###########################################################
+
+    def xYPlot(plotWidget,x,y,yerr=None,xerr=None,color='w',name='Current'):
+        thisPlot = plotWidget.plot(x,y,pen=mkPen(color,width=2))
+        plotWidget.addItem(
+            ErrorBarItem(
+                x=np.asarray(x),
+                y=np.asarray(y),
+                top=np.asarray(yerr) if yerr is not None else None,
+                bottom=np.asarray(yerr) if yerr is not None else None,
+                left=np.asarray(xerr) if xerr is not None else None,
+                right=np.asarray(xerr) if xerr is not None else None,
+                beam=.05,
+                pen=mkPen(color)
+            )
+        )
+        
+    
     # plot on step completion
+    def updatePlot():
+        plotWidget.clear()
+        for name, refData in self.refData.iteritems():
+            xYPlot(
+                plotWidget,
+                refData['data'][0],
+                refData['data'][1],
+                yerr=refData['data'][2],
+                color=refData['color'],
+                name=name
+            )
+        if len(self.x) >= 1:
+            xYPlot(plotWidget,self.x,self.y,yerr=self.err)
+        
+    
     def onStepped(data):
         # unpack scan step data
         position, output = data
@@ -683,25 +706,74 @@ def SmartScanGUI():
         self.err.append(err)
 
         # update plot
-        plotWidget.clear()
-        plotWidget.plot(self.x,self.y)
-        plotWidget.addItem(
-            ErrorBarItem(
-                x=np.asarray(self.x),
-                y=np.asarray(self.y),
-                top=np.asarray(self.err),
-                bottom=np.asarray(self.err),
-                beam=.05
-            )
-        )
+        updatePlot()
 
         # ready for next step!
         scanToggle.completeStep()        
     scanToggle.stepped.connect(onStepped)
 
-    # set up data saving capabilities (ask bobby re: this)
+    
+    
+    ############################################################# LOAD FUNCTIONS ###########################################################
+
+    # set up reference data capabilities
+    refLayout = QtGui.QHBoxLayout()
+    
+    def onLoadClicked():
+        date = datetime.datetime.now().strftime("%Y-%m-%d")
+        time = datetime.datetime.now().strftime("%H%M")
+        dir = os.path.join(
+            POOHDATAPATH,
+            date
+        )
+        
+        refFileName = QtGui.QFileDialog.getOpenFileName(
+            widget,
+            'select file', 
+            dir,
+            "CSV Files (*.csv)"
+        )
+        
+        refData = np.loadtxt(open(refFileName[0],"rb"),delimiter=",")
+        name = refFileName[0].rpartition('/')[2]
+        
+        color = QtGui.QColorDialog.getColor()
+        
+        self.refData[name] = {
+            'color': color,
+            'data': [refData[:,0], refData[:,1], refData[:,2]]
+        }
+        
+        updatePlot()
+    
+    loadButton = QtGui.QPushButton('load')
+    loadButton.clicked.connect(onLoadClicked)
+    refLayout.addWidget(SqueezeRow(loadButton))
+
+    def onClearClicked():
+        for refs in self.refData.keys():
+            del self.refData[refs]
+            
+        updatePlot()
+
+    clearButton = QtGui.QPushButton('clear all')
+    clearButton.clicked.connect(onClearClicked)
+    refLayout.addWidget(SqueezeRow(clearButton))
+
+    cpLayout.addWidget(
+        LabelWidget(
+            'reference',
+            refLayout
+        )
+    )    
+
+    
+    # set up data saving capabilities
     saveLayout = QtGui.QVBoxLayout()
 
+    
+    ############################################################# SAVE FUNCTIONS ###########################################################
+    
     def onSaveClicked():
         dataArray = np.asarray(
             [self.x,self.y,self.err],
@@ -735,16 +807,19 @@ def SmartScanGUI():
             dataArray.transpose(),
             delimiter=','
         )
-    saveCSVButton = QtGui.QPushButton('save (csv)')
-    saveCSVButton.clicked.connect(onSaveClicked)
-    saveLayout.addWidget(SqueezeRow(saveCSVButton))
+    saveButton = QtGui.QPushButton('save')
+    saveButton.clicked.connect(onSaveClicked)
+    saveLayout.addWidget(SqueezeRow(saveButton))
     
     cpLayout.addWidget(
         LabelWidget(
             'save',
             saveLayout
         )
-    )    
+    )
+    
+   
+
 
 if __name__ == '__main__':
     from twisted.internet import reactor

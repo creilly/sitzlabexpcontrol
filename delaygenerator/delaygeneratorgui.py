@@ -20,11 +20,11 @@ from delaygeneratorclient import DelayGeneratorClient
 
 
 import sys
-print sys.argv
+#print sys.argv
 DEBUG = len(sys.argv) > 1 and 'debug' in sys.argv
 LOCAL = len(sys.argv) > 1 and 'local' in sys.argv
-print 'debug: %s' % DEBUG
-print 'local: %s' % LOCAL
+#print 'debug: %s' % DEBUG
+#print 'local: %s' % LOCAL
 
 import os
 os.system("delay generator gui")

@@ -24,6 +24,9 @@ MAV_PROBE_LAMP = 'probe laser lamps'
 MAV_PROBE_QSW = 'probe laser q-switch'
 MAV_NOZZLE = 'nozzle'
 
+MIN_DELAY = 0
+MAX_DELAY = (2**20 + 1)*100
+
 '''
 numberings of ddgs on pooh computer, for ease of reference
 
@@ -38,7 +41,7 @@ COM7:   55330343731351906041     631    2.6     3.82
 DG_CONFIG = {
     MAV_NOZZLE:{
         'ard_id': '55338343539351109290', #COM3
-        'delay':2842450,
+        'delay':2000000,  #2842450,
         'partner':None,
         'rel_part_delay':None,
         'run_by_default':True,
@@ -49,7 +52,7 @@ DG_CONFIG = {
         },
     MAV_PUMP_LAMP:{
         'ard_id':'5533834353935150E1D1',  #COM4
-        'delay':3607400,
+        'delay': 2962450,      #3607400,
         'partner':MAV_PUMP_QSW,
         'rel_part_delay':227550.,
         'run_by_default':True,
@@ -60,7 +63,7 @@ DG_CONFIG = {
         },
     MAV_PUMP_QSW:{
         'ard_id': '5533834353935120E1D0',  #COM5
-        'delay':3834950,
+        'delay':3190000, #3834950,
         'partner':MAV_PUMP_LAMP,
         'rel_part_delay':-227550.,
         'run_by_default':True,
@@ -71,7 +74,7 @@ DG_CONFIG = {
         },
     MAV_PROBE_LAMP:{
         'ard_id': '55330343731351C0A1B1',  #COM6
-        'delay':3604150,
+        'delay':2957600, #3604150,
         'partner':MAV_PROBE_QSW,
         'rel_part_delay':232400.,
         'run_by_default':True,
@@ -82,7 +85,7 @@ DG_CONFIG = {
         },
     MAV_PROBE_QSW:{
         'ard_id':'55330343731351906041',  #COM7
-        'delay':3836550,
+        'delay':3190000, #3836550,
         'partner':MAV_PROBE_LAMP,
         'rel_part_delay':-232400.,
         'run_by_default':True,
